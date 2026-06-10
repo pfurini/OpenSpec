@@ -21,9 +21,21 @@ When ready to implement, run /opsx:apply
 
 ---
 
-**Input**: The user's request should include a change name (kebab-case) OR a description of what they want to build.
+**Input**: The user's request should include a change name (kebab-case) OR a description of what they want to build. If an exploration note already exists for the topic, it becomes the primary input (see Step 0).
 
 **Steps**
+
+0. **Check for an exploration note** — explore mode may have already crystallized the WHAT.
+   - Look for a note at \`openspec/explorations/<name>.md\` matching the requested topic or name (list \`openspec/explorations/\` if the name is fuzzy).
+   - **If a note exists**, read it and treat it as your primary input — the WHAT is already settled, so you transcribe it, you do NOT re-derive it:
+     - **Problem / Why** → \`proposal.md\` (Why)
+     - **Scope & Non-Goals** → \`proposal.md\` (What Changes) and spec scope
+     - **Capabilities (new vs modified)** → \`proposal.md\` (Capabilities) and the \`specs/\` to create
+     - **Parked Design Seeds** → carry forward as input to \`design.md\` when you reach it (do NOT discard them)
+     - **Open Questions** → resolve with the user only if they block the proposal or specs; otherwise record them under design's Open Questions
+
+     Skip the Step 1 interview — confirm the change name and proceed to Step 2.
+   - **If no note exists**, proceed to Step 1 as normal.
 
 1. **If no clear input provided, ask what they want to build**
 
@@ -133,9 +145,21 @@ When ready to implement, run /opsx:apply
 
 ---
 
-**Input**: The argument after \`/opsx:propose\` is the change name (kebab-case), OR a description of what the user wants to build.
+**Input**: The argument after \`/opsx:propose\` is the change name (kebab-case), OR a description of what the user wants to build. If an exploration note already exists for the topic, it becomes the primary input (see Step 0).
 
 **Steps**
+
+0. **Check for an exploration note** — explore mode may have already crystallized the WHAT.
+   - Look for a note at \`openspec/explorations/<name>.md\` matching the requested topic or name (list \`openspec/explorations/\` if the name is fuzzy).
+   - **If a note exists**, read it and treat it as your primary input — the WHAT is already settled, so you transcribe it, you do NOT re-derive it:
+     - **Problem / Why** → \`proposal.md\` (Why)
+     - **Scope & Non-Goals** → \`proposal.md\` (What Changes) and spec scope
+     - **Capabilities (new vs modified)** → \`proposal.md\` (Capabilities) and the \`specs/\` to create
+     - **Parked Design Seeds** → carry forward as input to \`design.md\` when you reach it (do NOT discard them)
+     - **Open Questions** → resolve with the user only if they block the proposal or specs; otherwise record them under design's Open Questions
+
+     Skip the Step 1 interview — confirm the change name and proceed to Step 2.
+   - **If no note exists**, proceed to Step 1 as normal.
 
 1. **If no input provided, ask what they want to build**
 
