@@ -38,6 +38,7 @@ export function getContinueChangeSkillTemplate(): SkillTemplate {
    - \`schemaName\`: The workflow schema being used (e.g., "spec-driven")
    - \`artifacts\`: Array of artifacts with their status ("done", "ready", "blocked")
    - \`isComplete\`: Boolean indicating if all artifacts are complete
+   - \`continueMode\`: How to advance — \`"step"\` (one artifact per invocation, default) or \`"flow-to-gate"\` (draft consecutive ungated artifacts, stop at a gate)
    - \`planningHome\`, \`changeRoot\`, \`artifactPaths\`, and \`actionContext\`: path and scope context. Use these instead of assuming repo-local paths.
 
 3. **Act based on status**:
@@ -71,7 +72,9 @@ export function getContinueChangeSkillTemplate(): SkillTemplate {
      - Apply \`context\` and \`rules\` as constraints when writing - but do NOT copy them into the file
      - Write to the \`resolvedOutputPath\` specified in instructions. If it is a glob pattern, choose the concrete file path using the schema instruction and workspace planning context
    - Show what was created and what's now unlocked
-   - STOP after creating ONE artifact
+   - **Then advance based on \`continueMode\` (from status):**
+     - **\`step\` (default):** STOP after creating ONE artifact. (The user runs continue again for the next.)
+     - **\`flow-to-gate\`:** re-run \`openspec status --change "<name>" --json\` and repeat for the next ready artifact — but BEFORE writing it, read its \`instruction\`. If the instruction tells you to STOP because a precondition is missing (a *gate* — e.g. a design step that first needs a thinking note from \`/opsx:design\`), STOP there and report exactly what's needed; do NOT write that artifact. Otherwise create it and keep going. Stop when you hit a gate, no artifact is \`ready\`, or every apply-required artifact is done.
 
    ---
 
@@ -109,7 +112,7 @@ Common artifact patterns:
 For other schemas, follow the \`instruction\` field from the CLI output.
 
 **Guardrails**
-- Create ONE artifact per invocation
+- In \`step\` mode create ONE artifact per invocation; in \`flow-to-gate\` mode create consecutive ungated artifacts and STOP at the first gate
 - Always read dependency artifacts before creating a new one
 - Never skip artifacts or create out of order
 - If context is unclear, ask the user before creating
@@ -158,6 +161,7 @@ export function getOpsxContinueCommandTemplate(): CommandTemplate {
    - \`schemaName\`: The workflow schema being used (e.g., "spec-driven")
    - \`artifacts\`: Array of artifacts with their status ("done", "ready", "blocked")
    - \`isComplete\`: Boolean indicating if all artifacts are complete
+   - \`continueMode\`: How to advance — \`"step"\` (one artifact per invocation, default) or \`"flow-to-gate"\` (draft consecutive ungated artifacts, stop at a gate)
    - \`planningHome\`, \`changeRoot\`, \`artifactPaths\`, and \`actionContext\`: path and scope context. Use these instead of assuming repo-local paths.
 
 3. **Act based on status**:
@@ -191,7 +195,9 @@ export function getOpsxContinueCommandTemplate(): CommandTemplate {
      - Apply \`context\` and \`rules\` as constraints when writing - but do NOT copy them into the file
      - Write to the \`resolvedOutputPath\` specified in instructions. If it is a glob pattern, choose the concrete file path using the schema instruction and workspace planning context
    - Show what was created and what's now unlocked
-   - STOP after creating ONE artifact
+   - **Then advance based on \`continueMode\` (from status):**
+     - **\`step\` (default):** STOP after creating ONE artifact. (The user runs continue again for the next.)
+     - **\`flow-to-gate\`:** re-run \`openspec status --change "<name>" --json\` and repeat for the next ready artifact — but BEFORE writing it, read its \`instruction\`. If the instruction tells you to STOP because a precondition is missing (a *gate* — e.g. a design step that first needs a thinking note from \`/opsx:design\`), STOP there and report exactly what's needed; do NOT write that artifact. Otherwise create it and keep going. Stop when you hit a gate, no artifact is \`ready\`, or every apply-required artifact is done.
 
    ---
 
@@ -229,7 +235,7 @@ Common artifact patterns:
 For other schemas, follow the \`instruction\` field from the CLI output.
 
 **Guardrails**
-- Create ONE artifact per invocation
+- In \`step\` mode create ONE artifact per invocation; in \`flow-to-gate\` mode create consecutive ungated artifacts and STOP at the first gate
 - Always read dependency artifacts before creating a new one
 - Never skip artifacts or create out of order
 - If context is unclear, ask the user before creating

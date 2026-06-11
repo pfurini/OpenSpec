@@ -6,6 +6,11 @@ description: >
   (exploration note, design note, ADRs). The generic writer (e.g. /opsx:continue)
   then transcribes proposal -> specs -> design -> tasks from those records, with the
   design decomposed into well-bounded units for downstream parallel task building.
+
+# Draft consecutive mechanical artifacts (proposal -> specs) in one /opsx:continue,
+# stopping at the design gate (which needs a /opsx:design thinking note first).
+continueMode: flow-to-gate
+
 artifacts:
   - id: proposal
     generates: proposal.md

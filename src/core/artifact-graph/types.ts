@@ -28,6 +28,12 @@ export const SchemaYamlSchema = z.object({
   artifacts: z.array(ArtifactSchema).min(1, { error: 'At least one artifact required' }),
   // Optional apply phase configuration (for schema-aware apply instructions)
   apply: ApplyPhaseSchema.optional(),
+  // How `continue` advances through artifacts:
+  //   'step' (default) - one artifact per invocation (classic step-by-step)
+  //   'flow-to-gate'   - draft consecutive ungated artifacts, then stop at the
+  //                      first gated one (an artifact whose instruction halts
+  //                      until a precondition like a thinking note is met)
+  continueMode: z.enum(['step', 'flow-to-gate']).optional(),
 });
 
 // Derived TypeScript types
