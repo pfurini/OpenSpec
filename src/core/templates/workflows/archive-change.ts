@@ -72,7 +72,7 @@ export function getArchiveChangeSkillTemplate(): SkillTemplate {
 5. **Promote this change's ADRs (proposed → accepted)**
 
    This change is shipping, so the architectural decisions it recorded become real. Promote its ADRs **before** the move (the change name is still unambiguous):
-   - Search \`openspec/adr/\` (and \`docs/adr/\` if the project uses it) for ADR files whose front-matter has \`change: <name>\` and \`status: proposed\`.
+   - Search the project's ADR directory (commonly \`docs/adr/\` — wherever this repo keeps ADRs) for files whose front-matter has \`change: <name>\` and \`status: proposed\`.
    - For each match, set \`status: accepted\` and add \`accepted: <YYYY-MM-DD>\` (run \`date +%Y-%m-%d\`). Leave \`superseded\` ADRs untouched.
    - If none match, proceed silently — not every change records an ADR.
 
@@ -201,7 +201,7 @@ export function getOpsxArchiveCommandTemplate(): CommandTemplate {
 5. **Promote this change's ADRs (proposed → accepted)**
 
    This change is shipping, so the architectural decisions it recorded become real. Promote its ADRs **before** the move (the change name is still unambiguous):
-   - Search \`openspec/adr/\` (and \`docs/adr/\` if the project uses it) for ADR files whose front-matter has \`change: <name>\` and \`status: proposed\`.
+   - Search the project's ADR directory (commonly \`docs/adr/\` — wherever this repo keeps ADRs) for files whose front-matter has \`change: <name>\` and \`status: proposed\`.
    - For each match, set \`status: accepted\` and add \`accepted: <YYYY-MM-DD>\` (run \`date +%Y-%m-%d\`). Leave \`superseded\` ADRs untouched.
    - If none match, proceed silently — not every change records an ADR.
 

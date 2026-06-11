@@ -20,7 +20,7 @@ export const PRIME_RITUAL = `A ritual, not a fact store (after piv-prime): refre
 
 **2 · Route to the canonical sources — read them, never re-derive**
 - **Project context** — the repo's agent guide (\`AGENTS.md\` / \`CLAUDE.md\`) + the OpenSpec project config → stack, conventions, hard constraints.
-- **Architectural memory** — accepted **ADRs** (\`openspec/adr/\`, or a project's \`docs/adr/\`) are *standing constraints you must respect*; the **glossary** (\`openspec/glossary.md\`) is the *canonical vocabulary* — use its terms, don't coin synonyms for concepts it already names.
+- **Architectural memory** — accepted **ADRs** are *standing constraints you must respect*; the **glossary** is the *canonical vocabulary* (use its terms, don't coin synonyms). *Find them where the project already keeps them:* ADRs commonly live in \`docs/adr/\`, the glossary in a root \`GLOSSARY.md\`.
 - **Thinking records** — the exploration note (\`openspec/explorations/<name>.md\`) for the settled WHAT and its parked design seeds; the design note (\`<changeRoot>/design-notes.md\`) if you're resuming the HOW.
 - **The code** — existing patterns at \`path:line\`. Use the repo's code graph if one is available; otherwise read the real code. Cite reality; don't reinvent it.
 

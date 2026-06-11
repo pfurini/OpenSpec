@@ -191,7 +191,7 @@ When the WHAT crystallizes, you hold the raw material for a proposal and specs. 
   - **Capabilities** — new vs modified (the WHAT decisions)
   - **Open Questions** — what's still undecided
   - **Parked Design Seeds** — the HOW ideas surfaced but deferred, held for the HOW phase
-- **Offer to seed the glossary.** If the session named or sharpened a domain term others will reuse, offer to add it to \`openspec/glossary.md\` (one line, append don't clobber). The glossary is the canonical vocabulary — explore is where it gets seeded. Offer, don't auto-write.
+- **Offer to seed the glossary.** If the session named or sharpened a domain term others will reuse, offer to add it to the project glossary (a root \`GLOSSARY.md\`, created at the repo root if none exists). One line, append don't clobber. The glossary is the canonical vocabulary — explore is where it gets seeded. Offer, don't auto-write.
 - **Hand off to propose.** When the user is ready, \`/opsx:propose\` reads that note as its input and transcribes it into \`proposal.md\` + \`specs/\` — it doesn't re-think the WHAT, you already did. The parked design seeds travel with the note for the HOW phase to pick up before \`design.md\`.
 
 ---
@@ -345,7 +345,7 @@ But this summary is optional. Sometimes the thinking IS the value.
 - **Do explore the codebase** - Ground the WHAT in reality
 - **Do question assumptions** - Including the user's and your own
 - **Read ADRs as constraints, not a design cue** - accepted ADRs bound the WHAT; respect them, don't start designing against them
-- **Seed the glossary, don't fork it** - use \`openspec/glossary.md\`'s terms, offer to add genuinely new domain ones, don't coin synonyms`,
+- **Seed the glossary, don't fork it** - use the project glossary's terms (a root \`GLOSSARY.md\`), offer to add genuinely new domain ones, don't coin synonyms`,
     license: 'MIT',
     compatibility: 'Requires openspec CLI.',
     metadata: { author: 'openspec', version: '1.0' },
@@ -547,7 +547,7 @@ When the WHAT crystallizes, you hold the raw material for a proposal and specs. 
   - **Capabilities** — new vs modified (the WHAT decisions)
   - **Open Questions** — what's still undecided
   - **Parked Design Seeds** — the HOW ideas surfaced but deferred, held for the HOW phase
-- **Offer to seed the glossary.** If the session named or sharpened a domain term others will reuse, offer to add it to \`openspec/glossary.md\` (one line, append don't clobber). The glossary is the canonical vocabulary — explore is where it gets seeded. Offer, don't auto-write.
+- **Offer to seed the glossary.** If the session named or sharpened a domain term others will reuse, offer to add it to the project glossary (a root \`GLOSSARY.md\`, created at the repo root if none exists). One line, append don't clobber. The glossary is the canonical vocabulary — explore is where it gets seeded. Offer, don't auto-write.
 - **Hand off to propose.** When the user is ready, \`/opsx:propose\` reads that note as its input and transcribes it into \`proposal.md\` + \`specs/\` — it doesn't re-think the WHAT, you already did. The parked design seeds travel with the note for the HOW phase to pick up before \`design.md\`.
 
 ---
@@ -588,6 +588,6 @@ When things crystallize, you might offer a summary (problem / scope & non-goals 
 - **Do explore the codebase** - Ground the WHAT in reality
 - **Do question assumptions** - Including the user's and your own
 - **Read ADRs as constraints, not a design cue** - accepted ADRs bound the WHAT; respect them, don't start designing against them
-- **Seed the glossary, don't fork it** - use \`openspec/glossary.md\`'s terms, offer to add genuinely new domain ones, don't coin synonyms`
+- **Seed the glossary, don't fork it** - use the project glossary's terms (a root \`GLOSSARY.md\`), offer to add genuinely new domain ones, don't coin synonyms`
   };
 }

@@ -114,10 +114,10 @@ Capture the settled HOW in \`<changeRoot>/design-notes.md\` — exactly what \`/
 
 Scale each section to its weight; skip what doesn't apply. Don't pad.
 
-**Glossary:** if the design introduces a genuinely new shared term — a concept others will reference — offer to append it to \`openspec/glossary.md\` (one line, append don't clobber). Reuse the glossary's existing terms; don't log throwaway implementation names.
+**Glossary:** if the design introduces a genuinely new shared term — a concept others will reference — offer to append it to the project glossary (the existing root \`GLOSSARY.md\`, or create one at the repo root). One line, append don't clobber. Reuse the glossary's existing terms; don't log throwaway implementation names.
 
 ### 6 · Record ADRs
-Record an ADR **only if all three hold**: hard to reverse · surprising without context · the result of a real trade-off. Write \`openspec/adr/ADR-NNNN-slug.md\` (respect an existing \`docs/adr/\` if the project uses one) with this front-matter, then Context / Decision / Consequences / Alternatives:
+Record an ADR **only if all three hold**: hard to reverse · surprising without context · the result of a real trade-off. Write \`ADR-NNNN-slug.md\` into the project's ADR directory — use the repo's existing one if it has ADRs, else create \`docs/adr/\` (the convention). Give it this front-matter, then Context / Decision / Consequences / Alternatives:
 \`\`\`yaml
 ---
 id: ADR-NNNN
@@ -156,8 +156,8 @@ Scan the design note: placeholders, internal consistency, **every component has 
 - **Stay in the HOW lane** - The WHAT is fixed. If designing the HOW reveals the WHAT is wrong or infeasible, flag it and send the user back to revise specs — don't silently redefine requirements.
 - **Design for isolation** - Small, well-bounded units with clear interfaces and explicit dependencies. Follow existing patterns; YAGNI.
 - **Don't write design.md, code, or tasks** - your output is the design note + ADRs; \`/opsx:continue\` writes \`design.md\` from the note.
-- **ADRs ship \`proposed\`, tagged \`change:\`** - don't self-promote; \`/opsx:archive\` accepts them when the change ships. They live in \`openspec/adr/\`, outside the change directory — durable architectural memory.
-- **Keep the glossary canonical** - reuse \`openspec/glossary.md\` terms; offer to append genuinely new shared ones; never coin a synonym for a concept it already names.
+- **ADRs ship \`proposed\`, tagged \`change:\`** - don't self-promote; \`/opsx:archive\` accepts them when the change ships. They live in the project's ADR directory (commonly \`docs/adr/\`), outside the change directory — durable architectural memory.
+- **Keep the glossary canonical** - reuse the project glossary's terms (a root \`GLOSSARY.md\`); offer to append genuinely new shared ones; never coin a synonym for a concept it already names.
 - **Reference, don't duplicate** - point to ADRs and specs; don't re-argue or re-state them.
 - **Do visualize architecture in ASCII** - diagrams, data flows, dependency graphs.`;
 

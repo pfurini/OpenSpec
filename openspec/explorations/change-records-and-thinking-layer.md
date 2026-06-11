@@ -62,17 +62,24 @@ shadow layer until drift is observed" and the repo's all-markdown convention.
 What now exists:
 - **ADR lifecycle**: `/opsx:design` writes ADRs at `status: proposed` with front-matter
   carrying `change: <name>`. `/opsx:archive` promotes the ADRs tagged with that change to
-  `status: accepted` (+ `accepted:` date) on archival. ADRs live in `openspec/adr/`
-  (outside the change dir) so they survive archival as durable architectural memory.
+  `status: accepted` (+ `accepted:` date) on archival. ADRs live in the project's ADR
+  directory (**`docs/adr/`** by convention — the prompts discover the repo's existing one),
+  outside the change dir, so they survive archival as durable architectural memory.
 - **explore-reads-ADRs**: explore primes from accepted ADRs as *standing constraints*
   (WHAT-lane guardrail: read as context, not a license to design).
 - **Shared prime ritual**: `src/core/templates/workflows/shared-prime.ts` exports
   `PRIME_RITUAL`, a piv-prime-style ritual (refresh live state → route to canonical
   never-stale sources incl. ADRs + glossary → orient) embedded in both explore and design.
   It holds no copied facts by design.
-- **Glossary**: canonical `openspec/glossary.md`. explore *seeds* domain vocabulary;
-  design *extends* with new shared terms; both read it as canonical (no synonyms). Offer-
-  to-write, append-don't-clobber.
+- **Glossary**: canonical **root `GLOSSARY.md`** (a top-level project doc, like README/
+  CHANGELOG — not buried in a subfolder). explore *seeds* domain vocabulary; design *extends*
+  with new shared terms; both read it as canonical (no synonyms). Offer-to-write,
+  append-don't-clobber.
+- **Locations are project-owned, not OpenSpec-owned**: ADRs/glossary are project-wide
+  architectural memory with their own conventions, so the prompts resolve to the repo's
+  existing location (defaults: `docs/adr/`, root `GLOSSARY.md`) and never write under
+  `openspec/`. A config override (`adrDir`/`glossaryPath`) is a possible future addition if a
+  project needs a non-standard, deterministic path.
 
 Still deferred (revisit only if drift/scale bites):
 - **`openspec adr` CLI** (`list --json`, `promote --change`): chosen prompt-only for now.
