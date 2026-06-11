@@ -5,6 +5,7 @@
  * templates file into workflow-focused modules.
  */
 import type { SkillTemplate, CommandTemplate } from '../types.js';
+import { PRIME_RITUAL } from './shared-prime.js';
 
 export function getExploreSkillTemplate(): SkillTemplate {
   return {
@@ -137,17 +138,10 @@ These change the requirements and the capability map — not the architecture. (
 
 You have full context of the OpenSpec system. Use it naturally, don't force it.
 
-### Check for context
+### Prime — orient (lightly) before you dig in
+${PRIME_RITUAL}
 
-At the start, quickly check what exists:
-\`\`\`bash
-openspec list --json
-\`\`\`
-
-This tells you:
-- If there are active changes
-- Their names, schemas, and status
-- What the user might be working on
+For explore specifically: you're grounding the **WHAT**, so the routes that matter most are project context, the accepted **ADRs** (the constraints your idea has to live within), the **glossary** (the words this domain already uses), and the existing behavior in code. Reading ADRs and code here is to sharpen the requirement against reality — it is *not* license to start designing. Stay in the WHAT lane.
 
 ### When no change exists
 
@@ -197,6 +191,7 @@ When the WHAT crystallizes, you hold the raw material for a proposal and specs. 
   - **Capabilities** — new vs modified (the WHAT decisions)
   - **Open Questions** — what's still undecided
   - **Parked Design Seeds** — the HOW ideas surfaced but deferred, held for the HOW phase
+- **Offer to seed the glossary.** If the session named or sharpened a domain term others will reuse, offer to add it to \`openspec/glossary.md\` (one line, append don't clobber). The glossary is the canonical vocabulary — explore is where it gets seeded. Offer, don't auto-write.
 - **Hand off to propose.** When the user is ready, \`/opsx:propose\` reads that note as its input and transcribes it into \`proposal.md\` + \`specs/\` — it doesn't re-think the WHAT, you already did. The parked design seeds travel with the note for the HOW phase to pick up before \`design.md\`.
 
 ---
@@ -348,7 +343,9 @@ But this summary is optional. Sometimes the thinking IS the value.
 - **Don't auto-capture** - Offer to save insights, don't just do it
 - **Do visualize** - A good diagram is worth many paragraphs
 - **Do explore the codebase** - Ground the WHAT in reality
-- **Do question assumptions** - Including the user's and your own`,
+- **Do question assumptions** - Including the user's and your own
+- **Read ADRs as constraints, not a design cue** - accepted ADRs bound the WHAT; respect them, don't start designing against them
+- **Seed the glossary, don't fork it** - use \`openspec/glossary.md\`'s terms, offer to add genuinely new domain ones, don't coin synonyms`,
     license: 'MIT',
     compatibility: 'Requires openspec CLI.',
     metadata: { author: 'openspec', version: '1.0' },
@@ -495,17 +492,10 @@ These change the requirements and the capability map — not the architecture. (
 
 You have full context of the OpenSpec system. Use it naturally, don't force it.
 
-### Check for context
+### Prime — orient (lightly) before you dig in
+${PRIME_RITUAL}
 
-At the start, quickly check what exists:
-\`\`\`bash
-openspec list --json
-\`\`\`
-
-This tells you:
-- If there are active changes
-- Their names, schemas, and status
-- What the user might be working on
+For explore specifically: you're grounding the **WHAT**, so the routes that matter most are project context, the accepted **ADRs** (the constraints your idea has to live within), the **glossary** (the words this domain already uses), and the existing behavior in code. Reading ADRs and code here is to sharpen the requirement against reality — it is *not* license to start designing. Stay in the WHAT lane.
 
 If the user mentioned a specific change name, read its artifacts for context.
 
@@ -557,6 +547,7 @@ When the WHAT crystallizes, you hold the raw material for a proposal and specs. 
   - **Capabilities** — new vs modified (the WHAT decisions)
   - **Open Questions** — what's still undecided
   - **Parked Design Seeds** — the HOW ideas surfaced but deferred, held for the HOW phase
+- **Offer to seed the glossary.** If the session named or sharpened a domain term others will reuse, offer to add it to \`openspec/glossary.md\` (one line, append don't clobber). The glossary is the canonical vocabulary — explore is where it gets seeded. Offer, don't auto-write.
 - **Hand off to propose.** When the user is ready, \`/opsx:propose\` reads that note as its input and transcribes it into \`proposal.md\` + \`specs/\` — it doesn't re-think the WHAT, you already did. The parked design seeds travel with the note for the HOW phase to pick up before \`design.md\`.
 
 ---
@@ -595,6 +586,8 @@ When things crystallize, you might offer a summary (problem / scope & non-goals 
 - **Don't auto-capture** - Offer to save insights, don't just do it
 - **Do visualize** - A good diagram is worth many paragraphs
 - **Do explore the codebase** - Ground the WHAT in reality
-- **Do question assumptions** - Including the user's and your own`
+- **Do question assumptions** - Including the user's and your own
+- **Read ADRs as constraints, not a design cue** - accepted ADRs bound the WHAT; respect them, don't start designing against them
+- **Seed the glossary, don't fork it** - use \`openspec/glossary.md\`'s terms, offer to add genuinely new domain ones, don't coin synonyms`
   };
 }

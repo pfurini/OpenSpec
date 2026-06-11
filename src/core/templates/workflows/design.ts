@@ -5,6 +5,7 @@
  * templates file into workflow-focused modules.
  */
 import type { SkillTemplate, CommandTemplate } from '../types.js';
+import { PRIME_RITUAL } from './shared-prime.js';
 
 const DESIGN_BODY = `Enter design mode. Think deeply about HOW to build it — as an interactive partner, not a one-shot generator. This is the HOW counterpart to explore.
 
@@ -85,11 +86,10 @@ A unit you can't describe by purpose + interface + dependencies isn't bounded ye
 
 ## The Flow
 
-### 0 · Prime (read)
-- \`openspec status --change "<name>" --json\` → resolve \`changeRoot\`, \`artifactPaths\`, \`actionContext\`.
-- Read **proposal + specs** — the WHAT you're designing against.
-- Read the exploration note's **Parked Design Seeds** (incl. any \`candidate ADR\` tags) if present.
-- Read existing **ADRs** (\`openspec/adr/\`, or a project's \`docs/adr/\`) and the **glossary** → the constraints and canonical terms in play.
+### 0 · Prime — orient before you design
+${PRIME_RITUAL}
+
+For design specifically: the **proposal + specs** are the WHAT you build against — read them in full, not just to orient. The exploration note's **Parked Design Seeds** (incl. any \`candidate ADR\` tags) are your HOW starting points. The accepted **ADRs** are hard constraints; the **glossary** fixes the vocabulary your note and ADRs must use.
 
 ### 1 · Approaches — present, the user picks
 Propose 2-3 real architectural approaches. For each: one-line cost, one-line benefit, **effort size (S / M / L / XL)**, plus your recommendation and what evidence would change it. **Present and wait for the user's pick** — this is the first and biggest fork. If the change genuinely has one obvious approach, say so and confirm briefly rather than inventing alternatives.
@@ -114,13 +114,25 @@ Capture the settled HOW in \`<changeRoot>/design-notes.md\` — exactly what \`/
 
 Scale each section to its weight; skip what doesn't apply. Don't pad.
 
+**Glossary:** if the design introduces a genuinely new shared term — a concept others will reference — offer to append it to \`openspec/glossary.md\` (one line, append don't clobber). Reuse the glossary's existing terms; don't log throwaway implementation names.
+
 ### 6 · Record ADRs
-Record an ADR **only if all three hold**: hard to reverse · surprising without context · the result of a real trade-off. Write \`openspec/adr/ADR-NNNN-slug.md\` at \`status: proposed\`. **Dedup first** — read existing ADRs; if a decision revises one, supersede it (new ADR + \`superseded-by\`), never silently duplicate. Respect an existing \`docs/adr/\` if the project uses one.
+Record an ADR **only if all three hold**: hard to reverse · surprising without context · the result of a real trade-off. Write \`openspec/adr/ADR-NNNN-slug.md\` (respect an existing \`docs/adr/\` if the project uses one) with this front-matter, then Context / Decision / Consequences / Alternatives:
+\`\`\`yaml
+---
+id: ADR-NNNN
+title: <the decision, one line>
+status: proposed
+date: <today — run \`date +%Y-%m-%d\`>
+change: <this change name>     # the link /opsx:archive uses to promote it
+---
+\`\`\`
+**Dedup first** — read existing ADRs; if a decision revises one, supersede it (new ADR + \`superseded-by\`), never silently duplicate.
 
 - ✅ *"Profile data stays owned by the user-management capability; the self-service page references it, doesn't fork it."* — hard to reverse, surprising, a real trade-off. → **ADR.**
 - ❌ *"Reuse the existing Button component for Save."* — trivially reversible, unsurprising, no real alternative. → just do it.
 
-(Status stays \`proposed\`; promotion to \`accepted\` is manual for now.)
+(Status stays \`proposed\` here. When the change is archived, \`/opsx:archive\` promotes the ADRs tagged \`change: <name>\` to \`accepted\`. ADRs live *outside* the change directory, so they survive archival as the project's durable architectural memory.)
 
 ### 7 · Visual question? Suggest the visual flow
 Suggest a separate visual-design flow **only if seeing beats reading AND it's UI (not architecture)**. Don't attempt UI mockups inline.
@@ -144,7 +156,8 @@ Scan the design note: placeholders, internal consistency, **every component has 
 - **Stay in the HOW lane** - The WHAT is fixed. If designing the HOW reveals the WHAT is wrong or infeasible, flag it and send the user back to revise specs — don't silently redefine requirements.
 - **Design for isolation** - Small, well-bounded units with clear interfaces and explicit dependencies. Follow existing patterns; YAGNI.
 - **Don't write design.md, code, or tasks** - your output is the design note + ADRs; \`/opsx:continue\` writes \`design.md\` from the note.
-- **Don't auto-promote ADRs** - they ship at \`status: proposed\`.
+- **ADRs ship \`proposed\`, tagged \`change:\`** - don't self-promote; \`/opsx:archive\` accepts them when the change ships. They live in \`openspec/adr/\`, outside the change directory — durable architectural memory.
+- **Keep the glossary canonical** - reuse \`openspec/glossary.md\` terms; offer to append genuinely new shared ones; never coin a synonym for a concept it already names.
 - **Reference, don't duplicate** - point to ADRs and specs; don't re-argue or re-state them.
 - **Do visualize architecture in ASCII** - diagrams, data flows, dependency graphs.`;
 

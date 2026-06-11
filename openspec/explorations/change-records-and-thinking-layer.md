@@ -54,7 +54,37 @@ schema). If we ever move note-incorporation into `spec-driven` itself, collapse
 Step 0 to its flow-control-only role (name derivation, skip-interview) to avoid two
 sources of truth.
 
+## 4. Durable ADR/glossary layer — LANDED (prompt-level)
+
+Implemented as prompts only (no new CLI), consistent with §2's "don't formalize the
+shadow layer until drift is observed" and the repo's all-markdown convention.
+
+What now exists:
+- **ADR lifecycle**: `/opsx:design` writes ADRs at `status: proposed` with front-matter
+  carrying `change: <name>`. `/opsx:archive` promotes the ADRs tagged with that change to
+  `status: accepted` (+ `accepted:` date) on archival. ADRs live in `openspec/adr/`
+  (outside the change dir) so they survive archival as durable architectural memory.
+- **explore-reads-ADRs**: explore primes from accepted ADRs as *standing constraints*
+  (WHAT-lane guardrail: read as context, not a license to design).
+- **Shared prime ritual**: `src/core/templates/workflows/shared-prime.ts` exports
+  `PRIME_RITUAL`, a piv-prime-style ritual (refresh live state → route to canonical
+  never-stale sources incl. ADRs + glossary → orient) embedded in both explore and design.
+  It holds no copied facts by design.
+- **Glossary**: canonical `openspec/glossary.md`. explore *seeds* domain vocabulary;
+  design *extends* with new shared terms; both read it as canonical (no synonyms). Offer-
+  to-write, append-don't-clobber.
+
+Still deferred (revisit only if drift/scale bites):
+- **`openspec adr` CLI** (`list --json`, `promote --change`): chosen prompt-only for now.
+  Promotion is an agent Edit; ADR reads are markdown. Build the CLI when the markdown-only
+  approach proves fragile or unqueryable at scale (this is the §2 graduation question for ADRs).
+- **init scaffolding** of `openspec/adr/` and `openspec/glossary.md`: created lazily on
+  first write today (same as `explorations/`); formalize in `init` if convention solidifies.
+
 ## Related
 - `openspec/explorations/explore-workflow-ux.md`
 - `schemas/deep-planning/schema.yaml`
 - `src/core/templates/workflows/design.ts`
+- `src/core/templates/workflows/explore.ts`
+- `src/core/templates/workflows/archive-change.ts`
+- `src/core/templates/workflows/shared-prime.ts`

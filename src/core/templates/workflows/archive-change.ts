@@ -69,7 +69,16 @@ export function getArchiveChangeSkillTemplate(): SkillTemplate {
 
    If user chooses sync, use Task tool (subagent_type: "general-purpose", prompt: "Use Skill tool to invoke openspec-sync-specs for change '<name>'. Delta spec analysis: <include the analyzed delta spec summary>"). Proceed to archive regardless of choice.
 
-5. **Perform the archive**
+5. **Promote this change's ADRs (proposed → accepted)**
+
+   This change is shipping, so the architectural decisions it recorded become real. Promote its ADRs **before** the move (the change name is still unambiguous):
+   - Search \`openspec/adr/\` (and \`docs/adr/\` if the project uses it) for ADR files whose front-matter has \`change: <name>\` and \`status: proposed\`.
+   - For each match, set \`status: accepted\` and add \`accepted: <YYYY-MM-DD>\` (run \`date +%Y-%m-%d\`). Leave \`superseded\` ADRs untouched.
+   - If none match, proceed silently — not every change records an ADR.
+
+   ADRs live *outside* the change directory, so the archive move does not touch them; only their status flips. They persist as the project's durable architectural memory.
+
+6. **Perform the archive**
 
    Create an \`archive\` directory under \`planningHome.changesDir\` if it doesn't exist:
    \`\`\`bash
@@ -86,13 +95,14 @@ export function getArchiveChangeSkillTemplate(): SkillTemplate {
    mv "<changeRoot>" "<planningHome.changesDir>/archive/YYYY-MM-DD-<name>"
    \`\`\`
 
-6. **Display summary**
+7. **Display summary**
 
    Show archive completion summary including:
    - Change name
    - Schema that was used
    - Archive location
    - Whether specs were synced (if applicable)
+   - ADRs promoted to \`accepted\` (count), if any
    - Note about any warnings (incomplete artifacts/tasks)
 
 **Output On Success**
@@ -113,6 +123,7 @@ All artifacts complete. All tasks complete.
 - Use artifact graph (openspec status --json) for completion checking
 - Don't block archive on warnings - just inform and confirm
 - Preserve .openspec.yaml when moving to archive (it moves with the directory)
+- Promote this change's \`proposed\` ADRs (those tagged \`change: <name>\`) to \`accepted\` before the move; ADRs live outside the change dir and persist as durable architectural memory
 - Show clear summary of what happened
 - If sync is requested, use openspec-sync-specs approach (agent-driven)
 - If delta specs exist, always run the sync assessment and show the combined summary before prompting`,
@@ -187,7 +198,16 @@ export function getOpsxArchiveCommandTemplate(): CommandTemplate {
 
    If user chooses sync, use Task tool (subagent_type: "general-purpose", prompt: "Use Skill tool to invoke openspec-sync-specs for change '<name>'. Delta spec analysis: <include the analyzed delta spec summary>"). Proceed to archive regardless of choice.
 
-5. **Perform the archive**
+5. **Promote this change's ADRs (proposed → accepted)**
+
+   This change is shipping, so the architectural decisions it recorded become real. Promote its ADRs **before** the move (the change name is still unambiguous):
+   - Search \`openspec/adr/\` (and \`docs/adr/\` if the project uses it) for ADR files whose front-matter has \`change: <name>\` and \`status: proposed\`.
+   - For each match, set \`status: accepted\` and add \`accepted: <YYYY-MM-DD>\` (run \`date +%Y-%m-%d\`). Leave \`superseded\` ADRs untouched.
+   - If none match, proceed silently — not every change records an ADR.
+
+   ADRs live *outside* the change directory, so the archive move does not touch them; only their status flips. They persist as the project's durable architectural memory.
+
+6. **Perform the archive**
 
    Create an \`archive\` directory under \`planningHome.changesDir\` if it doesn't exist:
    \`\`\`bash
@@ -204,13 +224,14 @@ export function getOpsxArchiveCommandTemplate(): CommandTemplate {
    mv "<changeRoot>" "<planningHome.changesDir>/archive/YYYY-MM-DD-<name>"
    \`\`\`
 
-6. **Display summary**
+7. **Display summary**
 
    Show archive completion summary including:
    - Change name
    - Schema that was used
    - Archive location
    - Spec sync status (synced / sync skipped / no delta specs)
+   - ADRs promoted to \`accepted\` (count), if any
    - Note about any warnings (incomplete artifacts/tasks)
 
 **Output On Success**
@@ -278,6 +299,7 @@ Target archive directory already exists.
 - Use artifact graph (openspec status --json) for completion checking
 - Don't block archive on warnings - just inform and confirm
 - Preserve .openspec.yaml when moving to archive (it moves with the directory)
+- Promote this change's \`proposed\` ADRs (those tagged \`change: <name>\`) to \`accepted\` before the move; ADRs live outside the change dir and persist as durable architectural memory
 - Show clear summary of what happened
 - If sync is requested, use the Skill tool to invoke \`openspec-sync-specs\` (agent-driven)
 - If delta specs exist, always run the sync assessment and show the combined summary before prompting`
