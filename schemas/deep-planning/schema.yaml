@@ -98,6 +98,7 @@ artifacts:
       motivation and specs for requirements. Do not duplicate ADR rationale - link to it.
     requires:
       - proposal
+      - specs
 
   - id: tasks
     generates: tasks.md
