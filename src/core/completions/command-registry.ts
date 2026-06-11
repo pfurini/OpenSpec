@@ -51,6 +51,10 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
         description: 'List changes explicitly (default)',
       },
       {
+        name: 'explorations',
+        description: 'List explorations (pending = not yet linked to a change)',
+      },
+      {
         name: 'sort',
         description: 'Sort order: "recent" (default) or "name"',
         takesValue: true,

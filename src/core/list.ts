@@ -75,7 +75,7 @@ function formatRelativeTime(date: Date): string {
 }
 
 export class ListCommand {
-  async execute(targetPath: string = '.', mode: 'changes' | 'specs' = 'changes', options: ListOptions = {}): Promise<void> {
+  async execute(targetPath: string = '.', mode: 'changes' | 'specs' | 'explorations' = 'changes', options: ListOptions = {}): Promise<void> {
     const { sort = 'recent', json = false } = options;
 
     if (mode === 'changes') {
@@ -147,6 +147,70 @@ export class ListCommand {
         const status = formatTaskStatus({ total: change.totalTasks, completed: change.completedTasks });
         const timeAgo = formatRelativeTime(change.lastModified);
         console.log(`${padding}${paddedName}     ${status.padEnd(12)}  ${timeAgo}`);
+      }
+      return;
+    }
+
+    if (mode === 'explorations') {
+      const explorationsDir = path.join(targetPath, 'openspec', 'explorations');
+      let files: string[];
+      try {
+        const entries = await fs.readdir(explorationsDir, { withFileTypes: true });
+        files = entries.filter(e => e.isFile() && e.name.endsWith('.md')).map(e => e.name);
+      } catch {
+        if (json) console.log(JSON.stringify({ explorations: [] }, null, 2));
+        else console.log('No explorations found.');
+        return;
+      }
+
+      // Derive "pending" from the authoritative changes dir: an exploration is
+      // pending iff no active change shares its slug (name-match). No stored status,
+      // so nothing can drift out of sync with reality.
+      let changeNames = new Set<string>();
+      try {
+        const ce = await fs.readdir(path.join(targetPath, 'openspec', 'changes'), { withFileTypes: true });
+        changeNames = new Set(ce.filter(e => e.isDirectory() && e.name !== 'archive').map(e => e.name));
+      } catch {
+        // no changes dir yet — every exploration is pending
+      }
+
+      type ExplorationInfo = { name: string; pending: boolean; change: string | null; lastModified: Date };
+      const explorations: ExplorationInfo[] = [];
+      for (const file of files) {
+        const slug = file.replace(/\.md$/, '');
+        const stat = await fs.stat(path.join(explorationsDir, file));
+        const linked = changeNames.has(slug);
+        explorations.push({ name: slug, pending: !linked, change: linked ? slug : null, lastModified: stat.mtime });
+      }
+
+      if (sort === 'recent') {
+        explorations.sort((a, b) => b.lastModified.getTime() - a.lastModified.getTime());
+      } else {
+        explorations.sort((a, b) => a.name.localeCompare(b.name));
+      }
+
+      if (json) {
+        console.log(JSON.stringify({
+          explorations: explorations.map(e => ({
+            name: e.name,
+            pending: e.pending,
+            change: e.change,
+            lastModified: e.lastModified.toISOString(),
+          })),
+        }, null, 2));
+        return;
+      }
+
+      if (explorations.length === 0) {
+        console.log('No explorations found.');
+        return;
+      }
+      console.log('Explorations:');
+      const nameWidth = Math.max(...explorations.map(e => e.name.length));
+      for (const e of explorations) {
+        const padded = e.name.padEnd(nameWidth);
+        const state = e.pending ? 'pending' : `linked → ${e.change}`;
+        console.log(`  ${padded}     ${state.padEnd(20)}  ${formatRelativeTime(e.lastModified)}`);
       }
       return;
     }

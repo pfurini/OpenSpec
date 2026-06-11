@@ -22,6 +22,8 @@ Design runs on an **existing change** that already has proposal + specs (the WHA
 
 **Prereq:** proposal + specs must exist. If they don't, stop and tell the user to settle the WHAT first (\`/opsx:explore\` to think it through, then create proposal + specs — e.g. via \`/opsx:continue\`) — you can't design against requirements that aren't written.
 
+**If no change is named:** run \`openspec list --json\` and find the changes whose \`design\` artifact isn't \`done\` yet (confirm via \`openspec status --change "<name>" --json\`) — those are the ones ready for the HOW. If a change already has a \`design-notes.md\`, design is mid-flight there — offer to resume it. Let the user pick which change to design.
+
 ---
 
 ## Design for Decomposition — the spine

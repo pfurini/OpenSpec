@@ -162,4 +162,31 @@ Regular text that should be ignored
       expect(logOutput.some(line => line.includes('no-tasks') && line.includes('No tasks'))).toBe(true);
     });
   });
+
+  describe('explorations mode', () => {
+    it('derives pending from the changes dir (name-match), not stored status', async () => {
+      const explorationsDir = path.join(tempDir, 'openspec', 'explorations');
+      const changesDir = path.join(tempDir, 'openspec', 'changes');
+      await fs.mkdir(explorationsDir, { recursive: true });
+      await fs.mkdir(path.join(changesDir, 'linked-topic'), { recursive: true });
+      await fs.writeFile(path.join(explorationsDir, 'linked-topic.md'), 'note');
+      await fs.writeFile(path.join(explorationsDir, 'pending-topic.md'), 'note');
+
+      const listCommand = new ListCommand();
+      await listCommand.execute(tempDir, 'explorations', { json: true });
+
+      const out = JSON.parse(logOutput.join('\n'));
+      const byName = Object.fromEntries(out.explorations.map((e: any) => [e.name, e]));
+      expect(byName['pending-topic'].pending).toBe(true);
+      expect(byName['pending-topic'].change).toBe(null);
+      expect(byName['linked-topic'].pending).toBe(false);
+      expect(byName['linked-topic'].change).toBe('linked-topic');
+    });
+
+    it('returns an empty list when there is no explorations directory', async () => {
+      const listCommand = new ListCommand();
+      await listCommand.execute(tempDir, 'explorations', { json: true });
+      expect(JSON.parse(logOutput.join('\n'))).toEqual({ explorations: [] });
+    });
+  });
 });

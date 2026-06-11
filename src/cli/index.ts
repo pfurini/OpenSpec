@@ -206,15 +206,20 @@ program
 
 program
   .command('list')
-  .description('List items (changes by default). Use --specs to list specs.')
+  .description('List items (changes by default). Use --specs for specs, --explorations for explorations.')
   .option('--specs', 'List specs instead of changes')
   .option('--changes', 'List changes explicitly (default)')
+  .option('--explorations', 'List explorations (pending = not yet linked to a change)')
   .option('--sort <order>', 'Sort order: "recent" (default) or "name"', 'recent')
   .option('--json', 'Output as JSON (for programmatic use)')
-  .action(async (options?: { specs?: boolean; changes?: boolean; sort?: string; json?: boolean }) => {
+  .action(async (options?: { specs?: boolean; changes?: boolean; explorations?: boolean; sort?: string; json?: boolean }) => {
     try {
       const listCommand = new ListCommand();
-      const mode: 'changes' | 'specs' = options?.specs ? 'specs' : 'changes';
+      const mode: 'changes' | 'specs' | 'explorations' = options?.specs
+        ? 'specs'
+        : options?.explorations
+          ? 'explorations'
+          : 'changes';
       const sort = options?.sort === 'name' ? 'name' : 'recent';
       await listCommand.execute('.', mode, { sort, json: options?.json });
     } catch (error) {

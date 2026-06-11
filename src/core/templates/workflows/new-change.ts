@@ -6,6 +6,24 @@
  */
 import type { SkillTemplate, CommandTemplate } from '../types.js';
 
+const STEP_1_INTENT = `1. **Understand what to build — and check for a pending exploration to start from**
+
+   Before deriving a name, see what explorations are waiting to become changes:
+   \`\`\`bash
+   openspec list --explorations --json
+   \`\`\`
+   A \`"pending": true\` exploration is an exploration note (from \`/opsx:explore\`) that hasn't been turned into a change yet. If one matches what the user wants — or if they gave no specific input — offer it:
+   > "You have a pending exploration **<name>**. Start a change from it? I'll reuse its name so its notes flow into the proposal and specs."
+   - If they choose it → use the exploration's **slug as the change name**. The schema's proposal/specs steps then incorporate \`openspec/explorations/<slug>.md\` automatically (matched by name — no extra wiring).
+   - Otherwise, continue with their description.
+
+   If no exploration is chosen and no clear input was given, ask — use the **AskUserQuestion tool** (open-ended, no preset options):
+   > "What change do you want to work on? Describe what you want to build or fix."
+
+   From the chosen exploration or their description, derive a kebab-case name (e.g., "add user authentication" → \`add-user-auth\`).
+
+   **IMPORTANT**: Do NOT proceed without understanding what the user wants to build.`;
+
 const EXISTING_CHANGE_DETECTOR = `2. **Check whether this should extend an existing change (not a new one)**
 
    Before scaffolding anything, see what's already in flight:
@@ -39,14 +57,7 @@ export function getNewChangeSkillTemplate(): SkillTemplate {
 
 **Steps**
 
-1. **If no clear input provided, ask what they want to build**
-
-   Use the **AskUserQuestion tool** (open-ended, no preset options) to ask:
-   > "What change do you want to work on? Describe what you want to build or fix."
-
-   From their description, derive a kebab-case name (e.g., "add user authentication" → \`add-user-auth\`).
-
-   **IMPORTANT**: Do NOT proceed without understanding what the user wants to build.
+${STEP_1_INTENT}
 
 ${EXISTING_CHANGE_DETECTOR}
 
@@ -117,14 +128,7 @@ export function getOpsxNewCommandTemplate(): CommandTemplate {
 
 **Steps**
 
-1. **If no input provided, ask what they want to build**
-
-   Use the **AskUserQuestion tool** (open-ended, no preset options) to ask:
-   > "What change do you want to work on? Describe what you want to build or fix."
-
-   From their description, derive a kebab-case name (e.g., "add user authentication" → \`add-user-auth\`).
-
-   **IMPORTANT**: Do NOT proceed without understanding what the user wants to build.
+${STEP_1_INTENT}
 
 ${EXISTING_CHANGE_DETECTOR}
 
