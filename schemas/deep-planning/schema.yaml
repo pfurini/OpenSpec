@@ -25,6 +25,7 @@ artifacts:
       crystallized. Transcribe it, don't re-derive it:
       - Problem / Why -> the Why section
       - Scope & Non-Goals -> What Changes
+      - Constraints -> the Constraints section
       - Capabilities (new vs modified) -> the Capabilities section
       Carry any "Parked Design Seeds" forward untouched - they are for the design phase.
 
@@ -34,6 +35,7 @@ artifacts:
       - **Capabilities**: Identify which specs will be created or modified:
         - **New Capabilities**: List capabilities being introduced. Each becomes a new `specs/<name>/spec.md`. Use kebab-case names.
         - **Modified Capabilities**: List existing capabilities whose REQUIREMENTS are changing. Check `openspec/specs/` for existing spec names. Leave empty if no requirement changes.
+      - **Constraints**: The given limits the solution must respect, grouped (Compatibility / Performance / Security & Compliance / Operational) and each falsifiable — a number or named rule, not an adjective ("p95 < 200ms at 1k RPS", not "fast"). Write `None` for a group that genuinely has none; send unknowns to the design's open questions rather than guessing. These are *given* constraints (handed to you by the world) — distinct from ADRs, which record constraints the team *decided*.
       - **Impact**: Affected code, APIs, dependencies, or systems.
 
       Keep it concise (1-2 pages). Focus on the "why" not the "how" -
@@ -64,6 +66,7 @@ artifacts:
       - Each scenario: `#### Scenario: <name>` with WHEN/THEN format.
       - **CRITICAL**: Scenarios MUST use exactly 4 hashtags (`####`).
       - Every requirement MUST have at least one scenario.
+      - **Falsifiable only**: every requirement and scenario must be checkable. Ban vibe words - "fast", "robust", "scalable", "performant", "user-friendly", "as needed" - and replace each with a measurement or named rule ("p95 < 200ms at 1k RPS", not "fast"). If a criterion can't be made falsifiable, the requirement is too vague - sharpen it before writing the scenario.
 
       Specs should be testable - each scenario is a potential test case.
     requires:

@@ -117,6 +117,8 @@ Depending on what the user brings, you might:
 
 ## Framing the WHAT
 
+**Force it into one sentence first:** *this change does X so that Y* — X concrete (a behavior, a capability), Y the outcome. If you can't write it in one try, the WHAT is still too vague: ask ONE clarifying question and wait — don't fill X or Y with an assumption.
+
 When the shape is ambiguous, lay out the framings — different ways to scope and bound the thing, not different ways to build it:
 
 \`\`\`
@@ -131,6 +133,18 @@ When the shape is ambiguous, lay out the framings — different ways to scope an
 \`\`\`
 
 These change the requirements and the capability map — not the architecture. ("How hard to build" is a HOW estimate — park it.)
+
+---
+
+## Pin the given constraints
+
+Part of the WHAT is the box the solution has to fit in — the *given* limits, not chosen ones. As they surface, pin each **falsifiably** (a number or a named rule, never an adjective):
+- **Compatibility** — APIs / schemas / contracts that must not break.
+- **Performance** — latency, throughput, payload, size budgets ("p95 < 200ms at 1k RPS", not "fast").
+- **Security / compliance** — auth, data residency, what must not be logged, audit rules.
+- **Operational** — supported runtimes, environments, infra it must run on.
+
+These are *requirements* (what must hold), not architecture — so they're yours to capture. They're distinct from ADRs, which record constraints the team *decided*; these are the ones the world *hands* you. Don't invent one to look thorough — if a limit is unknown, it's an open question, not a guess.
 
 ---
 
@@ -187,9 +201,10 @@ When the WHAT crystallizes, you hold the raw material for a proposal and specs. 
 
 - **Offer to save a structured exploration note** to \`openspec/explorations/<name>.md\`. The user decides whether to save — offer, don't auto-write. Structure it as:
   - **Problem / Why** — the need behind the request
-  - **Scope & Non-Goals** — what's in, what's explicitly out
+  - **Scope & Non-Goals** — what's in, what's explicitly out. The non-goals are the harder, more valuable list: write the things a reasonable reader would assume are in scope but aren't.
+  - **Constraints** — the given limits (compatibility / performance / security / operational), each falsifiable (a number or named rule, not an adjective)
   - **Capabilities** — new vs modified (the WHAT decisions)
-  - **Open Questions** — what's still undecided
+  - **Open Questions** — what's still undecided; for each, note who'd likely know and the impact of getting it wrong. (None at all? You haven't looked hard enough — write your least-sure assumption as a question.)
   - **Parked Design Seeds** — the HOW ideas surfaced but deferred, held for the HOW phase
 - **Offer to seed the glossary.** If the session named or sharpened a domain term others will reuse, offer to add it to the project glossary (a root \`GLOSSARY.md\`, created at the repo root if none exists). One line, append don't clobber. The glossary is the canonical vocabulary — explore is where it gets seeded. Offer, don't auto-write.
 - **Hand off to propose.** When the user is ready, \`/opsx:propose\` reads that note as its input and transcribes it into \`proposal.md\` + \`specs/\` — it doesn't re-think the WHAT, you already did. The parked design seeds travel with the note for the HOW phase to pick up before \`design.md\`.
@@ -317,6 +332,8 @@ When the WHAT crystallizes, you might summarize:
 **The problem**: [crystallized understanding]
 
 **Scope / non-goals**: [what's in, what's out]
+
+**Constraints**: [given limits — compat / perf / security / operational, falsifiable]
 
 **Capabilities**: [new vs modified]
 
@@ -471,6 +488,8 @@ Depending on what the user brings, you might:
 
 ## Framing the WHAT
 
+**Force it into one sentence first:** *this change does X so that Y* — X concrete (a behavior, a capability), Y the outcome. If you can't write it in one try, the WHAT is still too vague: ask ONE clarifying question and wait — don't fill X or Y with an assumption.
+
 When the shape is ambiguous, lay out the framings — different ways to scope and bound the thing, not different ways to build it:
 
 \`\`\`
@@ -485,6 +504,18 @@ When the shape is ambiguous, lay out the framings — different ways to scope an
 \`\`\`
 
 These change the requirements and the capability map — not the architecture. ("How hard to build" is a HOW estimate — park it.)
+
+---
+
+## Pin the given constraints
+
+Part of the WHAT is the box the solution has to fit in — the *given* limits, not chosen ones. As they surface, pin each **falsifiably** (a number or a named rule, never an adjective):
+- **Compatibility** — APIs / schemas / contracts that must not break.
+- **Performance** — latency, throughput, payload, size budgets ("p95 < 200ms at 1k RPS", not "fast").
+- **Security / compliance** — auth, data residency, what must not be logged, audit rules.
+- **Operational** — supported runtimes, environments, infra it must run on.
+
+These are *requirements* (what must hold), not architecture — so they're yours to capture. They're distinct from ADRs, which record constraints the team *decided*; these are the ones the world *hands* you. Don't invent one to look thorough — if a limit is unknown, it's an open question, not a guess.
 
 ---
 
@@ -543,9 +574,10 @@ When the WHAT crystallizes, you hold the raw material for a proposal and specs. 
 
 - **Offer to save a structured exploration note** to \`openspec/explorations/<name>.md\`. The user decides whether to save — offer, don't auto-write. Structure it as:
   - **Problem / Why** — the need behind the request
-  - **Scope & Non-Goals** — what's in, what's explicitly out
+  - **Scope & Non-Goals** — what's in, what's explicitly out. The non-goals are the harder, more valuable list: write the things a reasonable reader would assume are in scope but aren't.
+  - **Constraints** — the given limits (compatibility / performance / security / operational), each falsifiable (a number or named rule, not an adjective)
   - **Capabilities** — new vs modified (the WHAT decisions)
-  - **Open Questions** — what's still undecided
+  - **Open Questions** — what's still undecided; for each, note who'd likely know and the impact of getting it wrong. (None at all? You haven't looked hard enough — write your least-sure assumption as a question.)
   - **Parked Design Seeds** — the HOW ideas surfaced but deferred, held for the HOW phase
 - **Offer to seed the glossary.** If the session named or sharpened a domain term others will reuse, offer to add it to the project glossary (a root \`GLOSSARY.md\`, created at the repo root if none exists). One line, append don't clobber. The glossary is the canonical vocabulary — explore is where it gets seeded. Offer, don't auto-write.
 - **Hand off to propose.** When the user is ready, \`/opsx:propose\` reads that note as its input and transcribes it into \`proposal.md\` + \`specs/\` — it doesn't re-think the WHAT, you already did. The parked design seeds travel with the note for the HOW phase to pick up before \`design.md\`.
