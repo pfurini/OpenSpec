@@ -113,6 +113,12 @@ artifacts:
       Create the task list that breaks down the implementation work, derived from the
       design's **Components & Dependencies** section.
 
+      MECHANICAL ONLY - tasks makes NO design decisions. The design (design.md +
+      design-notes.md) has already settled everything. If you find an unresolved
+      decision - an unsettled choice, a deferred "?", or an "Open Question" that is
+      really a dodged decision - STOP: that is a design gap. Do not decide it here;
+      send the user back to /opsx:design to settle it, then resume.
+
       **IMPORTANT: Follow the template format exactly.** Tasks must be checkboxes
       `- [ ] X.Y Task description` grouped under ## numbered headings, ordered by dependency.
 

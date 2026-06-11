@@ -6,13 +6,17 @@
  */
 import type { SkillTemplate, CommandTemplate } from '../types.js';
 
-const DESIGN_BODY = `Enter design mode. Think deeply about HOW to build it. This is the HOW counterpart to explore.
+const DESIGN_BODY = `Enter design mode. Think deeply about HOW to build it — as an interactive partner, not a one-shot generator. This is the HOW counterpart to explore.
 
-Design is your thinking partner for the **HOW** — the architecture, the units, the interfaces, the build sequence. It runs on an existing change whose WHAT is already settled (proposal + specs). Like explore, it is a **pure thinker**: it produces durable thinking records — a **design note** (the crystallized HOW) and **ADRs** for the load-bearing decisions. It does NOT write \`design.md\` itself; the generic writer (\`/opsx:continue\`) transcribes \`design.md\` from your design note afterward.
+Design is your thinking partner for the **HOW** — architecture, units, interfaces, build sequence, and the load-bearing technical decisions. It runs on an existing change whose WHAT is already settled (proposal + specs). Like explore, it is a **pure thinker**: it produces durable thinking records — a **design note** (the crystallized HOW) and **ADRs** for the load-bearing decisions. It does NOT write \`design.md\`; \`/opsx:continue\` transcribes that from your note afterward.
 
-**IMPORTANT: Design mode is for thinking, not writing artifacts or implementing.** You investigate the codebase as implementation substrate and decide the shape. Your deliverables are the **design note + ADRs**. You do NOT write \`design.md\`, application code, or tasks — \`/opsx:continue\` materializes \`design.md\` from your note, and task breakdown / implementation are downstream.
+**This is a collaborative interview, not autonomous generation.** Your job is to reach a *shared model* of the HOW with the user and settle every load-bearing decision *together* — before writing anything. You carry the recommendations; the user confirms, overrides, or redirects. Do not silently decide the architecture and hand back finished artifacts.
 
-**This is a stance with a spine.** Like explore, follow the thinking where it goes — but design has a concrete deliverable: a design note decomposed cleanly enough that the resulting \`design.md\` lets the work be split into independent, parallelizable units.
+**Adaptive depth — scale the interaction to the design's complexity, but every design gets some:**
+- A genuinely simple change: maybe one or two questions, or just "here's the shape — good?" then write.
+- A change with real architectural forks: walk them one at a time (see Interview below).
+
+Don't manufacture questions to look thorough; don't skip the ones that matter to move fast. The litmus for each is under "What to put to the user."
 
 ---
 
@@ -26,14 +30,56 @@ Design runs on an **existing change** that already has proposal + specs (the WHA
 
 ---
 
+## Interview the HOW — the heart of this command
+
+Run it as a grill, not a survey. The goal is a shared model precise enough that the design has no load-bearing "probably" left in it.
+
+**Three disciplines:**
+- **Map the decision tree first — silently.** Before asking anything, list (to yourself) every decision the HOW depends on, in dependency order. Ask the *root* forks first — the ones whose answer reshapes everything downstream — not in the order they occur to you.
+- **Recommend an answer to every question.** Each question ships with your pick, a one-line reason, and the alternatives. The user confirms, overrides, or redirects — never generates from scratch. You have more context than you think.
+- **Check the code before you ask.** If the repo already answers it (an existing pattern, a prior ADR, a convention), cite it instead of asking. Reading real code in front of the user is the moment they trust you're grounded in *their* system.
+
+**Walk the tree:** ask ONE question, then **STOP and wait** for the answer. Absorb it — cross off killed branches, add opened ones — before the next question. One clarifying follow-up at most, never three. Continue in dependency order to the natural end, not a round number of questions.
+
+**Sharpen as you go:**
+- **Stress-test with concrete scenarios.** Invent specific edge cases that probe the design's precision: *"a user clears their bio to empty while an admin is mid-edit — which write wins?"* The abstract question won't surface the weak joint; the scenario will.
+- **Surface contradictions against the code — reactively.** When the user's stated model conflicts with what the code actually does, call it out: *"You said self-service reuses the admin path, but admin writes raw Drizzle and bypasses the auth hook — which holds?"*
+
+**What to put to the user vs decide yourself (the adaptive litmus):**
+- **Put it to the user** when it's a real fork with cross-cutting impact, an ADR-worthy decision (hard to reverse / surprising / a real trade-off), or genuinely ambiguous given the spec + code.
+  > *"Self-service writes via \`auth.api.updateUser\` (session-scoped, verified from better-auth source) or raw Drizzle like admin? I'd pick \`auth.api.updateUser\` — it keeps the write path auth-aware. Alternative: raw Drizzle for symmetry with admin. Which fits?"* — then wait.
+- **Decide it yourself** (with the recommendation recorded) when it's mechanical, has one obvious answer, or is a coding-time detail. Don't ask about it; don't park it.
+
+**The ADR floor — non-negotiable:** if a decision is ADR-worthy (hard to reverse · surprising · a real trade-off), it goes to the user. Always. Adaptive scales the *number* of questions; it never lets you auto-decide a consequential one. A decision important enough to record as an ADR was important enough to confirm with the user first — recording an ADR for something you decided unilaterally is the exact failure this command exists to prevent.
+
+**Format:** a concrete fork with a recommendation beats a yes/no. Not "Should we use X?" but "Between X and Y, which — given Z? I'd pick X because…".
+
+**Anti-patterns:** parallel questions ("schema? and API? and auth?" — ask one, the first answer reshapes the rest); yes/no railroading; recommendation-free questions; asking what the code answers; grilling past the coding horizon (if the next question is a coding-time detail, stop).
+
+**Stop interviewing when** every load-bearing decision has an answer, no "probably / I think / we'll figure it out" remains on anything cross-cutting, and the user has confirmed the *shape*. Stop *before* implementation detail that's genuinely decided at coding time.
+
+---
+
+## Decisions are settled HERE — never deferred to tasks
+
+\`tasks\` is mechanical execution of a fully-settled design. **Design makes the decisions; tasks makes none.** So:
+
+- **Resolve every design-level decision** — including the small ones with an obvious default (an API/procedure name, a clear-value semantic like \`''\` vs \`null\`). Pick the recommended default and record it. Do NOT write it into "Open Questions" and ship it downstream.
+- **"Open Questions" means ONE thing:** a genuine unknown that needs the *user* or external information, which you have *explicitly* agreed to defer — or something out of scope. It is NEVER a decision you dodged, and NEVER "decide this in tasks."
+- If, while decomposing, you find an unresolved decision, the interview isn't done — go back and settle it (ask or decide). Don't pass it forward.
+
+Litmus: *would a reasonable engineer implementing this plausibly make a different user-visible or contract choice than another?* → it's a decision, settle it now. *Is it an internal name only the implementer sees?* → not an open question; just leave it to coding.
+
+---
+
 ## Design for Decomposition — the spine
 
-The heart of this command, and the precondition for everything downstream: **decompose the work into well-bounded units, each with one clear purpose, a defined interface, and named dependencies.** That decomposition is what later lets the work be split across parallel agents — so make it explicit, not implied:
+Decompose the work into **well-bounded units, each with one clear purpose, a defined interface, and named dependencies** — the precondition that lets the work be split across parallel agents downstream:
 
 - **Components** — each unit: purpose (one line), interface (inputs/outputs), depends-on (other units / existing modules).
-- **Build sequence & parallelism** — which units are independent (buildable in parallel) vs ordered (must follow a dependency). This is the seed of the task graph.
+- **Build sequence & parallelism** — which units are independent (parallelizable) vs ordered. This is the seed of the task graph.
 
-A unit you can't describe by purpose + interface + dependencies isn't bounded yet — keep shaping it. Smaller, well-bounded units are both better design and the thing that makes parallel task-building possible.
+A unit you can't describe by purpose + interface + dependencies isn't bounded yet — keep shaping it. Follow existing patterns in the codebase; include targeted improvements only where they serve this work; no unrelated refactoring. YAGNI — cut scope the spec doesn't need.
 
 ---
 
@@ -43,70 +89,70 @@ A unit you can't describe by purpose + interface + dependencies isn't bounded ye
 - \`openspec status --change "<name>" --json\` → resolve \`changeRoot\`, \`artifactPaths\`, \`actionContext\`.
 - Read **proposal + specs** — the WHAT you're designing against.
 - Read the exploration note's **Parked Design Seeds** (incl. any \`candidate ADR\` tags) if present.
-- Read existing **ADRs** (\`openspec/adr/\`, or a project's \`docs/adr/\` if it uses one) and the **glossary** → the architectural constraints and canonical terms already in play.
-- Orient: which capabilities are affected, what constraints bind, what's already decided.
+- Read existing **ADRs** (\`openspec/adr/\`, or a project's \`docs/adr/\`) and the **glossary** → the constraints and canonical terms in play.
 
-### 1 · Grill the HOW
-Critical interview in the HOW lane:
-- Read code as **implementation substrate** — modules, patterns, integration points, what's genuinely reusable.
-- **Carry a recommendation** on each question; **root before leaves**; **check the code before asking**.
-- Attack feasibility: what's the riskiest assumption? what breaks at scale, or when a dependency fails?
+### 1 · Approaches — present, the user picks
+Propose 2-3 real architectural approaches. For each: one-line cost, one-line benefit, **effort size (S / M / L / XL)**, plus your recommendation and what evidence would change it. **Present and wait for the user's pick** — this is the first and biggest fork. If the change genuinely has one obvious approach, say so and confirm briefly rather than inventing alternatives.
 
-### 2 · Approaches
-Propose 2-3 real architectural approaches. For each: one-line cost, one-line benefit, and an **effort size (S / M / L / XL)**. Lead with your recommendation and say what evidence would change it. (Effort sizing belongs here — it's a HOW estimate.)
+### 2 · Interview the load-bearing decisions
+Walk the decision tree (above) — one question at a time, recommendation, wait — for the forks that matter. Auto-decide the trivia. Settle everything; defer nothing to tasks.
 
-### 3 · Decompose (see "Design for Decomposition" above)
-Turn the chosen approach into components + interfaces + dependencies + a parallelism map. This is the part the task builder depends on; don't skip or hand-wave it.
+### 3 · Decompose
+Turn the chosen approach into components + interfaces + dependencies + a parallelism map (see the spine above).
 
-### 4 · Write the design note
-Capture the crystallized HOW in a **design note** at \`<changeRoot>/design-notes.md\`. This note is exactly what \`/opsx:continue\` transcribes into \`design.md\`, so it must hold the full design — organized so transcription is faithful:
+### 4 · Present the design shape — get approval
+Before writing anything, present the shape back to the user, scaled to complexity — a few sentences for a simple change; the approach + decomposition + the load-bearing decisions for a complex one. Ask "does this look right?" and fold in corrections. **This is the gate: don't write the note until the user has confirmed the shape.**
+
+### 5 · Write the design note
+Capture the settled HOW in \`<changeRoot>/design-notes.md\` — exactly what \`/opsx:continue\` transcribes into \`design.md\`, so it must hold the full design:
 - **Context** — current state cited by \`path:line\`; constraints; relevant ADRs (reference, don't re-argue).
 - **Goals / Non-Goals**.
-- **Decisions** — key technical choices + rationale + alternatives considered; reference ADRs for the load-bearing ones.
-- **Components & Dependencies** — the decomposition from step 3 (units, interfaces, depends-on, parallelism). *This is the task-builder precondition.*
-- **Data model / API shapes** — concrete enough that an implementer makes no design decisions.
-- **Data flow & error handling** — the happy path, and what happens when each step fails.
-- **Testing approach** — what to cover (unit / integration / e2e), tied to the spec scenarios.
-- **Risks / Trade-offs**, **Migration / Rollback**, **Open Questions**.
+- **Decisions** — every settled choice + rationale + alternatives considered; reference ADRs for the load-bearing ones.
+- **Components & Dependencies** — the decomposition (units, interfaces, depends-on, parallelism). *The task-builder precondition.*
+- **Data model / API shapes**, **Data flow & error handling**, **Testing approach**, **Risks / Trade-offs**, **Migration / Rollback**.
+- **Open Questions** — genuine, explicitly-deferred unknowns only (often empty). Never dodged decisions.
 
-Scale each section to its weight; skip what doesn't apply. Don't pad to look thorough.
+Scale each section to its weight; skip what doesn't apply. Don't pad.
 
-### 5 · Record ADRs
-Record an ADR **only if all three hold**: hard to reverse · surprising without context · the result of a real trade-off. Write \`openspec/adr/ADR-NNNN-slug.md\` at \`status: proposed\`. **Dedup first** — read existing ADRs; if a decision revises one, supersede it (new ADR + \`superseded-by\` on the old), never silently duplicate. Respect an existing \`docs/adr/\` if the project uses one.
+### 6 · Record ADRs
+Record an ADR **only if all three hold**: hard to reverse · surprising without context · the result of a real trade-off. Write \`openspec/adr/ADR-NNNN-slug.md\` at \`status: proposed\`. **Dedup first** — read existing ADRs; if a decision revises one, supersede it (new ADR + \`superseded-by\`), never silently duplicate. Respect an existing \`docs/adr/\` if the project uses one.
 
-- ✅ *"Profile data stays owned by the user-management capability; the self-service page references it, doesn't fork it."* — reversing means reconciling two sources of truth (hard); a reader wonders why self-service has no profile model of its own (surprising); single-source vs independent evolution (real trade-off). → **ADR.**
-- ❌ *"Reuse the existing Button component for Save."* — trivially reversible, unsurprising, no real alternative. → just do it; not an ADR.
+- ✅ *"Profile data stays owned by the user-management capability; the self-service page references it, doesn't fork it."* — hard to reverse, surprising, a real trade-off. → **ADR.**
+- ❌ *"Reuse the existing Button component for Save."* — trivially reversible, unsurprising, no real alternative. → just do it.
 
 (Status stays \`proposed\`; promotion to \`accepted\` is manual for now.)
 
-### 6 · Visual question? Suggest the visual flow
+### 7 · Visual question? Suggest the visual flow
 Suggest a separate visual-design flow **only if seeing beats reading AND it's UI (not architecture)**. Don't attempt UI mockups inline.
-- ✅ *"Tabs vs single-scroll vs sidebar for the settings page?"* → UI, a visual preference → suggest the visual flow.
-- ❌ *"Validate avatar dimensions client- or server-side?"* → a HOW decision, the answer is words → handle inline. (A data-flow **diagram** is visual but it's *architecture* → draw it in ASCII here, don't route to the UI flow.)
+- ✅ *"Tabs vs single-scroll vs sidebar for the settings page?"* → suggest the visual flow.
+- ❌ *"Validate avatar dimensions client- or server-side?"* → a HOW decision, answer is words → handle inline. (A data-flow diagram is *architecture* → ASCII here.)
 
-### 7 · Self-review + gate
-Scan the **design note**: placeholders, internal consistency, **every component has an interface + named dependencies**, ambiguity. Fix inline. Then ask the user to review before it's transcribed.
+### 8 · Self-review + final review
+Scan the design note: placeholders, internal consistency, **every component has an interface + named dependencies**, **no unsettled decision is hiding in Open Questions**, and **every ADR traces to a decision the user explicitly confirmed** — none silently auto-decided (if one did, you skipped the gate; take it back to the user before transcribing). Fix inline. Then ask the user to review the note before it's transcribed.
 
-### 8 · Handoff
-"Design note written to \`<change>/design-notes.md\` (+ N ADRs at \`status: proposed\`). Work decomposed into <k> components with their dependencies. Run \`/opsx:continue\` to materialize \`design.md\` from the note." No \`design.md\`, code, or tasks are written here.
+### 9 · Handoff
+"Design note written to \`<change>/design-notes.md\` (+ N ADRs at \`status: proposed\`). Decomposed into <k> components; every decision settled. Run \`/opsx:continue\` to materialize \`design.md\` from the note." No \`design.md\`, code, or tasks are written here.
 
 ---
 
 ## Guardrails
 
-- **Stay in the HOW lane** - The WHAT is fixed. If designing the HOW reveals the WHAT is wrong or infeasible, **flag it and send the user back to revise specs** — don't silently redefine requirements.
-- **Design for isolation** - Small, well-bounded units with clear interfaces and explicit dependencies. Both better design and the precondition for parallel task-building.
+- **Interview, don't generate** - Reach a shared model with the user; settle load-bearing decisions together. Don't silently decide architecture the user would want a say in.
+- **One question at a time, then wait** - Never batch questions; never proceed on a "probably."
+- **Settle everything; defer nothing to tasks** - tasks is mechanical. Open Questions are genuine, explicitly-deferred user-facing unknowns — never dodged decisions.
+- **Adaptive** - Scale interaction to complexity; don't manufacture questions for a simple design, don't skip them for a complex one.
+- **Stay in the HOW lane** - The WHAT is fixed. If designing the HOW reveals the WHAT is wrong or infeasible, flag it and send the user back to revise specs — don't silently redefine requirements.
+- **Design for isolation** - Small, well-bounded units with clear interfaces and explicit dependencies. Follow existing patterns; YAGNI.
 - **Don't write design.md, code, or tasks** - your output is the design note + ADRs; \`/opsx:continue\` writes \`design.md\` from the note.
 - **Don't auto-promote ADRs** - they ship at \`status: proposed\`.
 - **Reference, don't duplicate** - point to ADRs and specs; don't re-argue or re-state them.
-- **Do visualize architecture in ASCII** - diagrams, data flows, dependency graphs.
-- **Do question assumptions** - including the user's and your own.`;
+- **Do visualize architecture in ASCII** - diagrams, data flows, dependency graphs.`;
 
 export function getOpsxDesignSkillTemplate(): SkillTemplate {
   return {
     name: 'openspec-design',
     description:
-      'Enter design mode - a HOW-thinking partner that turns a settled WHAT (proposal + specs) into a design note + architecture decisions (ADRs), decomposing the work into well-bounded, parallelizable units. A pure thinker: /opsx:continue transcribes design.md from its note. Use after requirements are settled, to think through how to build it.',
+      'Enter design mode - an interactive HOW-thinking partner that interviews you to settle the architecture, then turns a settled WHAT (proposal + specs) into a design note + ADRs, decomposed into well-bounded, parallelizable units. A pure thinker: /opsx:continue transcribes design.md from its note. Use after requirements are settled, to think through how to build it.',
     instructions: DESIGN_BODY,
     license: 'MIT',
     compatibility: 'Requires openspec CLI.',
@@ -118,7 +164,7 @@ export function getOpsxDesignCommandTemplate(): CommandTemplate {
   return {
     name: 'OPSX: Design',
     description:
-      'Enter design mode - turn a settled WHAT into a design note + ADRs, decomposed for parallel build (continue transcribes design.md)',
+      'Enter design mode - interview to settle the HOW, then write a design note + ADRs decomposed for parallel build (continue transcribes design.md)',
     category: 'Workflow',
     tags: ['workflow', 'design', 'experimental', 'thinking'],
     content: `${DESIGN_BODY}
