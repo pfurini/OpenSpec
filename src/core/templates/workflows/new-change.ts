@@ -6,6 +6,29 @@
  */
 import type { SkillTemplate, CommandTemplate } from '../types.js';
 
+const EXISTING_CHANGE_DETECTOR = `2. **Check whether this should extend an existing change (not a new one)**
+
+   Before scaffolding anything, see what's already in flight:
+   \`\`\`bash
+   openspec list --json
+   \`\`\`
+   If there are active changes, judge whether the user's intent **overlaps** with one — the same problem, the same area, a refinement or continuation rather than genuinely new work. Name similarity is a hint, not the test; when a change looks like a candidate, read its proposal before deciding:
+   \`\`\`bash
+   openspec status --change "<candidate>" --json   # then read its proposal.md
+   \`\`\`
+   Apply the same-work test (from the workflows guide):
+   - **Extend the existing change** when: same intent / same problem, >50% scope overlap, or the existing change can't be considered "done" without this work.
+   - **Create a new change** when: the intent fundamentally changed, scope exploded into different work, or the original can stand alone as "done".
+
+   **If it looks like the same work**, STOP and ask before creating — use the **AskUserQuestion tool**:
+   > "This looks like it extends **<existing>** (which is about <one-line summary>). Continue that change instead of creating a new one?"
+
+   Options: [Continue <existing> / Create new anyway].
+   - If they choose to continue → hand off to \`/opsx:continue <existing>\` (or operate on that change). Do **not** create a new change.
+   - If they choose new, or there's no real overlap → proceed.
+
+   When there are no active changes, skip straight to creating.`;
+
 export function getNewChangeSkillTemplate(): SkillTemplate {
   return {
     name: 'openspec-new-change',
@@ -25,7 +48,9 @@ export function getNewChangeSkillTemplate(): SkillTemplate {
 
    **IMPORTANT**: Do NOT proceed without understanding what the user wants to build.
 
-2. **Determine the workflow schema**
+${EXISTING_CHANGE_DETECTOR}
+
+3. **Determine the workflow schema**
 
    Use the default schema (omit \`--schema\`) unless the user explicitly requests a different workflow.
 
@@ -35,20 +60,20 @@ export function getNewChangeSkillTemplate(): SkillTemplate {
 
    **Otherwise**: Omit \`--schema\` to use the default.
 
-3. **Create the change directory**
+4. **Create the change directory**
    \`\`\`bash
    openspec new change "<name>"
    \`\`\`
    Add \`--schema <name>\` only if the user requested a specific workflow.
    This creates a scaffolded change in the planning home resolved by the CLI.
 
-4. **Show the artifact status**
+5. **Show the artifact status**
    \`\`\`bash
    openspec status --change "<name>" --json
    \`\`\`
    Use the returned \`planningHome\`, \`changeRoot\`, \`artifactPaths\`, and \`nextSteps\` instead of assuming repo-local paths.
 
-5. **Get instructions for the first artifact**
+6. **Get instructions for the first artifact**
    The first artifact depends on the schema (e.g., \`proposal\` for spec-driven).
    Check the status output to find the first artifact with status "ready".
    \`\`\`bash
@@ -56,7 +81,7 @@ export function getNewChangeSkillTemplate(): SkillTemplate {
    \`\`\`
    This outputs the template and context for creating the first artifact.
 
-6. **STOP and wait for user direction**
+7. **STOP and wait for user direction**
 
 **Output**
 
@@ -68,6 +93,7 @@ After completing the steps, summarize:
 - Prompt: "Ready to create the first artifact? Just describe what this change is about and I'll draft it, or ask me to continue."
 
 **Guardrails**
+- Prefer extending an existing change over creating a near-duplicate (see Step 2)
 - Do NOT create any artifacts yet - just show the instructions
 - Do NOT advance beyond showing the first artifact template
 - If the name is invalid (not kebab-case), ask for a valid name
@@ -100,7 +126,9 @@ export function getOpsxNewCommandTemplate(): CommandTemplate {
 
    **IMPORTANT**: Do NOT proceed without understanding what the user wants to build.
 
-2. **Determine the workflow schema**
+${EXISTING_CHANGE_DETECTOR}
+
+3. **Determine the workflow schema**
 
    Use the default schema (omit \`--schema\`) unless the user explicitly requests a different workflow.
 
@@ -110,27 +138,27 @@ export function getOpsxNewCommandTemplate(): CommandTemplate {
 
    **Otherwise**: Omit \`--schema\` to use the default.
 
-3. **Create the change directory**
+4. **Create the change directory**
    \`\`\`bash
    openspec new change "<name>"
    \`\`\`
    Add \`--schema <name>\` only if the user requested a specific workflow.
    This creates a scaffolded change in the planning home resolved by the CLI.
 
-4. **Show the artifact status**
+5. **Show the artifact status**
    \`\`\`bash
    openspec status --change "<name>" --json
    \`\`\`
    Use the returned \`planningHome\`, \`changeRoot\`, \`artifactPaths\`, and \`nextSteps\` instead of assuming repo-local paths.
 
-5. **Get instructions for the first artifact**
+6. **Get instructions for the first artifact**
    The first artifact depends on the schema. Check the status output to find the first artifact with status "ready".
    \`\`\`bash
    openspec instructions <first-artifact-id> --change "<name>"
    \`\`\`
    This outputs the template and context for creating the first artifact.
 
-6. **STOP and wait for user direction**
+7. **STOP and wait for user direction**
 
 **Output**
 
@@ -142,6 +170,7 @@ After completing the steps, summarize:
 - Prompt: "Ready to create the first artifact? Run \`/opsx:continue\` or just describe what this change is about and I'll draft it."
 
 **Guardrails**
+- Prefer extending an existing change over creating a near-duplicate (see Step 2)
 - Do NOT create any artifacts yet - just show the instructions
 - Do NOT advance beyond showing the first artifact template
 - If the name is invalid (not kebab-case), ask for a valid name
