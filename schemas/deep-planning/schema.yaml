@@ -1,0 +1,130 @@
+name: deep-planning
+version: 1
+description: >
+  Deep-planning workflow - thinking-record driven. /opsx:explore reasons about the
+  WHAT and /opsx:design reasons about the HOW; both produce durable thinking records
+  (exploration note, design note, ADRs). The generic writer (e.g. /opsx:continue)
+  then transcribes proposal -> specs -> design -> tasks from those records, with the
+  design decomposed into well-bounded units for downstream parallel task building.
+artifacts:
+  - id: proposal
+    generates: proposal.md
+    description: Initial proposal document outlining the change
+    template: proposal.md
+    instruction: |
+      Create the proposal document that establishes WHY this change is needed.
+
+      INCORPORATE THE EXPLORATION NOTE (if present): before writing, look for an
+      exploration note at `openspec/explorations/<change-name>.md` (written by
+      /opsx:explore). If it exists, it is your PRIMARY input - the WHAT is already
+      crystallized. Transcribe it, don't re-derive it:
+      - Problem / Why -> the Why section
+      - Scope & Non-Goals -> What Changes
+      - Capabilities (new vs modified) -> the Capabilities section
+      Carry any "Parked Design Seeds" forward untouched - they are for the design phase.
+
+      Sections:
+      - **Why**: 1-2 sentences on the problem or opportunity. What problem does this solve? Why now?
+      - **What Changes**: Bullet list of changes. Be specific about new capabilities, modifications, or removals. Mark breaking changes with **BREAKING**.
+      - **Capabilities**: Identify which specs will be created or modified:
+        - **New Capabilities**: List capabilities being introduced. Each becomes a new `specs/<name>/spec.md`. Use kebab-case names.
+        - **Modified Capabilities**: List existing capabilities whose REQUIREMENTS are changing. Check `openspec/specs/` for existing spec names. Leave empty if no requirement changes.
+      - **Impact**: Affected code, APIs, dependencies, or systems.
+
+      Keep it concise (1-2 pages). Focus on the "why" not the "how" -
+      implementation details belong in design.md.
+    requires: []
+
+  - id: specs
+    generates: "specs/**/*.md"
+    description: Detailed specifications for the change (the WHAT)
+    template: spec.md
+    instruction: |
+      Create specification files that define WHAT the system should do.
+
+      INCORPORATE THE EXPLORATION NOTE (if present): if `openspec/explorations/<change-name>.md`
+      exists, its Capabilities and scope are the source for the requirements here.
+
+      Create one spec file per capability listed in the proposal's Capabilities section.
+      - New capabilities: use the exact kebab-case name from the proposal (specs/<capability>/spec.md).
+      - Modified capabilities: use the existing spec folder name when creating the delta spec.
+
+      Delta operations (use ## headers):
+      - **ADDED Requirements**, **MODIFIED Requirements** (include full updated content),
+        **REMOVED Requirements** (include **Reason** and **Migration**), **RENAMED Requirements** (FROM:/TO:).
+
+      Format requirements:
+      - Each requirement: `### Requirement: <name>` followed by description.
+      - Use SHALL/MUST for normative requirements (avoid should/may).
+      - Each scenario: `#### Scenario: <name>` with WHEN/THEN format.
+      - **CRITICAL**: Scenarios MUST use exactly 4 hashtags (`####`).
+      - Every requirement MUST have at least one scenario.
+
+      Specs should be testable - each scenario is a potential test case.
+    requires:
+      - proposal
+
+  - id: design
+    generates: design.md
+    description: Technical design (the HOW), transcribed from the design note
+    template: design.md
+    instruction: |
+      Create the design document (the HOW) for this change.
+
+      ORDERING GUARD - read this first:
+      The deep HOW thinking happens in /opsx:design, which writes a design note
+      (`design-notes.md`) into this change's directory. Look for that note now.
+      - **If `design-notes.md` does NOT exist in this change directory, STOP.** Do not
+        write a mechanical design.md. Tell the user exactly this:
+        "No design note found. Run /opsx:design <change> first to think through the HOW
+        (approaches, decomposition, ADRs), then re-run this step to materialize design.md."
+      - **If it exists**, it is your PRIMARY input. Transcribe it faithfully - the
+        thinking is already done; you are writing it up, not re-deciding it.
+
+      Sections (fill from the design note):
+      - **Context**: current state cited by path:line; constraints; relevant ADRs (reference, don't re-argue).
+      - **Goals / Non-Goals**.
+      - **Decisions**: key technical choices + rationale + alternatives considered; reference ADRs for the load-bearing ones.
+      - **Components & Dependencies**: the decomposition from the design note - each unit with
+        its purpose (one line), interface (inputs/outputs), and depends-on (other units / existing
+        modules); plus a build sequence / parallelism map (which units are independent vs ordered).
+        THIS SECTION IS THE CONTRACT the downstream task builder consumes - do not omit or hand-wave it.
+      - **Data model / API shapes**: concrete enough that an implementer makes no design decisions.
+      - **Data flow & error handling**: happy path + failure per step.
+      - **Testing approach**: unit / integration / e2e, tied to spec scenarios.
+      - **Risks / Trade-offs**, **Migration / Rollback**, **Open Questions**.
+
+      Scale each section to its weight; skip what doesn't apply. Reference the proposal for
+      motivation and specs for requirements. Do not duplicate ADR rationale - link to it.
+    requires:
+      - proposal
+
+  - id: tasks
+    generates: tasks.md
+    description: Implementation checklist (kept first-class; richer task graph is a future enhancement)
+    template: tasks.md
+    instruction: |
+      Create the task list that breaks down the implementation work, derived from the
+      design's **Components & Dependencies** section.
+
+      **IMPORTANT: Follow the template format exactly.** Tasks must be checkboxes
+      `- [ ] X.Y Task description` grouped under ## numbered headings, ordered by dependency.
+
+      Guidelines:
+      - One task group per component where practical; order by the dependency map in design.md.
+      - Each task should be small enough to complete in one session and individually verifiable.
+      - Reference specs for what to build and design for how to build it.
+
+      (Note: a richer, parallelism-aware task graph - explicit inter-task dependencies, parallel
+      groups, per-task acceptance criteria and agent hints - is a planned enhancement. For now,
+      preserve the dependency ordering from design.md so it can be derived later.)
+    requires:
+      - specs
+      - design
+
+apply:
+  requires: [tasks]
+  tracks: tasks.md
+  instruction: |
+    Read context files, work through pending tasks, mark complete as you go.
+    Pause if you hit blockers or need clarification.

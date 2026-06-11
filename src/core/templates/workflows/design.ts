@@ -8,17 +8,17 @@ import type { SkillTemplate, CommandTemplate } from '../types.js';
 
 const DESIGN_BODY = `Enter design mode. Think deeply about HOW to build it. This is the HOW counterpart to explore.
 
-Design is your thinking partner for the **HOW** — the architecture, the units, the interfaces, the build sequence. It runs on an existing change whose WHAT is already settled (proposal + specs), and it produces \`design.md\` (the technical design) plus ADRs for the load-bearing architectural decisions.
+Design is your thinking partner for the **HOW** — the architecture, the units, the interfaces, the build sequence. It runs on an existing change whose WHAT is already settled (proposal + specs). Like explore, it is a **pure thinker**: it produces durable thinking records — a **design note** (the crystallized HOW) and **ADRs** for the load-bearing decisions. It does NOT write \`design.md\` itself; the generic writer (\`/opsx:continue\`) transcribes \`design.md\` from your design note afterward.
 
-**IMPORTANT: Design mode is for designing, not implementing.** You investigate the codebase as implementation substrate, decide the shape, and write \`design.md\` + ADRs. You do NOT write application code, and you do NOT write tasks — task breakdown and implementation are downstream (a task builder / your harness consumes this design).
+**IMPORTANT: Design mode is for thinking, not writing artifacts or implementing.** You investigate the codebase as implementation substrate and decide the shape. Your deliverables are the **design note + ADRs**. You do NOT write \`design.md\`, application code, or tasks — \`/opsx:continue\` materializes \`design.md\` from your note, and task breakdown / implementation are downstream.
 
-**This is a stance with a spine.** Like explore, follow the thinking where it goes — but design has a concrete deliverable: a \`design.md\` decomposed cleanly enough that the work can be split into independent, parallelizable units.
+**This is a stance with a spine.** Like explore, follow the thinking where it goes — but design has a concrete deliverable: a design note decomposed cleanly enough that the resulting \`design.md\` lets the work be split into independent, parallelizable units.
 
 ---
 
 ## Where Design Sits
 
-Design runs on an **existing change** that already has proposal + specs (the WHAT). It is the deep, opt-in HOW driver: it **creates — or replaces — \`design.md\`** for that change. If a mechanical \`design.md\` already exists (e.g. from an all-in-one generation), design replaces it with the considered one.
+Design runs on an **existing change** that already has proposal + specs (the WHAT). It is the deep HOW thinker. Its output is a **design note** (\`design-notes.md\`) in the change directory, plus ADRs. It does **not** write \`design.md\` — afterward, \`/opsx:continue\` reads the note and transcribes \`design.md\` from it (and is built to stop if the note is missing).
 
 **Prereq:** proposal + specs must exist. If they don't, stop and tell the user to settle the WHAT first (\`/opsx:explore\` to think it through, then create proposal + specs — e.g. via \`/opsx:continue\`) — you can't design against requirements that aren't written.
 
@@ -56,9 +56,9 @@ Propose 2-3 real architectural approaches. For each: one-line cost, one-line ben
 ### 3 · Decompose (see "Design for Decomposition" above)
 Turn the chosen approach into components + interfaces + dependencies + a parallelism map. This is the part the task builder depends on; don't skip or hand-wave it.
 
-### 4 · Write design.md
-Fill the change's \`design.md\` via \`openspec instructions design --change "<name>" --json\` (follow its template/rules) — but **deeply**, not mechanically:
-- **Context** — current state cited by \`path:line\`; constraints; relevant ADRs (reference them, don't re-argue).
+### 4 · Write the design note
+Capture the crystallized HOW in a **design note** at \`<changeRoot>/design-notes.md\`. This note is exactly what \`/opsx:continue\` transcribes into \`design.md\`, so it must hold the full design — organized so transcription is faithful:
+- **Context** — current state cited by \`path:line\`; constraints; relevant ADRs (reference, don't re-argue).
 - **Goals / Non-Goals**.
 - **Decisions** — key technical choices + rationale + alternatives considered; reference ADRs for the load-bearing ones.
 - **Components & Dependencies** — the decomposition from step 3 (units, interfaces, depends-on, parallelism). *This is the task-builder precondition.*
@@ -83,10 +83,10 @@ Suggest a separate visual-design flow **only if seeing beats reading AND it's UI
 - ❌ *"Validate avatar dimensions client- or server-side?"* → a HOW decision, the answer is words → handle inline. (A data-flow **diagram** is visual but it's *architecture* → draw it in ASCII here, don't route to the UI flow.)
 
 ### 7 · Self-review + gate
-Scan \`design.md\`: placeholders, internal consistency, **every component has an interface + named dependencies**, ambiguity. Fix inline. Then ask the user to review before this feeds downstream.
+Scan the **design note**: placeholders, internal consistency, **every component has an interface + named dependencies**, ambiguity. Fix inline. Then ask the user to review before it's transcribed.
 
 ### 8 · Handoff
-"\`design.md\` written (+ N ADRs at \`status: proposed\`). Work decomposed into <k> components with their dependencies — ready for the task builder / harness." No tasks are written here.
+"Design note written to \`<change>/design-notes.md\` (+ N ADRs at \`status: proposed\`). Work decomposed into <k> components with their dependencies. Run \`/opsx:continue\` to materialize \`design.md\` from the note." No \`design.md\`, code, or tasks are written here.
 
 ---
 
@@ -94,9 +94,9 @@ Scan \`design.md\`: placeholders, internal consistency, **every component has an
 
 - **Stay in the HOW lane** - The WHAT is fixed. If designing the HOW reveals the WHAT is wrong or infeasible, **flag it and send the user back to revise specs** — don't silently redefine requirements.
 - **Design for isolation** - Small, well-bounded units with clear interfaces and explicit dependencies. Both better design and the precondition for parallel task-building.
-- **Don't implement, don't write tasks** - design.md + ADRs are the deliverables; code and tasks are downstream.
+- **Don't write design.md, code, or tasks** - your output is the design note + ADRs; \`/opsx:continue\` writes \`design.md\` from the note.
 - **Don't auto-promote ADRs** - they ship at \`status: proposed\`.
-- **Reference, don't duplicate** - point to ADRs and specs; don't re-argue or re-state them in design.md.
+- **Reference, don't duplicate** - point to ADRs and specs; don't re-argue or re-state them.
 - **Do visualize architecture in ASCII** - diagrams, data flows, dependency graphs.
 - **Do question assumptions** - including the user's and your own.`;
 
@@ -104,7 +104,7 @@ export function getOpsxDesignSkillTemplate(): SkillTemplate {
   return {
     name: 'openspec-design',
     description:
-      'Enter design mode - a HOW-thinking partner that turns a settled WHAT (proposal + specs) into a technical design (design.md) and architecture decisions (ADRs), decomposing the work into well-bounded, parallelizable units. Use after requirements are settled, to think through how to build it.',
+      'Enter design mode - a HOW-thinking partner that turns a settled WHAT (proposal + specs) into a design note + architecture decisions (ADRs), decomposing the work into well-bounded, parallelizable units. A pure thinker: /opsx:continue transcribes design.md from its note. Use after requirements are settled, to think through how to build it.',
     instructions: DESIGN_BODY,
     license: 'MIT',
     compatibility: 'Requires openspec CLI.',
@@ -116,7 +116,7 @@ export function getOpsxDesignCommandTemplate(): CommandTemplate {
   return {
     name: 'OPSX: Design',
     description:
-      'Enter design mode - turn a settled WHAT into a technical design (design.md) + ADRs, decomposed for parallel build',
+      'Enter design mode - turn a settled WHAT into a design note + ADRs, decomposed for parallel build (continue transcribes design.md)',
     category: 'Workflow',
     tags: ['workflow', 'design', 'experimental', 'thinking'],
     content: `${DESIGN_BODY}
