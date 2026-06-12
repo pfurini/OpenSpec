@@ -238,3 +238,34 @@ path) vs a prd.json-shaped `tasks.json` (harness path) — one artifact, a gener
 view, or task-builder emits JSON from design at handoff. A deep-planning schema decision;
 ties directly to `executable-plans-and-feedback-loop.md` §1 and its open item "fatten
 tasks.md or a sibling artifact".
+
+### Model routing / token cost (researched 2026-06, verified in Archon source)
+
+The cost lever: a classifier step deciding small/medium/large per unit of work, mapped to
+`model: <tier>` (Archon's tier keywords already exist in config). Verified capabilities:
+
+- **Loop nodes DO honor static `model:`/`provider:`** — `LOOP_NODE_AI_FIELDS` excludes them;
+  the executor resolves + forwards them per iteration (`schemas/dag-node.ts:388-394`). The
+  skill docs (parameter-matrix / workflow-dag) claiming "ignored on loops" are STALE — code
+  is authoritative; ralph-dag's `model: large` works. (`agents:` IS stripped on loops.)
+- **Dynamic model injection is NOT supported**: variable substitution applies only to
+  prompt/bash/script/loop-prompt strings; `node.model` is consumed raw
+  (`dag-executor.ts:480` → `resolveModelSpec`). `model: $classify.output.size` fails.
+- **Multi-node loop bodies are NOT supported**: `loopNodeConfigSchema` is a single-prompt
+  controller — no classifier+implementor pair per iteration.
+
+**Today (supported):** per-CHANGE routing — the orchestrator picks among workflow variants
+differing only in the loop's `model:` tier, informed by a scope classifier or by the design
+itself (deep-planning design knows the change's complexity → stamp it into the change
+package). One-field templating; serves meta-orchestration's last surviving motivation.
+Per-TASK routing: only behavior/effort adaptation in the loop prompt (model price fixed);
+built-in Task-tool sub-delegation with a cheaper model is unverified — test empirically.
+
+**Upstream feature candidates (Archon is local — file/build):**
+1. **Per-iteration model directive** (recommended, minimal): iteration output carries e.g.
+   `<next-model>small</next-model>`, parsed by the executor for the NEXT iteration — same
+   pattern as `<promise>` detection. Iteration N classifies the next task as it exits.
+   Delivers classifier→implementor economics without multi-node loops.
+2. Substitution on `model:`/`effort:` (or `model_from: $node.output.field`).
+3. Multi-node loop bodies (probably unnecessary if #1 lands).
+4. Docs bug: loop `model:` documented as ignored but honored in code.
