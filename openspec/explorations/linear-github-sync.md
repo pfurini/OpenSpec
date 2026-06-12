@@ -5,13 +5,20 @@ into Linear's native hierarchy, with hooks usable from inside Archon workflow ru
 linkage rides the user's EXISTING native GH↔Linear integration — OpenSpec never syncs to
 GitHub directly (loop avoidance).
 
-**FINAL VISION (user, 2026-06): Linear is the native DRIVER of every workflow, not a mirror.**
-Work originates, gets triaged, prioritized, and *dispatched* in Linear — the way some Archon
-workflows take GitHub issues as input and produce code artifacts. The push-sync below is the
-*outbound half* of that vision; the inbound half (trigger + seed) is designed in
-"Linear as driver" at the end of this note, with feasibility findings. The truth split that
-makes both halves coherent: **git owns content truth** (specs/design artifacts), **Linear owns
-work-state truth** (what to do next, priority, assignment, dispatch).
+**Scope framing (user, 2026-06): v1 vs future vision — do not conflate.**
+- **v1 (the buildable roadmap item):** OUTBOUND ONLY. OpenSpec writes to Linear (the push
+  sync designed below); git is the only read surface for the orchestrator and workflows.
+- **Future vision (explicitly NOT v1):** Linear becomes the native DRIVER of every workflow —
+  work originates, gets triaged, prioritized, and *dispatched* in Linear (the way some Archon
+  workflows take GitHub issues as input), AND the **orchestrator + workflows READ artifacts
+  from Linear too** (Linear as the artifact/context distribution surface for the execution
+  layer, not just a human mirror). The "Linear as driver" section at the end captures that
+  vision's feasibility findings so they aren't lost — it is design-ahead, not scope.
+
+The truth split that keeps every stage coherent: **git owns content truth** (specs/design
+artifacts), **Linear owns work-state truth** (what to do next, priority, assignment,
+dispatch). In the future vision Linear additionally *carries* artifact content for the
+execution layer to read — carrying ≠ owning; provenance stays git.
 
 Decided:
 - **Mapping: CONFIGURABLE** — both homomorphisms implemented, chosen per project (e.g.
@@ -144,15 +151,16 @@ work, not greenfield.
 6. **State double-driving**: the agent moving issue states vs the native GH↔Linear
    auto-close on merge — config discipline over who owns which transition.
 
-### Staged path (each stage ships value alone)
+### Staged path (each stage ships value alone; only stage 1 is v1)
 
-1. **Outbound sync** (this note's original scope) — prompt-level push + ids in metadata.
-2. **Polling driver, zero Archon changes** — a scheduled orchestrator (cron session or
-   Archon workflow) runs `linear issue list` for delegated/labeled issues → seeds changes →
-   dispatches workflows → posts back via `linear` CLI. Proves the driver loop cheaply;
-   latency = poll interval; no webhook infra.
-3. **Native agent** — the Archon Linear adapter on the Agents API: real-time delegation,
-   in-Linear session UX, `awaitingInput` async interviews. The full vision.
+1. **v1 — Outbound sync** (this note's buildable scope) — prompt-level push + ids in
+   metadata. Orchestrator and workflows read from git only.
+2. **Future — Read-side**: orchestrator + workflows consume artifacts/context from Linear
+   (change package enriched or fetched via Linear; Linear carries, git owns). Plus the
+   cheap driver proof: a polling orchestrator (cron + `linear` CLI) picking up
+   delegated/labeled issues → seeds changes → dispatches workflows. Zero Archon changes.
+3. **Future — Native agent**: the Archon Linear adapter on the Agents API: real-time
+   delegation, in-Linear session UX, `awaitingInput` async interviews. The full vision.
 
 ## Related
 - `phase-graph-unified-model.md` — change graph cohorts → milestones; orchestrator branch
