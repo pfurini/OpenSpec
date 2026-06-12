@@ -49,6 +49,16 @@ section, falsifiability gate, flow-to-gate continueMode, MECHANICAL-ONLY tasks),
    ADR-worthy decisions confirmed with the user, nothing deferred to tasks;
    (b) design→archive ADR lifecycle — ADR written to `docs/adr/` with `change:` +
    `status: proposed`, archive flips it to `accepted`.
+   **Setup (account-profile-self-service):** keep the exploration note + `.openspec.yaml`
+   + ADR-0036; delete the stale `proposal.md`, `specs/`, `design-notes.md` (pre-dates the
+   interview work) and `docs/adr/ADR-0037-*` (minted unilaterally, old format). Archive
+   dry-run: git-checkpoint first, confirm the incomplete-tasks warning, **DECLINE spec
+   sync** (feature is unimplemented), verify ADR flip + move, then `git reset --hard`.
+   **Cold-handoff protocol — `/clear` at every command boundary, never mid-interview:**
+   artifacts must carry ALL state (the architecture's central claim; Archon consumers are
+   fresh-context by design). Warm sessions produce FALSE PASSES (the model remembers what
+   the note should have carried). Bisection rule: cold-fail + warm-pass = artifact/prime
+   gap; fails both = prompt gap.
 1. **The vertical slice (recommended first build):** author the `openspec-implement-change`
    Archon workflow (ralph-dag variant: bash node pulls the change package via OpenSpec CLI →
    implement loop over the change's tasks with per-task validate+commit → gate → PR → unit
