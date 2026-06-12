@@ -54,6 +54,12 @@ Then **review reads the report**: documented deviations are treated as *intentio
 `apply` ticks checkboxes but emits no report; `archive` doesn't compare predicted vs actual;
 nothing distinguishes intentional deviation from drift.
 
+Report enrichment (from claudekit's incremental-shipping "refactor with evidence"): refactor
+tasks carry **before/after evidence in the report** — test-suite output captured before and
+after the structural change, plus perf numbers when the code is hot-path ("perf not measured;
+cold path" stated explicitly otherwise). Behavior preservation is proved by deltas in the
+artifact, never claimed.
+
 Mapping into OpenSpec / the harness model:
 - The unit workflow's final node writes the **unit report** into `$ARTIFACTS_DIR` (and/or the
   change dir) — the orchestrator's merge decision and the integration gate consume it.

@@ -11,11 +11,17 @@ Two review gates, mirroring our WHAT/HOW separation:
 1. **WHAT-review** — reviews **proposal + specs** (the WHAT). Dimensions: is the problem real /
    evidenced? scope bounded? non-goals explicit? capabilities right (new vs modified)? acceptance
    **falsifiable** (no vibe words — the `shape-spec` gate we added)? spec-smell vs intent (the
-   furiai PRD rubric)? requirement testability?
+   furiai PRD rubric)? requirement testability? **bundling / slice-of-value** (from
+   incremental-shipping: is this proposal ONE vertical slice of observable value, or several
+   stapled together — feature + refactor + config? at initiative level: are the children
+   vertical slices, and does the ordering front-load value, not horizontal layers?)
 2. **HOW-review** — reviews the **design + tasks** (the HOW; tasks = the executable plan that
    maps to "plans" in other frameworks). Dimensions: architecture soundness, decomposition /
    bounded units / clean interfaces, dependency + parallelism correctness, error handling / silent
-   failures, type design, test coverage, security, performance, simplification.
+   failures, type design, test coverage, security, performance, simplification, **measured size**
+   (from incremental-shipping: task count / projected diff — the >~500-line red flag; catches
+   what looked like one slice at proposal time but decomposed into a monster → send back to
+   design to split; primary enforcement is design-time, this is the backstop).
 
 Pattern: a **panel of focused subagents**, each owning one dimension, run in parallel (or a
 pipeline), findings synthesized — adversarial where it helps.

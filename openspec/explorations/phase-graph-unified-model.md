@@ -62,6 +62,31 @@ decomposition, not drive it.
 change." If two parts of a change are independent enough to run in separate worktrees, that's
 the signal to `split` them into sibling changes — not to parallelize tasks across worktrees.
 
+**The ceiling side (from claudekit's incremental-shipping, added 2026-06):** right-sizing
+guards the floor (don't split eagerly); these guard the ceiling:
+- **Vertical-slice litmus** — a change should be the smallest unit of *value* (something a
+  user could see, an API consumer could call, a test could exercise), not the smallest piece
+  of code. A slice with independent observable value = a capability-sized change (composes
+  with the capability-axis rule).
+- **Size red flags** — a projected diff > ~500 lines or a plan whose tasks would ship as one
+  unreviewable PR: not a slice, a bundle. Split.
+- **Enforcement is layered, earliest-first:** primary = a split check in `/opsx:design`'s
+  decomposition (interactive, nothing written, splitting costs a conversation); backstop =
+  one-line dimensions in both review gates (WHAT-review: bundling/scope-creep — one slice of
+  value or several stapled together?; HOW-review: *measured* size — task count, projected
+  diff — catches what looked like one slice at proposal time but decomposed into a monster).
+- **Initiative level: NO size cap** (the initiative exists to let big things be big by
+  composing right-sized changes) — but DO check **slice direction**: horizontal decomposition
+  (db-layer → api-layer → ui-layer changes) delivers zero value until the last lands and
+  concentrates integration risk at the end; vertical children (each cutting the stack,
+  shipping observable value) deliver incrementally and verify per merge cohort. The
+  initiative review dimension is "are the children vertical, and does the change-graph
+  ordering front-load value?"
+- **Ship-dark / feature flags** — a design-phase HOW decision ("how does this change land
+  dark on main while siblings are in flight?"), flag off-by-default with a deletion plan
+  (ADR-adjacent: deliberate, reversible-by-design). Rollout mechanics (ramps, monitoring,
+  bake) are runtime ops — harness/orchestrator territory, out of OpenSpec scope.
+
 ## Two DAGs, two grains — both live
 
 | Grain | DAG | Source | Consumed by | OpenSpec status |
