@@ -86,6 +86,17 @@ Still deferred (revisit only if drift/scale bites):
   Promotion is an agent Edit; ADR reads are markdown. Build the CLI when the markdown-only
   approach proves fragile or unqueryable at scale (this is the §2 graduation question for ADRs).
 
+## 5. Small deferred items (parking, so they aren't lost)
+
+- **Visual-design flow**: `/opsx:design` step 7 *detects* authentic visual questions and
+  suggests a separate visual flow — but that flow itself doesn't exist. The user has
+  "something more articulate than the visual companion in mind" (their words); design it
+  with them, don't assume the superpowers visual-companion shape.
+- **Name the `deep-planning` schema for real**: working title; pick a proper name before
+  any public release of the schema.
+- **Design-side detector in propose**: `/opsx:propose` (spec-driven path) has no
+  existing-change overlap detection; `new` got it. Add when touching propose.
+
 ## Related
 - `openspec/explorations/explore-workflow-ux.md`
 - `schemas/deep-planning/schema.yaml`
