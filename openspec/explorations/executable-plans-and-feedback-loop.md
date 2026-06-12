@@ -1,6 +1,10 @@
 # Deferred capability: executable plans + the implementation feedback loop
 
-Status: **deferred / to-discuss.** Captured from the archon-dev analysis (the workflow Archon
+Status: **partially absorbed (2026-06-12)** — §1's content spec now lands in the
+**wave-plan instruction** and the "fatten tasks.md or sibling artifact" open item is
+RESOLVED (neither: two-level queue — wave map + committed JIT `plans/wave-N.md`); §3's
+report gains routing calibration. See `task-machinery-and-wave-execution.md` §4/§6.4.
+Original status: **deferred / to-discuss.** Captured from the archon-dev analysis (the workflow Archon
 uses to plan and ship its own features — `archon/.claude/skills/archon-dev/`, esp.
 `cookbooks/plan.md` and `cookbooks/implement.md`). This is the concrete **content spec for the
 deferred rich task-builder** (phase-graph build-order #4) plus a post-execution feedback loop

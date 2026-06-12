@@ -226,6 +226,13 @@ Graph-level (for the orchestrator):
 
 ## Intra-change execution — the static-DAG question (discussed 2026-06, leaning C)
 
+> **SUPERSEDED (2026-06-12):** intra-change execution is now **A′ unrolled wave slots**
+> (per-wave plan→implement→gate node triplets, `when:`-gated, dynamic models, planner ≻
+> implementer per node). The Ralph/dispatch single-loop (option C below) was rejected:
+> one static loop `model:` violates planner ≻ implementer, and control flow belongs in
+> the DAG, not the prompt. See `task-machinery-and-wave-execution.md` §5. The analysis
+> below is kept for the reasoning record.
+
 Archon DAGs are static (parsed at load time) → nodes cannot be created from a change's
 tasks at run time. Three mechanisms considered:
 
@@ -265,6 +272,13 @@ ties directly to `executable-plans-and-feedback-loop.md` §1 and its open item "
 tasks.md or a sibling artifact".
 
 ### Model routing / token cost (researched 2026-06, verified in Archon source)
+
+> **AMENDED (2026-06-12):** dynamic routing is now a hard requirement (no static models
+> in workflow YAML); upstream candidates #1 (`<next-model>`, repurposed to in-slot
+> escalation) and #2 (substitution on `model:`/`provider:` — now the BLOCKING one) are
+> **committed prerequisites**, user-built. Classification is a vector (complexity→tier,
+> risk→verification depth, novelty→research) with planner ≻ implementer invariant.
+> See `task-machinery-and-wave-execution.md` §6.
 
 The cost lever: a classifier step deciding small/medium/large per unit of work, mapped to
 `model: <tier>` (Archon's tier keywords already exist in config). Verified capabilities:

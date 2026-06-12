@@ -5,7 +5,7 @@ harness work on branch `feat/explore-what-brainstorming`. An implementing sessio
 read this index, then ONLY the note(s) for its chosen track — not the whole corpus.
 
 Two families of files:
-- **Ours (this effort)** — the 8 notes below.
+- **Ours (this effort)** — the 9 notes below.
 - **Upstream** (`workspace-*.md`, `explore-workflow-ux.md`) — inherited context; read only
   if a track touches workspaces/initiatives.
 
@@ -13,8 +13,9 @@ Two families of files:
 
 | Note | Role | Status |
 |---|---|---|
-| `phase-graph-unified-model.md` | **The architecture.** OpenSpec↔Archon harness model: unit = right-sized change; change DAG (orchestrator) + task DAG (Ralph loop); validation gates; build order; intra-change execution; model routing; size ceiling | Core model **CONFIRMED**; build deferred |
-| `executable-plans-and-feedback-loop.md` | Content spec for the rich task-builder (self-sufficiency standard, ralph `prd.json` convergence) + implementation report / feedback loop | Deferred; consumer contract verified |
+| `task-machinery-and-wave-execution.md` | **The current build contract (read FIRST for the active track).** TDD wave model (3 grains, two-level queue, JIT wave plans), A′ unrolled-slot workflow, dynamic model routing (planner ≻ implementer), test-layer routing, skills backbone, reversed build order. Supersedes phase-graph's intra-change section + parts of executable-plans | Brainstorm **SETTLED 2026-06-12**; impl NOT started; user has more seeds pending |
+| `phase-graph-unified-model.md` | **The architecture.** OpenSpec↔Archon harness model: unit = right-sized change; change DAG (orchestrator) + task DAG; validation gates; build order; size ceiling. *Intra-change execution + model routing sections superseded — see task-machinery note* | Core model **CONFIRMED**; intra-change parts superseded |
+| `executable-plans-and-feedback-loop.md` | Content spec for the rich task-builder (self-sufficiency standard, ralph `prd.json` convergence) + implementation report / feedback loop. *§1 now lands in the wave-plan instruction; "fatten tasks.md" item resolved — see task-machinery note* | Partially absorbed into task-machinery note |
 | `change-records-and-thinking-layer.md` | Amendment model, shadow-layer caveat, ADR/glossary layer (§4 LANDED), small parked items (§5) | Mixed: §4 shipped, rest deferred |
 | `specialized-review-steps.md` | WHAT-review vs HOW-review panels, dimensions distilled from gstack/PRP/claudekit/furiai | Deferred |
 | `research-grounding-capability.md` | Parallel specialized research (external + codebase) at grounding points | Deferred |
@@ -33,6 +34,18 @@ Two families of files:
    lifecycle (`proposed` → archive promotes to `accepted` via `change:` front-matter link).
 5. Git owns content truth; Linear (v1) is outbound-only projection.
 6. All agent compute on own hardware; model choice owned (Archon tiers, local via Pi/ollama).
+7. Tasks are TDD: one checkbox = one red-green-refactor cycle; spec scenarios are the
+   behavior blocks; wave 0 = tracer bullet. Tests-last task lists are a defect.
+8. Three grains: commit = TDD cycle; fresh session = wave; run/worktree/PR = change.
+9. **Planner ≻ implementer, always** (stronger model plans than implements) — structural,
+   per-node; killed the single-loop dispatch design.
+10. **No static models in workflow YAML** — `model:`/`provider:` resolved at runtime from
+    classification (Archon substitution feature = committed prerequisite, user-built).
+11. No parallel code-writing inside a change (one worktree: git index, single-writer
+    state files, test-infra exclusivity). Independence between waves = split signal →
+    sibling changes. Intra-run parallelism = read-only fan-outs only.
+12. Project skills enter as recorded artifact references (explore → design → wave →
+    Mandatory Reading), never as session memory.
 
 ## What is code vs notes (already shipped on this branch)
 
@@ -65,19 +78,26 @@ section, falsifiability gate, flow-to-gate continueMode, MECHANICAL-ONLY tasks),
    fresh-context by design). Warm sessions produce FALSE PASSES (the model remembers what
    the note should have carried). Bisection rule: cold-fail + warm-pass = artifact/prime
    gap; fails both = prompt gap.
-1. **The vertical slice (recommended first build):** author the `openspec-implement-change`
-   Archon workflow (ralph-dag variant: bash node pulls the change package via OpenSpec CLI →
-   implement loop over the change's tasks with per-task validate+commit → gate → PR → unit
-   report) and run it END-TO-END on one real lexup change. Empirically settles the two open
-   forks: tasks.md vs tasks.json work queue, and stitched CLI vs `change package --json`.
-   Needs NO new OpenSpec code to start. Read: `phase-graph-unified-model.md` +
-   `executable-plans-and-feedback-loop.md`.
+1. **REVERSED (2026-06-12) — task machinery BEFORE the slice.** The old "vertical slice
+   first, needs NO new OpenSpec code" is dead: the slice would validate task output we've
+   decided is defective (tests-last, too coarse). New order — read
+   `task-machinery-and-wave-execution.md` §9 for the full checklist:
+   1. Deep-planning schema + command rework (wave-map tasks, design de-parallelization,
+      wave-plan instruction + `instructions wave-plan` endpoint, skills wiring, parity
+      re-harvest).
+   2. Regenerate the lexup change through the reworked pipeline (= writing-pass
+      acceptance test, cold-handoff protocol).
+   3. Author the A′ unrolled-slot workflow in lexup `.archon/workflows/`.
+   4. Run the slice end-to-end (first pass single strong tier; routing comparison after
+      the Archon features land).
+   Parallel track (user-owned, in Archon): substitution on `model:`/`provider:` +
+   `<next-model>` loop directive — settle the classifier→slots path syntax first.
 2. **Inter-change graph:** implement `add-change-stacking-awareness`
    (spec: `openspec/changes/add-change-stacking-awareness/` — upstream-authored, check
    upstream for in-flight implementation first). The orchestration contract.
-3. Then per the phase-graph build order: validation gates → right-sizing/split → task-DAG
-   formalization; capability tracks (review steps, discovery, research grounding, Linear v1)
-   slot in independently.
+3. Then per the phase-graph build order: validation gates → right-sizing/split;
+   capability tracks (review steps, discovery, research grounding, Linear v1) slot in
+   independently. (Task-DAG formalization is absorbed by the wave model.)
 
 ## Implementation-session protocol (tribal knowledge — read before coding)
 
