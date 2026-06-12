@@ -146,6 +146,11 @@ Graph-level (for the orchestrator):
 1. **Inter-change graph** = implement `add-change-stacking-awareness`: stack metadata +
    `change graph --json` / `change next` + validation (cycles, missing targets, transitive
    block). This is the orchestration contract — highest leverage.
+   *Where the spec lives:* `openspec/changes/add-change-stacking-awareness/` in THIS repo —
+   proposal + 4 delta specs + tasks.md (22 tasks, none done). **Provenance: upstream**
+   (authored 2026-02-21 by Tabish Bidiwale, Fission-AI; inherited with the fork). Before
+   implementing, check upstream for an in-flight implementation to avoid divergence;
+   implement as-specced for maximum compatibility.
 2. **Validation gates**: per-change executable validation (PRP borrow) + the integration-gate
    concept. Needed for autonomous worktree runs to self-verify and for safe assembly.
    Execution side is free — Archon's `loop`/`until_bash` IS the gate runner; OpenSpec only
