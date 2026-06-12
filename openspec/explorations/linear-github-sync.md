@@ -106,6 +106,25 @@ graduation to actually happen.
 
 ## Linear as driver — feasibility investigation (2026-06)
 
+### Constraint (user, hard): all compute on own hardware — and the Agents API satisfies it
+
+**Linear runs zero inference.** The Agents API is a *protocol, not a runtime*: a Linear
+"agent" is an OAuth app YOU build and host — Linear fires webhooks at your endpoint, your
+server (Archon, on your hardware) does ALL planning/inference/implementation, and posts
+agent activities back via GraphQL. Session states are metadata derived from your emitted
+activities. Same trust model as a GitHub App. Marketplace agents (Cursor/Devin/…) host
+their own backends too — here the "product" is your own Archon.
+
+Model ownership is likewise already satisfied inside Archon: per-node provider/model from
+the registry (Claude, Codex, **Pi with ~20 backends incl. ollama** — local models), and
+`tiers:` config maps small/medium/large to any provider+model → cheap steps (classification)
+on local models is `tiers.small: {provider: pi, model: ollama/...}` today, composing with
+the per-change tier routing in `phase-graph-unified-model.md`.
+
+Honest residual dependency: Linear itself is proprietary SaaS — agents and compute are
+yours, but the *coordination plane* (issues, sessions, webhooks) is their API. Same
+dependency as using Linear at all; the polling driver (stage 2) keeps the coupling thinner.
+
 ### The enabling fact: Linear's Agents API exists and matches the vision exactly
 
 Verified live (linear.app/developers/agents, Developer Preview as of mid-2026):
