@@ -40,6 +40,15 @@ explore → proposal/specs → [WHAT-review gate] → design → tasks → [HOW-
 ## Inspiration sources (verified paths — to scout deeply together)
 
 **Multi-dimension review panels (the pattern):**
+- **archon-dev** (`archon/.claude/skills/archon-dev/cookbooks/review.md`): the most complete
+  single recipe — parallel agent panel (correctness, silent-failures, test-coverage,
+  simplification — launched conditionally by change size/type), then **synthesize**: dedup
+  across agents, severity taxonomy (Critical/High/Medium/Low), **self-verify top findings by
+  reading the code** before reporting, and a verdict model (APPROVE / REQUEST_CHANGES / BLOCK
+  with explicit criteria). Two properties to port: (1) **artifact-aware review** — it reads
+  the implementation report + plan first, treats *documented* deviations as intentional and
+  flags only *undocumented* ones (see `executable-plans-and-feedback-loop.md`); (2) automated
+  validation (type/lint/test) runs as part of review, not separately.
 - **gstack** (`.agents/skills/`): the review army — `gstack-plan-ceo-review/` (strategy/scope ≈
   WHAT), `gstack-plan-eng-review/` (architecture ≈ HOW), `gstack-plan-design-review/` &
   `gstack-design-review/` (design/UX), `gstack-plan-devex-review/`, `gstack-review/` (PR/code ≈

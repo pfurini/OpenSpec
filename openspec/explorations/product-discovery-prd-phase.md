@@ -55,6 +55,10 @@ pitch → PR/FAQ. The validation gate "always fires" — including on a PRD a sp
   the phases/technical out of the PRD.
 - **gsd-core** (`commands/gsd/`): `ns-ideate.md`, `new-project.md`, `sketch.md`, `surface.md`,
   and the front of `discuss-phase.md`.
+- **archon-dev** (`archon/.claude/skills/archon-dev/cookbooks/prd.md`): another PRD cookbook in
+  the research→investigate→prd→plan chain; same caveat as prp-prd (their PRD carries an
+  Implementation Phases table the plan cookbook consumes — that part is the phase-graph's job
+  here, not the PRD's).
 
 ## Open items to discuss together
 

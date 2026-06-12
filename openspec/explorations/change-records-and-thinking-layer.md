@@ -85,8 +85,6 @@ Still deferred (revisit only if drift/scale bites):
 - **`openspec adr` CLI** (`list --json`, `promote --change`): chosen prompt-only for now.
   Promotion is an agent Edit; ADR reads are markdown. Build the CLI when the markdown-only
   approach proves fragile or unqueryable at scale (this is the §2 graduation question for ADRs).
-- **init scaffolding** of `openspec/adr/` and `openspec/glossary.md`: created lazily on
-  first write today (same as `explorations/`); formalize in `init` if convention solidifies.
 
 ## Related
 - `openspec/explorations/explore-workflow-ux.md`

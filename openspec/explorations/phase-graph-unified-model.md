@@ -13,14 +13,39 @@ Confirmed decisions:
 - Integration gate lives on the **initiative**; per-unit gate on each **change**.
 - Maps onto existing OpenSpec primitives (initiative / change / design / tasks) — extend, don't invent.
 
-## The harness (given)
+## The harness (given) — grounded against the Archon skill (2026-06)
 
 Archon (`/Users/paolof/Developer/ai/archon`) is a "harness builder for AI coding": a
-workflow = a **static DAG of prompt-nodes** (`id`, `prompt`, `depends_on`, output refs like
-`$node.output`), verification-as-a-node included. The user's plan: an **orchestrator** (a
-Claude Code session) walks OpenSpec's **change graph**, spawns one Archon **workflow run per
-ready unit in its own git worktree**, then merges the worktree outputs in dependency order to
-assemble the final feature.
+workflow = a **static DAG of nodes** in YAML (`.archon/workflows/`), run via
+`archon workflow run <name> --branch <branch> "<message>"`. Grounding facts (from
+`.claude/skills/archon/SKILL.md` + Archon's CLAUDE.md) that shape this model:
+
+- **Seven node types**, not just prompts: `command` (a `.archon/commands/*.md` file),
+  `prompt`, `bash`, `script` (bun/uv), `loop`, `approval`, `cancel`. Outputs flow as
+  `$nodeId.output` (structured via `output_format` + schema validation, field access
+  `$nodeId.output.field`); `when:` conditions + `trigger_rule` give conditional routing.
+- **Independent nodes in the same topological layer run concurrently** (definitive, per
+  Archon's CLAUDE.md) — intra-run parallelism is real, but all nodes share the run's ONE
+  worktree.
+- **`loop` nodes with `until_bash`** ("iterate the AI until this command exits 0") are the
+  **native per-unit validation-gate primitive** — the PRP-style validation loop, built in.
+  OpenSpec's job is to *declare* the gate commands; Archon executes the loop.
+- **`approval` nodes** (+ `on_reject` rework, interactive relay protocol) — human gates
+  exist *inside* a run; unit workflows aren't forced to be fully autonomous.
+- **Worktree lifecycle is Archon-native**: `--branch` auto-creates the worktree;
+  `archon isolation list/cleanup` + `archon complete <branch>` tear down; `--resume`
+  re-runs a failed run skipping completed nodes; `--detach` + `workflow runs/get --json`
+  give monitoring. The orchestrator does NOT manage worktrees — it walks the change graph,
+  names branches, launches runs, polls JSON, merges cohorts.
+- **`$ARTIFACTS_DIR`** — per-run artifacts dir outside git (+ typed `output_type` sidecars)
+  — where unit reports land.
+- Stock workflows already cover plan→PR (`archon-plan-to-pr`, `archon-feature-development`,
+  `archon-ralph-dag`): a custom `openspec-implement-change` workflow is a small delta, not
+  greenfield.
+
+The user's plan: an **orchestrator** (a Claude Code session) walks OpenSpec's **change
+graph**, spawns one Archon **workflow run per ready unit in its own git worktree**, then
+merges the worktree outputs in dependency order to assemble the final feature.
 
 ## The big question, answered
 
@@ -47,9 +72,9 @@ the signal to `split` them into sibling changes — not to parallelize tasks acr
 Mapping to Archon: **change = workflow run = worktree; tasks = workflow nodes (with
 `depends_on`); per-task acceptance / change validation = verify nodes.** So the "rich
 parallelism-aware task-builder" is **not** discarded — it is the node-level layer of this
-model (the design's decomposition seeds the workflow's node DAG). (Open: confirm whether Archon
-runs independent nodes concurrently or just orders them; either way the task DAG is the natural
-node source.)
+model (the design's decomposition seeds the workflow's node DAG). (Resolved: Archon runs
+independent nodes in the same topological layer concurrently — the task DAG maps 1:1 onto
+real intra-run parallelism, within one shared worktree.)
 
 ## Refinement: TWO decomposition axes (this resolves most of the child-WHAT problem)
 
@@ -123,19 +148,23 @@ Graph-level (for the orchestrator):
    block). This is the orchestration contract — highest leverage.
 2. **Validation gates**: per-change executable validation (PRP borrow) + the integration-gate
    concept. Needed for autonomous worktree runs to self-verify and for safe assembly.
+   Execution side is free — Archon's `loop`/`until_bash` IS the gate runner; OpenSpec only
+   declares the commands.
 3. **Right-sizing + split**: guidance for "atomic enough for one run?" and the parent-WHAT /
    child-HOW-inherit model; `change split`.
 4. **Task DAG → Archon nodes**: formalize design's Components & Dependencies to a `--json` node
    seed (the deferred task-builder). Lower priority — design already emits the prose form.
+   **Content spec captured** in `executable-plans-and-feedback-loop.md` (self-sufficiency
+   standard: Mandatory Reading, Patterns to Mirror, per-task Validate, NO_PRIOR_KNOWLEDGE_TEST
+   — what a cold autonomous run needs that an interactive session doesn't).
 
 ## Open questions — updated
 
-- **Node concurrency (resolved enough):** Archon has a `maxConcurrent` conversation pool
-  (default 10), so it *can* run independent nodes concurrently — but all nodes of a run share
-  **one worktree**. So node-concurrency ≠ worktree-isolation: intra-change parallelism is
-  in-process concurrency over a shared filesystem (fine for disjoint files, risky for shared);
-  worktree-level isolation only exists at the **change** grain. The model doesn't depend on
-  which Archon does — the change grain is the isolation unit either way.
+- **Node concurrency (RESOLVED, definitive):** independent nodes in the same topological
+  layer run concurrently (Archon CLAUDE.md) — but all nodes of a run share **one worktree**.
+  Node-concurrency ≠ worktree-isolation: intra-change parallelism is concurrency over a
+  shared filesystem (fine for disjoint files, risky for shared); worktree-level isolation
+  only exists at the **change** grain — reinforcing change-as-the-unit.
 - **Integration-gate home (resolved):** the **initiative**. The feature-level WHAT = the
   composition of its capability changes; the integration gate = the cross-change acceptance
   (scenarios spanning changes), run by the orchestrator after each merge cohort.
@@ -146,6 +175,14 @@ Graph-level (for the orchestrator):
 - **Still open:** does a capability-change's per-unit gate run the *full* spec scenarios or
   only the subset it owns? (For capability-axis changes the change owns all its specs, so:
   full. The subset question only arises for HOW-slice children — another reason to defer them.)
-- **Still open:** how does the orchestrator obtain a unit's full context package (specs +
-  design + tasks + gates + graph position) in one call — a new `openspec change package --json`,
-  or does it stitch existing `status`/`instructions`/`change graph` outputs?
+- **Change-package contract (direction RESOLVED — pull, not push):** the unit workflow's
+  *first node* is a `bash` node that pulls the package from the OpenSpec CLI inside the
+  worktree (`openspec status/instructions --json`, or a future `openspec change package
+  --json`); the orchestrator passes only the change name as `$ARGUMENTS`. The package flows
+  to downstream nodes as `$nodeId.output`. Still open: whether the stitched existing
+  commands suffice or a single `change package --json` is worth building (decide when
+  authoring the `openspec-implement-change` workflow).
+- **Per-unit gate primitive (resolved):** a `loop` node with `until_bash: "<gate command>"`
+  (or a `bash` assertion + `when:`-gated `cancel`). OpenSpec declares the gate commands per
+  change; the workflow executes them natively. Failed runs resume via `archon workflow
+  resume` (completed nodes skipped).

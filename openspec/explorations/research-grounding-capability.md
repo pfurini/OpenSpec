@@ -37,9 +37,19 @@ HOW-research (architecture, feasibility) so it doesn't drag the HOW into explore
 
 ## Inspiration sources (verified paths — to scout deeply together)
 
-- **PRPs-agentic-eng** (`plugins/prp-core/`): the cleanest model. Agents
-  `agents/web-researcher`, `agents/codebase-explorer` (WHERE + patterns),
-  `agents/codebase-analyst` (HOW end-to-end, `file:line`, "no suggestions"). `commands/prp-prd.md`
+- **archon-dev** (`archon/.claude/skills/archon-dev/cookbooks/`): **the best concrete recipe
+  found so far** — `investigate.md` (strategic research: FRAME the question by type
+  [compare / explore / feasibility / prior-art] + state the *decision needed* → 2-3 parallel
+  agents [web-researcher always; codebase explorer always; analyst for feasibility] → ASSESS
+  each option against the codebase [alignment / integration effort / trade-off table] →
+  RECOMMEND with explicit confidence → durable artifact in `research/` with front-matter
+  [date, type, status, recommendation]). Distinguishes cleanly from `research.md` (pure
+  codebase questions, "document what exists, no suggestions"). Key properties to port: the
+  *decision-needed* framing, codebase-fit as a first-class evaluation dimension, and
+  opinionated RECOMMEND (vs neutral survey).
+- **PRPs-agentic-eng** (`plugins/prp-core/`): the same agent trio
+  (`agents/web-researcher`, `agents/codebase-explorer` (WHERE + patterns),
+  `agents/codebase-analyst` (HOW end-to-end, `file:line`, "no suggestions")). `commands/prp-prd.md`
   fires them **in parallel at two grounding gates** (market, then technical feasibility) and
   summarizes back. Also `commands/prp-research-team.md` (dynamic research team via agent teams).
 - **gsd-core** (`commands/gsd/`): `map-codebase.md`, `ingest-docs.md`, `forensics.md`,
