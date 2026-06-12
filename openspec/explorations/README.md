@@ -44,7 +44,13 @@ section, falsifiability gate, flow-to-gate continueMode, MECHANICAL-ONLY tasks),
 
 ## Recommended next steps (in order)
 
-0. **Acceptance tests on lexup (~30 min, validates shipped prompt work):**
+0. ✅ **DONE (2026-06-12, 100% pass under the cold-handoff protocol).** Verified live:
+   archive moved all 5 artifacts; ADR-0037 re-derived through the interview and promoted
+   (`change:` link, `accepted` + date); proposal Constraints grouped + falsifiable with an
+   HONEST "None" (no fabrication); specs vibe-word-clean; tasks zero deferred decisions;
+   design fed a spec-wording fix back to the WHAT properly. lexup reverted to pre-test
+   state afterward (the change is active again, planning artifacts regenerated and valid).
+   ~~Acceptance tests on lexup (~30 min, validates shipped prompt work):~~
    (a) run `/opsx:design` on a real change — expect one-question-at-a-time interview,
    ADR-worthy decisions confirmed with the user, nothing deferred to tasks;
    (b) design→archive ADR lifecycle — ADR written to `docs/adr/` with `change:` +
