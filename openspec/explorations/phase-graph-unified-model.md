@@ -69,12 +69,16 @@ the signal to `split` them into sibling changes — not to parallelize tasks acr
 | **Inter-change** | Change DAG (`dependsOn`/`touches`) → which workflows run in which worktrees + merge order | change stack metadata | the **orchestrator** | specced (`add-change-stacking-awareness`), unimplemented |
 | **Intra-change** | Task DAG (units, interfaces, `depends_on`) → the **nodes of a single Archon workflow run** | design's **Components & Dependencies** | **one workflow run** | deferred task-builder — now with a concrete consumer |
 
-Mapping to Archon: **change = workflow run = worktree; tasks = workflow nodes (with
-`depends_on`); per-task acceptance / change validation = verify nodes.** So the "rich
-parallelism-aware task-builder" is **not** discarded — it is the node-level layer of this
-model (the design's decomposition seeds the workflow's node DAG). (Resolved: Archon runs
-independent nodes in the same topological layer concurrently — the task DAG maps 1:1 onto
-real intra-run parallelism, within one shared worktree.)
+Mapping to Archon — **corrected after grounding on the static-DAG constraint** (workflow
+YAML is parsed at load time; nodes cannot be minted from a change's tasks at run time):
+**change = workflow run = worktree; workflow nodes = PHASES (prime → implement → validate →
+report), NOT tasks; the task DAG executes as dependency-ordered iterations of ONE static
+loop node, with state on disk** (the Ralph pattern — see "Intra-change execution" below).
+The "rich parallelism-aware task-builder" is still not discarded: its output is the loop's
+*work queue* (per-task `dependsOn` / acceptance / completion state), which Archon's stock
+`archon-ralph-dag` proves out as `prd.json`. (Archon does run same-layer nodes concurrently,
+but in ONE shared worktree — so node-level parallel *code-writing* is rejected by our own
+invariant anyway; node parallelism stays reserved for read-only phases like review.)
 
 ## Refinement: TWO decomposition axes (this resolves most of the child-WHAT problem)
 
@@ -190,4 +194,47 @@ Graph-level (for the orchestrator):
 - **Per-unit gate primitive (resolved):** a `loop` node with `until_bash: "<gate command>"`
   (or a `bash` assertion + `when:`-gated `cancel`). OpenSpec declares the gate commands per
   change; the workflow executes them natively. Failed runs resume via `archon workflow
-  resume` (completed nodes skipped).
+  resume` (completed nodes skipped). **Premature-complete trap:** `until_bash` is checked
+  after EVERY iteration — a change-level gate can go green while tasks remain (tests for
+  unwritten parts don't exist yet). The exit check must be "no unchecked tasks AND gate
+  green", e.g. `! grep -q '"passes": false' tasks.json && <gate>`.
+
+## Intra-change execution — the static-DAG question (discussed 2026-06, leaning C)
+
+Archon DAGs are static (parsed at load time) → nodes cannot be created from a change's
+tasks at run time. Three mechanisms considered:
+
+- **A — single implement node** (shape of `archon-fix-github-issue-experimental.yaml`): one
+  `command:` node implements the whole change; DAG = phases; variability via classifier +
+  `when:` gates ("static shape, dynamic routing" — Archon's native answer to variability).
+  Cost: whole-change context in one window; node-grain resume only.
+- **C — static loop node, task list as durable work queue** (the **Ralph pattern**, shipped
+  as stock `archon-ralph-dag`): `loop` + `fresh_context: true`; each iteration picks "the
+  highest-priority task where done==false AND all dependsOn done", implements it, runs
+  per-task validation (type/lint/test/format + acceptance criteria), **commits per task**,
+  flips the completion flag, appends learnings. Proven properties: dependency-ordered
+  dynamic execution inside a static DAG; disk state = resume state (max_iterations
+  exhaustion is benign — rerun/resume continues); per-task events
+  (`workflow event emit` → orchestrator visibility); `progress.txt` with a
+  `## Codebase Patterns` section = cross-iteration memory defeating context rot (and our
+  implementation-report loop, live). Caveats: loop nodes ignore `output_format` /
+  `allowed_tools` / `retry`; docs say `model:` is ignored on loops yet ralph-dag sets
+  `model: large` — verify empirically.
+- **B — meta-orchestration** (orchestrator generates `impl-<change>.yaml` from design's
+  decomposition; generated-then-static, lint via `archon validate workflows`): demoted from
+  "v2" to "revisit only if a concrete need survives Ralph" — its parallelism payoff is void
+  (one shared worktree + our split invariant), per-task visibility is covered by events,
+  leaving only per-component model routing. If ever built: sequential chains by default,
+  parallel layers only for declared file-disjoint components.
+
+**Killer convergence:** ralph's `prd.json` story schema (per-task id / acceptanceCriteria /
+technicalNotes / dependsOn / priority / passes / notes) **is the output spec of our deferred
+rich task-builder** — the consumer's contract already exists. `openspec-implement-change`
+≈ ralph-dag with: PRD nodes → bash change-package pull; gate commands from the change's
+declared gates; report node → our unit report.
+
+**Remaining fork (NOT yet decided):** the work-queue format. `tasks.md` checkboxes (human
+path) vs a prd.json-shaped `tasks.json` (harness path) — one artifact, a generated sibling
+view, or task-builder emits JSON from design at handoff. A deep-planning schema decision;
+ties directly to `executable-plans-and-feedback-loop.md` §1 and its open item "fatten
+tasks.md or a sibling artifact".

@@ -74,10 +74,25 @@ Mapping into OpenSpec / the harness model:
 - **Project detection over hardcoding** (lockfile → runner; read the repo's CLAUDE.md for
   conventions) — already our style; keep it for gate-command detection.
 
+## Convergent evidence: Archon's ralph `prd.json` (added 2026-06)
+
+Archon's stock `archon-ralph-dag` consumes a work-queue file whose story schema is, almost
+field-for-field, this note's §1: `id`, `title`, `description` (user-story form),
+`acceptanceCriteria[]`, `technicalNotes`, `dependsOn[]`, `priority`, `passes` (durable
+completion state), `notes`. Its loop protocol also implements §3 live: per-task validation
+before a per-task commit, `progress.txt` appended per iteration with **Files changed /
+criteria verified / Learnings**, and a `## Codebase Patterns` section that future
+fresh-context iterations read first. The harness consumer's contract for the rich
+task-builder therefore already exists — design the tasks output to satisfy it.
+(See `phase-graph-unified-model.md` → "Intra-change execution".)
+
 ## Open items to discuss together
 
 - Where does the context payload live: fatten `tasks.md`, or a distinct executable-plan
   artifact between design and tasks? (Schema change either way; affects deep-planning.)
+  **Sharpened by the ralph evidence:** the harness path wants a prd.json-shaped
+  `tasks.json` (machine work queue with dependsOn/acceptance/state); the human path wants
+  `tasks.md`. One source, two views — or JSON generated at handoff. Undecided.
 - Are Mandatory Reading / Patterns-to-Mirror produced by `/opsx:design` (it already reads the
   code) or by the task-builder pass? Design already cites `path:line` — the delta is snippets
   + per-task wiring.
