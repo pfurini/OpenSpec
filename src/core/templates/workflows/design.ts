@@ -75,10 +75,10 @@ Litmus: *would a reasonable engineer implementing this plausibly make a differen
 
 ## Design for Decomposition — the spine
 
-Decompose the work into **well-bounded units, each with one clear purpose, a defined interface, and named dependencies** — the precondition that lets the work be split across parallel agents downstream:
+Decompose the work into **well-bounded units, each with one clear purpose, a defined interface, and named dependencies** — the precondition for the downstream TDD wave map:
 
 - **Components** — each unit: purpose (one line), interface (inputs/outputs), depends-on (other units / existing modules).
-- **Build sequence & parallelism** — which units are independent (parallelizable) vs ordered. This is the seed of the task graph.
+- **Slice composition** — the dependency edges between units, and for each capability: *independently valuable* (a split signal — surface it; genuinely separable, separately-valuable work wants to be a **sibling change**, not a unit here) vs *simply unordered* (ordering freedom). Do **not** frame units as "parallelizable": code-writing inside one change is single-worktree and serialized. This map seeds the wave ordering downstream.
 
 A unit you can't describe by purpose + interface + dependencies isn't bounded yet — keep shaping it. Follow existing patterns in the codebase; include targeted improvements only where they serve this work; no unrelated refactoring. YAGNI — cut scope the spec doesn't need.
 
@@ -91,6 +91,8 @@ ${PRIME_RITUAL}
 
 For design specifically: the **proposal + specs** are the WHAT you build against — read them in full, not just to orient. The exploration note's **Parked Design Seeds** (incl. any \`candidate ADR\` tags) are your HOW starting points. The accepted **ADRs** are hard constraints; the **glossary** fixes the vocabulary your note and ADRs must use.
 
+**Skills discovery — record the ground-truth references.** Project skills are the harness's backbone, and they must enter as *recorded references in artifacts*, never as session memory (cold-handoff safe). If the exploration note already recorded a resolved skill set, that is your input — carry it forward. Otherwise discover it now: glob \`.agents/skills/*/SKILL.md\` and \`.claude/skills/*/SKILL.md\`, read their front-matter \`description\`s, and match them to this change's capabilities (an \`openspec/config.yaml\` \`skills:\` block, if present, pins/adds/excludes — its override wins). Note especially any **test-strategy** skill (the project's scenario→layer table + mock allowlist + enforced bans) — its Testing-approach contribution is load-bearing. You will cite these skills per component (by path) in the design note so the wave map and JIT plans can list them as Mandatory Reading.
+
 ### 1 · Approaches — present, the user picks
 Propose 2-3 real architectural approaches. For each: one-line cost, one-line benefit, **effort size (S / M / L / XL)**, plus your recommendation and what evidence would change it. **Present and wait for the user's pick** — this is the first and biggest fork. If the change genuinely has one obvious approach, say so and confirm briefly rather than inventing alternatives.
 
@@ -98,7 +100,7 @@ Propose 2-3 real architectural approaches. For each: one-line cost, one-line ben
 Walk the decision tree (above) — one question at a time, recommendation, wait — for the forks that matter. Auto-decide the trivia. Settle everything; defer nothing to tasks.
 
 ### 3 · Decompose
-Turn the chosen approach into components + interfaces + dependencies + a parallelism map (see the spine above).
+Turn the chosen approach into components + interfaces + dependencies + the slice-composition map (see the spine above).
 
 ### 4 · Present the design shape — get approval
 Before writing anything, present the shape back to the user, scaled to complexity — a few sentences for a simple change; the approach + decomposition + the load-bearing decisions for a complex one. Ask "does this look right?" and fold in corrections. **This is the gate: don't write the note until the user has confirmed the shape.**
@@ -108,8 +110,10 @@ Capture the settled HOW in \`<changeRoot>/design-notes.md\` — exactly what \`/
 - **Context** — current state cited by \`path:line\`; constraints; relevant ADRs (reference, don't re-argue).
 - **Goals / Non-Goals**.
 - **Decisions** — every settled choice + rationale + alternatives considered; reference ADRs for the load-bearing ones.
-- **Components & Dependencies** — the decomposition (units, interfaces, depends-on, parallelism). *The task-builder precondition.*
-- **Data model / API shapes**, **Data flow & error handling**, **Testing approach**, **Risks / Trade-offs**, **Migration / Rollback**.
+- **Components & Dependencies** — the decomposition (units, interfaces, depends-on, slice composition). For each unit, cite the **project skills** that govern it (by SKILL.md path — the ground-truth references, see Prime). *The wave-map precondition.*
+- **Data model / API shapes**, **Data flow & error handling**.
+- **Testing approach** — **decide the test layer per spec scenario here** (unit / integration / component / e2e). Cheapest layer that genuinely *proves* the scenario; *proves* dominates *cheap*. If the project has a **test-strategy** skill (cited in Components above), apply its scenario-class → layer table; else reason from first principles and record it. Multi-page / gate / redirect flows prove at e2e, not unit piles. This is transcribed verbatim into the wave map's coverage map — leave none of it open.
+- **Risks / Trade-offs**, **Migration / Rollback**.
 - **Open Questions** — genuine, explicitly-deferred unknowns only (often empty). Never dodged decisions.
 
 Scale each section to its weight; skip what doesn't apply. Don't pad.
@@ -165,7 +169,7 @@ export function getOpsxDesignSkillTemplate(): SkillTemplate {
   return {
     name: 'openspec-design',
     description:
-      'Enter design mode - an interactive HOW-thinking partner that interviews you to settle the architecture, then turns a settled WHAT (proposal + specs) into a design note + ADRs, decomposed into well-bounded, parallelizable units. A pure thinker: /opsx:continue transcribes design.md from its note. Use after requirements are settled, to think through how to build it.',
+      'Enter design mode - an interactive HOW-thinking partner that interviews you to settle the architecture, then turns a settled WHAT (proposal + specs) into a design note + ADRs, decomposed into well-bounded units that compose into a TDD wave map. A pure thinker: /opsx:continue transcribes design.md from its note. Use after requirements are settled, to think through how to build it.',
     instructions: DESIGN_BODY,
     license: 'MIT',
     compatibility: 'Requires openspec CLI.',
@@ -177,7 +181,7 @@ export function getOpsxDesignCommandTemplate(): CommandTemplate {
   return {
     name: 'OPSX: Design',
     description:
-      'Enter design mode - interview to settle the HOW, then write a design note + ADRs decomposed for parallel build (continue transcribes design.md)',
+      'Enter design mode - interview to settle the HOW, then write a design note + ADRs decomposed into well-bounded units for a TDD wave map (continue transcribes design.md)',
     category: 'Workflow',
     tags: ['workflow', 'design', 'experimental', 'thinking'],
     content: `${DESIGN_BODY}

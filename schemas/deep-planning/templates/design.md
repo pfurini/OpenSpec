@@ -16,15 +16,20 @@
 
 ## Components & Dependencies
 
-<!-- The decomposition. THIS IS THE CONTRACT the downstream task builder consumes.
-     Each unit: purpose (one line), interface (inputs/outputs), depends-on (other units / existing modules). -->
+<!-- The decomposition. THIS IS THE CONTRACT the downstream wave map consumes.
+     Each unit: purpose (one line), interface (inputs/outputs), depends-on (other units /
+     existing modules), and the project skills that govern it (by SKILL.md path - the
+     ground-truth references the wave map and JIT plans cite as Mandatory Reading). -->
 
-| Component | Purpose | Interface | Depends on |
-|-----------|---------|-----------|------------|
-| `<unit>`  | <one line> | <inputs/outputs> | <units / modules> |
+| Component | Purpose | Interface | Depends on | Skills |
+|-----------|---------|-----------|------------|--------|
+| `<unit>`  | <one line> | <inputs/outputs> | <units / modules> | `<path/to/SKILL.md>` |
 
-**Build sequence & parallelism:**
-<!-- Which units are independent (parallelizable) vs ordered (must follow a dependency). -->
+**Slice composition:**
+<!-- The dependency edges between units, and for each capability: independently valuable
+     (a split signal - flag it) vs simply unordered (ordering freedom). NOT "parallelizable":
+     code-writing in one change is single-worktree/serial; separately-valuable work is a
+     sibling change, not a parallel unit. This map seeds the wave map's ordering. -->
 
 ## Data Model / API Shapes
 
@@ -36,7 +41,14 @@
 
 ## Testing Approach
 
-<!-- What to cover at unit / integration / e2e, tied to the spec scenarios. -->
+<!-- DECIDE the test layer per spec scenario here (transcribed verbatim into the tasks
+     coverage map - tasks decides nothing). Cheapest layer that genuinely PROVES the
+     scenario; proves dominates cheap. Apply the project test-strategy skill's table if one
+     exists. Multi-page/gate/redirect flows -> e2e, not unit piles. -->
+
+| Spec scenario | Test layer | Why this layer |
+|---------------|-----------|----------------|
+| `<scenario>`  | unit/integration/component/e2e | <what it proves> |
 
 ## Risks / Trade-offs
 

@@ -21,6 +21,7 @@ import {
   validateSchemaExists,
   type TaskItem,
   type ApplyInstructions,
+  type WaveInstructions,
 } from './shared.js';
 
 // -----------------------------------------------------------------------------
@@ -36,6 +37,13 @@ export interface InstructionsOptions {
 export interface ApplyInstructionsOptions {
   change?: string;
   schema?: string;
+  json?: boolean;
+}
+
+export interface WaveInstructionsOptions {
+  change?: string;
+  schema?: string;
+  wave?: string;
   json?: boolean;
 }
 
@@ -451,6 +459,186 @@ export function printApplyInstructionsText(instructions: ApplyInstructions): voi
   }
 
   // Instruction
+  console.log('### Instruction');
+  console.log(instruction);
+}
+
+// -----------------------------------------------------------------------------
+// Wave-Plan Instructions Command
+// -----------------------------------------------------------------------------
+
+/**
+ * Parses a `--wave N` option into a non-negative integer wave number.
+ * Wave 0 is the tracer-bullet wave, so 0 is valid.
+ */
+function parseWaveNumber(raw: string | undefined): number {
+  if (raw === undefined) {
+    throw new Error('Missing required option --wave <n> (the wave to plan; 0 = tracer bullet).');
+  }
+  const wave = Number(raw);
+  if (!Number.isInteger(wave) || wave < 0) {
+    throw new Error(`Invalid --wave value '${raw}': must be a non-negative integer (0 = tracer bullet).`);
+  }
+  return wave;
+}
+
+/**
+ * Generates wave-plan instructions: the just-in-time planner prompt for a single
+ * wave of a change. Mirrors generateApplyInstructions but serves the schema's
+ * `wavePlan` block instead of `apply`. Intentionally THIN — it does not parse or
+ * slice the wave map; it serves the static planner payload + context files + the
+ * target wave + output path, and the planner reads the `## Wave N` section itself.
+ */
+export async function generateWaveInstructions(
+  projectRoot: string,
+  changeName: string,
+  wave: number,
+  schemaName?: string,
+  planningHome = resolveCurrentPlanningHomeSync({ startPath: projectRoot })
+): Promise<WaveInstructions> {
+  // loadChangeContext will auto-detect schema from metadata if not provided
+  const context = loadChangeContext(projectRoot, changeName, schemaName, {
+    changeDir: getChangeDir(planningHome, changeName),
+    planningHome,
+  });
+  const changeDir = context.changeDir;
+
+  // Get the full schema to access the wavePlan phase configuration
+  const schema = resolveSchema(context.schemaName, projectRoot);
+  const waveConfig = schema.wavePlan;
+
+  if (!waveConfig) {
+    throw new Error(
+      `Schema '${context.schemaName}' has no wavePlan block. The wave-plan endpoint is only available for schemas that declare one (e.g. deep-planning).`
+    );
+  }
+
+  // Check which required artifacts are missing
+  const missingArtifacts: string[] = [];
+  for (const artifactId of waveConfig.requires) {
+    const artifact = schema.artifacts.find((a) => a.id === artifactId);
+    if (artifact && resolveArtifactOutputs(changeDir, artifact.generates).length === 0) {
+      missingArtifacts.push(artifactId);
+    }
+  }
+
+  // Build context files (Mandatory Reading) from all existing artifacts in schema
+  const contextFiles: Record<string, string[]> = {};
+  for (const artifact of schema.artifacts) {
+    const outputs = resolveArtifactOutputs(changeDir, artifact.generates);
+    if (outputs.length > 0) {
+      contextFiles[artifact.id] = outputs;
+    }
+  }
+
+  const outputPath = path.join(changeDir, 'plans', `wave-${wave}.md`);
+
+  let state: WaveInstructions['state'];
+  let instruction: string;
+
+  if (missingArtifacts.length > 0) {
+    state = 'blocked';
+    instruction = `Cannot plan a wave yet. Missing artifacts: ${missingArtifacts.join(', ')}.\nUse the openspec-continue-change skill to create the missing artifacts first.`;
+  } else {
+    state = 'ready';
+    instruction =
+      waveConfig.instruction?.trim() ??
+      'Read the context files and the target wave block in tasks.md, then write the executable plan for this wave.';
+  }
+
+  return {
+    changeName,
+    changeDir,
+    schemaName: context.schemaName,
+    ...(context.initiative ? { initiative: context.initiative } : {}),
+    wave,
+    contextFiles,
+    outputPath,
+    state,
+    missingArtifacts: missingArtifacts.length > 0 ? missingArtifacts : undefined,
+    instruction,
+  };
+}
+
+export async function waveInstructionsCommand(options: WaveInstructionsOptions): Promise<void> {
+  const spinner = options.json ? undefined : ora('Generating wave-plan instructions...').start();
+
+  try {
+    const wave = parseWaveNumber(options.wave);
+    const planningHome = resolveCurrentPlanningHomeSync();
+    const projectRoot = planningHome.root;
+    const changeName = await validateChangeExists(
+      options.change,
+      projectRoot,
+      planningHome.changesDir
+    );
+
+    // Validate schema if explicitly provided
+    if (options.schema) {
+      validateSchemaExists(options.schema, projectRoot);
+    }
+
+    const instructions = await generateWaveInstructions(
+      projectRoot,
+      changeName,
+      wave,
+      options.schema,
+      planningHome
+    );
+
+    spinner?.stop();
+
+    if (options.json) {
+      console.log(JSON.stringify(instructions, null, 2));
+      return;
+    }
+
+    printWaveInstructionsText(instructions);
+  } catch (error) {
+    spinner?.stop();
+    throw error;
+  }
+}
+
+export function printWaveInstructionsText(instructions: WaveInstructions): void {
+  const { changeName, schemaName, initiative, wave, contextFiles, outputPath, state, missingArtifacts, instruction } =
+    instructions;
+
+  console.log(`## Wave plan: ${changeName} — wave ${wave}`);
+  console.log(`Schema: ${schemaName}`);
+  if (initiative) {
+    console.log(`Initiative: ${initiative.store}/${initiative.id}`);
+  }
+  console.log();
+
+  // Warning for blocked state
+  if (state === 'blocked' && missingArtifacts) {
+    console.log('### ⚠️ Blocked');
+    console.log();
+    console.log(`Missing artifacts: ${missingArtifacts.join(', ')}`);
+    console.log('Use the openspec-continue-change skill to create these first.');
+    console.log();
+  }
+
+  // Mandatory Reading (context files, dynamically from schema)
+  const contextFileEntries = Object.entries(contextFiles);
+  if (contextFileEntries.length > 0) {
+    console.log('### Mandatory Reading');
+    console.log('Read these before planning the wave. The target wave is the `## Wave ' + wave + '` section of tasks.md.');
+    for (const [artifactId, filePaths] of contextFileEntries) {
+      for (const filePath of filePaths) {
+        console.log(`- ${artifactId}: ${filePath}`);
+      }
+    }
+    console.log();
+  }
+
+  // Output location
+  console.log('### Output');
+  console.log(`Write the executable plan to: ${outputPath}`);
+  console.log();
+
+  // Instruction (the static planner payload spec)
   console.log('### Instruction');
   console.log(instruction);
 }

@@ -5,7 +5,8 @@ description: >
   WHAT and /opsx:design reasons about the HOW; both produce durable thinking records
   (exploration note, design note, ADRs). The generic writer (e.g. /opsx:continue)
   then transcribes proposal -> specs -> design -> tasks from those records, with the
-  design decomposed into well-bounded units for downstream parallel task building.
+  design decomposed into well-bounded units that compose into a TDD wave map for
+  autonomous, harness-driven execution.
 
 # Draft consecutive mechanical artifacts (proposal -> specs) in one /opsx:continue,
 # stopping at the design gate (which needs a /opsx:design thinking note first).
@@ -94,12 +95,24 @@ artifacts:
       - **Goals / Non-Goals**.
       - **Decisions**: key technical choices + rationale + alternatives considered; reference ADRs for the load-bearing ones.
       - **Components & Dependencies**: the decomposition from the design note - each unit with
-        its purpose (one line), interface (inputs/outputs), and depends-on (other units / existing
-        modules); plus a build sequence / parallelism map (which units are independent vs ordered).
-        THIS SECTION IS THE CONTRACT the downstream task builder consumes - do not omit or hand-wave it.
+        its purpose (one line), interface (inputs/outputs), depends-on (other units / existing
+        modules), and the **project skills** that govern it (by SKILL.md path - transcribe these
+        from the design note; the wave map and JIT plans cite them as Mandatory Reading, so they
+        must survive into design.md, not stay only in the note); plus a **slice composition** map - the dependency edges between units and which
+        capabilities are independently valuable (a split signal, surfaced in design) vs simply
+        unordered (ordering freedom). Do NOT frame units as "parallelizable": code-writing inside
+        one change is single-worktree and serialized; genuinely independent, separately-valuable
+        work is a sibling change, not a parallel unit here.
+        THIS SECTION IS THE CONTRACT the downstream wave map consumes - do not omit or hand-wave it.
       - **Data model / API shapes**: concrete enough that an implementer makes no design decisions.
       - **Data flow & error handling**: happy path + failure per step.
-      - **Testing approach**: unit / integration / e2e, tied to spec scenarios.
+      - **Testing approach**: this is where the **test layer per spec scenario is DECIDED** (not
+        deferred to tasks). For each spec scenario, choose the cheapest layer that genuinely
+        *proves* it - *proves* dominates *cheap*. State the layer (unit / integration / component /
+        e2e) per scenario. If the project provides a "test-strategy" skill (see the skills step),
+        apply its scenario-class -> layer table; otherwise reason from first principles and record
+        the choice. Multi-page / gate / redirect flows prove at e2e, not unit piles. This decision
+        is transcribed verbatim into the tasks coverage map - leave none of it open.
       - **Risks / Trade-offs**, **Migration / Rollback**, **Open Questions**.
 
       Scale each section to its weight; skip what doesn't apply. Reference the proposal for
@@ -110,29 +123,61 @@ artifacts:
 
   - id: tasks
     generates: tasks.md
-    description: Implementation checklist (kept first-class; richer task graph is a future enhancement)
+    description: The TDD wave map - value-ordered vertical slices the harness executes autonomously
     template: tasks.md
     instruction: |
-      Create the task list that breaks down the implementation work, derived from the
-      design's **Components & Dependencies** section.
+      Create the **wave map**: the change-level work queue the autonomous harness executes.
+      It is NOT a flat checklist. It is a sequence of **TDD-ordered, value-ordered vertical
+      slices** ("waves"), derived from the design's **Components & Dependencies** and
+      **Testing Approach** sections and the spec scenarios.
 
       MECHANICAL ONLY - tasks makes NO design decisions. The design (design.md +
-      design-notes.md) has already settled everything. If you find an unresolved
-      decision - an unsettled choice, a deferred "?", or an "Open Question" that is
-      really a dodged decision - STOP: that is a design gap. Do not decide it here;
-      send the user back to /opsx:design to settle it, then resume.
+      design-notes.md) has already settled everything, INCLUDING the test layer for each
+      scenario (design's Testing Approach). If you find an unresolved decision - an unsettled
+      choice, a deferred "?", an "Open Question" that is really a dodged decision, OR a spec
+      scenario whose test layer the design did not settle - STOP: that is a design gap. Do not
+      decide it here; send the user back to /opsx:design to settle it, then resume.
 
-      **IMPORTANT: Follow the template format exactly.** Tasks must be checkboxes
-      `- [ ] X.Y Task description` grouped under ## numbered headings, ordered by dependency.
+      **Wave model (read before writing):**
+      - A **wave** is a vertical slice that delivers one observable unit of value end to end,
+        proven by tests. NOT a horizontal layer ("all the models", "all the tests"). Each wave
+        is one fresh harness session; within it the implementer runs red-green-refactor cycles.
+      - **Order waves by value, respecting dependencies** - earliest waves deliver the most
+        load-bearing user/system value that later waves build on.
+      - **Wave 0 is the tracer bullet**: a single failing end-to-end happy-path test that
+        exercises the whole skeleton, PLUS scaffolding for any missing test infrastructure
+        (Nyquist rule: every later wave must have an automated way to verify it; wave 0 creates
+        what's missing). Wave 0 proves the pipes connect; it is committed RED.
 
-      Guidelines:
-      - One task group per component where practical; order by the dependency map in design.md.
-      - Each task should be small enough to complete in one session and individually verifiable.
-      - Reference specs for what to build and design for how to build it.
+      **TDD ordering is mandatory.** Within every wave, behavior is proven test-first
+      (write test -> watch it fail for the right reason -> minimal code -> refactor). A
+      tests-last or tests-as-a-final-wave layout is a DEFECT - reject it. Do not bulk-write
+      tests against imagined behavior either (that is the horizontal-slice anti-pattern);
+      each wave's tests target that wave's behavior only.
 
-      (Note: a richer, parallelism-aware task graph - explicit inter-task dependencies, parallel
-      groups, per-task acceptance criteria and agent hints - is a planned enhancement. For now,
-      preserve the dependency ordering from design.md so it can be derived later.)
+      **Scope-reduction language is BANNED.** Never shrink a scenario with "v1 / for now /
+      simplified / MVP / just / basic / we'll handle X later". If a scenario is too big for
+      one change, that is a re-scoping decision for the human at design time, not a silent
+      trim here. Write the full scenario.
+
+      **IMPORTANT: Follow the template format exactly** (the parser counts checkboxes as
+      progress units, so checkboxes appear at WAVE grain ONLY):
+      - One `## Wave N` heading per wave (`## Wave 0` first).
+      - **Exactly one `- [ ]` checkbox per wave**, the first line under the heading, stating the
+        wave's observable-value goal. This is the only progress tick (it means "wave gate
+        passed"). Per-cycle ticks live in the JIT wave plan, never here.
+      - All other per-wave detail uses plain `-` bullets (NO checkboxes): `components:`,
+        `interfaces:`, `depends-on:`, `acceptance:` (the command(s) that prove the wave),
+        `stamps:` (inline backtick tags `size:S|M|L`, `risk:low|med|high`, and optional tier
+        hints `plannerTier:` / `implTier:` - planner tier always >= implementer tier),
+        `skills:` (SKILL.md paths relevant to this wave, including the project test-strategy
+        skill when tests are involved).
+      - A single **coverage map table** (top of file, after a one-line intro): columns
+        `| Scenario | Layer | Named test | Wave |`. TRANSCRIBE the Layer column from design's
+        Testing Approach - do not choose layers here. The Named test column (a concrete test
+        name/path you are introducing) is the only new content. No checkboxes in the table.
+
+      Reference specs for what each wave must prove and design for how to build it.
     requires:
       - specs
       - design
@@ -141,5 +186,59 @@ apply:
   requires: [tasks]
   tracks: tasks.md
   instruction: |
-    Read context files, work through pending tasks, mark complete as you go.
+    Read the context files and tasks.md (the wave map). Work through the waves in order;
+    within each wave run red-green-refactor cycles test-first, committing per cycle
+    (`test:` then `feat:`/`refactor:`). Tick a wave's checkbox only when its wave gate
+    passes. For autonomous execution, the JIT plan for a wave comes from
+    `openspec instructions wave-plan --change <name> --wave <N>`.
     Pause if you hit blockers or need clarification.
+
+# Served by `openspec instructions wave-plan --change <X> --wave <N>`. Generates the
+# just-in-time executable plan for one wave, written to plans/wave-<N>.md. The harness
+# calls this once per wave at run time; humans do NOT pre-approve wave plans in v1.
+wavePlan:
+  requires: [tasks]
+  instruction: |
+    You are the just-in-time **wave planner**. Turn the `## Wave N` block of the change's
+    wave map (tasks.md) into a self-sufficient, executable plan that a fresh-context agent
+    can implement WITHOUT prior knowledge of this codebase. Write it to plans/wave-<N>.md.
+
+    SELF-SUFFICIENCY STANDARD (the bar): could an agent unfamiliar with this codebase
+    implement this wave using ONLY your plan plus the files it tells them to read? If not,
+    the plan is incomplete. No prior-knowledge assumptions.
+
+    The plan MUST contain:
+    - **Mandatory Reading** - a table of files to read BEFORE coding: P0/P1/P2, each with
+      line ranges and WHY ("pattern to MIRROR", "types to IMPORT", "tests to EXTEND").
+      Include the skill paths from the wave's `skills:` refs, and - whenever the wave writes
+      tests - the project **test-strategy** skill (its scenario-class -> layer table, mock
+      allowlist, and enforced bans are load-bearing). Read it; do not restate the table.
+    - **Patterns to Mirror** - actual copy-pasted code snippets, each tagged `SOURCE: file:lines`.
+      Snippets, not descriptions. Re-verify them against the live code as you implement; if a
+      pattern has drifted, adapt and note it.
+    - **Files to Change** - CREATE / UPDATE / DELETE with a one-line justification each; every
+      path must already exist (or its parent dir, for CREATE).
+    - **Cycles** - the wave's red-green-refactor cycles, pre-ordered. ONE checkbox per cycle.
+      Each cycle carries: the **behavior** it proves (from a spec scenario), its **test layer**
+      (transcribed from the wave map's coverage map - do NOT re-decide it), **Mirror** (file:line),
+      **Gotcha**, and a **Validate** command (the exact command that proves this cycle, e.g. the
+      single scoped test). Commit grain is per cycle: `test:` (RED) then `feat:`/`refactor:` (GREEN).
+
+    HARD RULES:
+    - **Nyquist self-check**: every cycle has an automated way to verify it (a Validate command).
+      A cycle with no automated verification is a planning defect - fix it (add the scaffold, or
+      flag the wave-0 scaffold gap) before saving the plan.
+    - **No scope reduction**: never shrink a scenario with "v1 / for now / simplified / MVP /
+      just". The wave map is the contract; plan the whole behavior.
+    - **No placeholders**: no "TODO", "implement later", "..." stubs, or invented APIs. Every
+      referenced symbol/file/command must be real and verified.
+    - **Bounded discretion**: you TRANSCRIBE design + specs into cycles. Design decisions stay
+      settled upstream - you do not re-open them. You MAY split this wave into ordered cycles and,
+      if the wave map genuinely under- or over-counted, append/split a wave (planner authority) -
+      but never invent scope the design did not call for.
+    - **Documented-deviation rule**: v1 runs with no mid-run human gate. If you hit a design fork
+      the upstream design did NOT settle, do not silently pick and bury it. Record the decision +
+      rationale as a **documented deviation** in progress.md and the final report. End-of-run
+      review treats documented deviations as intentional and flags only undocumented ones - that
+      is what keeps the no-interruption contract honest. When genuinely blocked (mechanically
+      stuck, or a fork too consequential to log-and-continue), stop and surface it.

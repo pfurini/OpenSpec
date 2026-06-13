@@ -769,6 +769,168 @@ artifacts:
     });
   });
 
+  describe('instructions wave-plan command', () => {
+    const WAVE_MAP = `Each \`## Wave N\` is one fresh-session vertical slice.
+
+## Coverage map
+
+| Scenario | Layer | Named test | Wave |
+|----------|-------|------------|------|
+| \`profile/happy\` | e2e | \`e2e/profile.spec.ts::happy\` | 0 |
+| \`profile/validation\` | integration | \`profile.test.ts::rejects empty\` | 1 |
+
+## Wave 0
+- [ ] skeleton wired; happy-path e2e exists (RED)
+- components: page, router
+- depends-on: —
+- stamps: \`size:S\` \`risk:low\`
+- acceptance: \`pnpm test:e2e profile\`
+
+## Wave 1
+- [ ] profile edit validates input
+- components: form, api
+- depends-on: Wave 0
+- stamps: \`size:M\` \`risk:med\`
+- acceptance: \`pnpm test profile\`
+
+## Wave 2
+- [ ] profile changes persist
+- components: api, db
+- depends-on: Wave 1
+- stamps: \`size:M\` \`risk:high\`
+- acceptance: \`pnpm test profile.persist\`
+`;
+
+    /**
+     * Creates a deep-planning change (the schema that declares the wavePlan block)
+     * with proposal/specs/design and a tasks.md wave map.
+     */
+    async function createWaveMapChange(changeName: string, tasksContent = WAVE_MAP): Promise<string> {
+      const changeDir = path.join(changesDir, changeName);
+      await fs.mkdir(path.join(changeDir, 'specs'), { recursive: true });
+      await fs.writeFile(path.join(changeDir, '.openspec.yaml'), 'schema: deep-planning\n');
+      await fs.writeFile(
+        path.join(changeDir, 'proposal.md'),
+        '## Why\nTest.\n\n## What Changes\n- **test:** Something'
+      );
+      await fs.writeFile(path.join(changeDir, 'design.md'), '## Context\nDesign.');
+      await fs.writeFile(path.join(changeDir, 'specs', 'test-spec.md'), '## Purpose\nTest spec.');
+      await fs.writeFile(path.join(changeDir, 'tasks.md'), tasksContent);
+      return changeDir;
+    }
+
+    it('serves the JIT wave-planner prompt for a ready change', async () => {
+      await createWaveMapChange('wave-ready');
+
+      const result = await runCLI(
+        ['instructions', 'wave-plan', '--change', 'wave-ready', '--wave', '0', '--json'],
+        { cwd: tempDir }
+      );
+      expect(result.exitCode).toBe(0);
+      expect(result.stderr).toBe('');
+
+      const json = JSON.parse(result.stdout);
+      expect(json.changeName).toBe('wave-ready');
+      expect(json.schemaName).toBe('deep-planning');
+      expect(json.state).toBe('ready');
+      expect(json.wave).toBe(0);
+      expect(normalizePaths(json.outputPath)).toContain('wave-ready/plans/wave-0.md');
+      // Mandatory Reading context includes tasks (the wave map) and design.
+      expect(json.contextFiles.tasks).toBeDefined();
+      expect(json.contextFiles.design).toBeDefined();
+      // The static planner payload spec.
+      expect(json.instruction).toContain('wave planner');
+      expect(json.instruction).toContain('Mandatory Reading');
+      expect(json.instruction).toContain('documented deviation');
+    });
+
+    it('outputs the wave-plan prompt in text mode', async () => {
+      await createWaveMapChange('wave-text');
+
+      const result = await runCLI(
+        ['instructions', 'wave-plan', '--change', 'wave-text', '--wave', '2'],
+        { cwd: tempDir }
+      );
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain('## Wave plan: wave-text — wave 2');
+      expect(result.stdout).toContain('Schema: deep-planning');
+      expect(result.stdout).toContain('### Mandatory Reading');
+      expect(normalizePaths(result.stdout)).toContain('plans/wave-2.md');
+    });
+
+    it('blocks when the required tasks artifact is missing', async () => {
+      // deep-planning change with proposal/design/specs but no tasks.md
+      const changeDir = path.join(changesDir, 'wave-blocked');
+      await fs.mkdir(path.join(changeDir, 'specs'), { recursive: true });
+      await fs.writeFile(path.join(changeDir, '.openspec.yaml'), 'schema: deep-planning\n');
+      await fs.writeFile(
+        path.join(changeDir, 'proposal.md'),
+        '## Why\nTest.\n\n## What Changes\n- **test:** Something'
+      );
+      await fs.writeFile(path.join(changeDir, 'design.md'), '## Context\nDesign.');
+      await fs.writeFile(path.join(changeDir, 'specs', 'test-spec.md'), '## Purpose\nSpec.');
+
+      const result = await runCLI(
+        ['instructions', 'wave-plan', '--change', 'wave-blocked', '--wave', '0', '--json'],
+        { cwd: tempDir }
+      );
+      expect(result.exitCode).toBe(0);
+      const json = JSON.parse(result.stdout);
+      expect(json.state).toBe('blocked');
+      expect(json.missingArtifacts).toContain('tasks');
+    });
+
+    it('errors when --wave is missing', async () => {
+      await createWaveMapChange('wave-no-num');
+
+      const result = await runCLI(
+        ['instructions', 'wave-plan', '--change', 'wave-no-num'],
+        { cwd: tempDir }
+      );
+      expect(result.exitCode).not.toBe(0);
+      expect(getOutput(result)).toContain('--wave');
+    });
+
+    it('errors on a non-integer --wave value', async () => {
+      await createWaveMapChange('wave-bad-num');
+
+      const result = await runCLI(
+        ['instructions', 'wave-plan', '--change', 'wave-bad-num', '--wave', 'abc'],
+        { cwd: tempDir }
+      );
+      expect(result.exitCode).not.toBe(0);
+      expect(getOutput(result)).toContain('non-negative integer');
+    });
+
+    it('errors when the schema has no wavePlan block (spec-driven)', async () => {
+      // spec-driven has an apply block but no wavePlan block.
+      await createTestChange('wave-no-block', ['proposal', 'design', 'specs', 'tasks']);
+
+      const result = await runCLI(
+        ['instructions', 'wave-plan', '--change', 'wave-no-block', '--wave', '0'],
+        { cwd: tempDir }
+      );
+      expect(result.exitCode).not.toBe(0);
+      expect(getOutput(result)).toContain('no wavePlan block');
+    });
+
+    it('wave-grain progress: N wave checkboxes => apply progress.total = N', async () => {
+      // The wave map has exactly 3 `- [ ]` lines (one per wave); the coverage-map
+      // table rows and the per-wave `-` detail bullets must NOT be counted.
+      await createWaveMapChange('wave-progress');
+
+      const result = await runCLI(
+        ['instructions', 'apply', '--change', 'wave-progress', '--json'],
+        { cwd: tempDir }
+      );
+      expect(result.exitCode).toBe(0);
+      const json = JSON.parse(result.stdout);
+      expect(json.progress.total).toBe(3);
+      expect(json.tasks).toHaveLength(3);
+      expect(json.tasks[0].description).toContain('skeleton wired');
+    });
+  });
+
   describe('help text', () => {
     it('status command help shows description', async () => {
       const result = await runCLI(['status', '--help']);

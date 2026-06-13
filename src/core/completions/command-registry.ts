@@ -173,7 +173,7 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
   },
   {
     name: 'instructions',
-    description: 'Output enriched instructions for creating an artifact or applying tasks',
+    description: 'Output enriched instructions for creating an artifact, applying tasks, or planning a wave',
     acceptsPositional: true,
     positionals: [{ name: 'artifact', optional: true }],
     flags: [
@@ -185,6 +185,11 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
       {
         name: 'schema',
         description: 'Schema override',
+        takesValue: true,
+      },
+      {
+        name: 'wave',
+        description: 'Wave number to plan (only with the "wave-plan" target; 0 = tracer bullet)',
         takesValue: true,
       },
       COMMON_FLAGS.json,

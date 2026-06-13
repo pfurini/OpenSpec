@@ -131,6 +131,49 @@ machinery, wrong for an autonomous harness. [CONFIRMED]
   `apply.tracks` points at → wave-grain progress; contextFiles already lists
   proposal/specs/design/tasks absolute paths). `change package --json` still not needed.
 
+#### 4.1a Wave-map markdown format — SETTLED 2026-06-13 (step-1 implementation)
+
+The format had to satisfy a hard parser constraint: `parseTasksFile`
+(`src/commands/workflow/instructions.ts:233`) counts **every** `- [ ]`/`- [x]` line as a
+task (regex `^[-*]\s*\[([ xX])\]\s*(.+)$` — bracket anchored immediately after the bullet).
+So per-wave detail and the coverage map must use NO checkboxes. Settled encoding:
+
+- **One `## Wave N` heading per wave** (`## Wave 0` = tracer). Headings carry no checkbox.
+- **Exactly ONE `- [ ]` per wave**, the first line under the heading, carrying the wave's
+  observable-value goal. This is the only tick point → `instructions apply --json`
+  `progress.total` == wave count, `tasks[].description` == per-wave goal (verified by a
+  regression test: N wave lines → progress.total = N). **Tick semantics = "wave gate
+  passed"** (§4.2), recorded in the template comment, not the label.
+- **Per-wave detail = plain `-` bullets** (`components:`, `interfaces:`, `depends-on:`,
+  `acceptance:`) — no `[`, so they never match the regex. **Stamps = inline backtick
+  tags** on a `stamps:` bullet: `` `size:M` `risk:high` `plannerTier:large` `implTier:medium` ``
+  (tier hints written now are cheap + forward-compatible; v1 doesn't act on them for model
+  choice — README #10). `skills:` bullet lists skill SKILL.md paths (incl. the project
+  test-strategy skill).
+- **Coverage map = one markdown table** (`| Scenario | Layer | Named test | Wave |`) — pipes,
+  no checkboxes. The **layer column is TRANSCRIBED from design's Testing Approach**, never
+  decided here (mirrors the MECHANICAL-ONLY guard: an unresolved layer is a design gap →
+  STOP, back to design). The **named-test column is the only new thing** the tasks pass adds.
+- Scope-reduction language banned (gsd list): no "v1/for now/simplified/MVP/just" as a way
+  to silently shrink a scenario.
+
+#### 4.1b Project test-strategy skill contract — SETTLED 2026-06-13
+
+The wave-plan instruction (and design's Testing Approach) carry only the **principle**
+("for each spec scenario, the cheapest layer that genuinely *proves* it; *proves* dominates
+*cheap*"). The concrete per-scenario **table** comes from a project-provided **"test-strategy"
+skill** (lexup-testing = first instance), keeping OpenSpec general (§12). v1 contract (no
+structured schema — referenced by path, cold-handoff safe):
+- A standard project skill: `.agents/skills/<name>/SKILL.md` or `.claude/skills/<name>/SKILL.md`,
+  discoverable by the design skills-discovery step.
+- Front-matter `name` + `description`; the description must identify it as the test-strategy /
+  testing skill so discovery can match it to the change's testing concerns.
+- Body holds: a **scenario-class → test-layer** mapping table, the **mock allowlist** (what may
+  be mocked vs what must be real), and any **mechanically-enforced bans** (e.g. no `.skip`).
+- Recorded as a **ground-truth reference** by design (into the design note), then cited by
+  path in the wave map's per-wave `skills:` refs and surfaced by the wave-plan instruction as
+  Mandatory Reading. OpenSpec does NOT auto-detect or parse it in v1.
+
 ### 4.2 Wave checkbox semantics [REC, unratified]
 
 Tick = **wave gate passed** (not "cycles done") — makes tasks.md progress trustworthy
