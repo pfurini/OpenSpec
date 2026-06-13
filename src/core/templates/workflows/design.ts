@@ -131,7 +131,9 @@ date: <today — run \`date +%Y-%m-%d\`>
 change: <this change name>     # the link /opsx:archive uses to promote it
 ---
 \`\`\`
-**Dedup first** — read existing ADRs; if a decision revises one, supersede it (new ADR + \`superseded-by\`), never silently duplicate.
+**Dedup first** — check the ADR registry (\`docs/adr/README.md\`, loaded fresh at prime via \`openspec adr index --check\`) before minting: if your decision duplicates an existing ADR, don't; if it revises one, supersede it (new ADR + \`superseded-by\`), never silently duplicate.
+
+**Regenerate the registry — mandatory.** After writing a new ADR or superseding one, run \`openspec adr index\` so \`docs/adr/README.md\` reflects it. A stale registry is exactly what makes the next session mint a duplicate — this is a deterministic step, not optional.
 
 - ✅ *"Profile data stays owned by the user-management capability; the self-service page references it, doesn't fork it."* — hard to reverse, surprising, a real trade-off. → **ADR.**
 - ❌ *"Reuse the existing Button component for Save."* — trivially reversible, unsurprising, no real alternative. → just do it.

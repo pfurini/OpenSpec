@@ -75,6 +75,7 @@ export function getArchiveChangeSkillTemplate(): SkillTemplate {
    - Search the project's ADR directory (commonly \`docs/adr/\` — wherever this repo keeps ADRs) for files whose front-matter has \`change: <name>\` and \`status: proposed\`.
    - For each match, set \`status: accepted\` and add \`accepted: <YYYY-MM-DD>\` (run \`date +%Y-%m-%d\`). Leave \`superseded\` ADRs untouched.
    - If none match, proceed silently — not every change records an ADR.
+   - **If you flipped any ADR, regenerate the registry — mandatory:** run \`openspec adr index\` so \`docs/adr/README.md\` reflects the new \`accepted\` status. Deterministic step, not optional.
 
    ADRs live *outside* the change directory, so the archive move does not touch them; only their status flips. They persist as the project's durable architectural memory.
 
@@ -204,6 +205,7 @@ export function getOpsxArchiveCommandTemplate(): CommandTemplate {
    - Search the project's ADR directory (commonly \`docs/adr/\` — wherever this repo keeps ADRs) for files whose front-matter has \`change: <name>\` and \`status: proposed\`.
    - For each match, set \`status: accepted\` and add \`accepted: <YYYY-MM-DD>\` (run \`date +%Y-%m-%d\`). Leave \`superseded\` ADRs untouched.
    - If none match, proceed silently — not every change records an ADR.
+   - **If you flipped any ADR, regenerate the registry — mandatory:** run \`openspec adr index\` so \`docs/adr/README.md\` reflects the new \`accepted\` status. Deterministic step, not optional.
 
    ADRs live *outside* the change directory, so the archive move does not touch them; only their status flips. They persist as the project's durable architectural memory.
 
