@@ -18,6 +18,7 @@ Two families of files:
 | `executable-plans-and-feedback-loop.md` | Content spec for the rich task-builder (self-sufficiency standard, ralph `prd.json` convergence) + implementation report / feedback loop. *§1 now lands in the wave-plan instruction; "fatten tasks.md" item resolved — see task-machinery note* | Partially absorbed into task-machinery note |
 | `change-records-and-thinking-layer.md` | Amendment model, shadow-layer caveat, ADR/glossary layer (§4 LANDED), small parked items (§5) | Mixed: §4 shipped, rest deferred |
 | `multi-file-skill-generation.md` | **Kill single-file flattening.** OpenSpec's skill/command emitter produces single-file `SKILL.md` only, which flattened rich multi-file source skills into a sentence. Scope (ratified): opsx skills become multi-file (SKILL.md + references/ + scripts/), per-tool capability-gated degradation; NOT a user-facing skill generator. Prerequisite for the `design.ts` quality rewrite. | Captured 2026-06-13; **build after step-2** |
+| `prompt-adherence-and-design-rewrite.md` | **Open threads from the 2026-06-13 session.** The under-read prime diagnosis (3 discipline failures = adherence not missing-instructions; fix = enforcement/observability, not more prose; bisection still owed); the user-requested `design.ts` rewrite (pending: name-the-borrows vs gap-analysis; depends on multi-file gen); parked: lint→hook/CI wiring, deterministic command-flow enforcement, B/C lint rules, implTier heuristic. | Captured 2026-06-13; not started |
 | `specialized-review-steps.md` | WHAT-review vs HOW-review panels, dimensions distilled from gstack/PRP/claudekit/furiai. Full panel deferred; v1 harness still includes classification-gated verify/review. | Deferred except v1 harness gates |
 | `research-grounding-capability.md` | Parallel specialized research (external + codebase) at grounding points | Deferred; next priority after v1 harness |
 | `product-discovery-prd-phase.md` | Problem-first discovery → real PRD, BEFORE explore | Deferred; out of scope for this initiative |
@@ -164,6 +165,28 @@ section, falsifiability gate, flow-to-gate continueMode, MECHANICAL-ONLY tasks),
 3. Then per the phase-graph build order: validation gates → right-sizing/split;
    capability tracks (review steps, discovery, research grounding, Linear v1) slot in
    independently. (Task-DAG formalization is absorbed by the wave model.)
+
+## Open stack after the 2026-06-13 build session (ordered map for the next session)
+
+Step 1 (task-machinery rework) **shipped**; step 2 (writing-pass acceptance) **PASSED**. What's
+open, roughly in priority order:
+
+1. **Step 3 — author the A′ unrolled-slot workflow** in lexup `.archon/workflows/` (static
+   per-node tiers). First track that exercises harness *execution* (Archon/tiers/code). Then
+   step 4 (run the slice). See §9 of `task-machinery-and-wave-execution.md`.
+2. **Multi-file skill generation** (`multi-file-skill-generation.md`) → then the **`design.ts`
+   rewrite** (`prompt-adherence-and-design-rewrite.md` §2). Prereq chain; the rewrite needs
+   `references/` to stop flattening. The rewrite also needs the **bisection** (§1 there) first.
+3. **`openspec lint` → hook/CI wiring** + **B/C grounding-lint rules** into `ALL_RULES`
+   (Files-to-Change-exist, design Open-Questions gate) — `prompt-adherence-and-design-rewrite.md` §3.
+4. **Deterministic command-flow enforcement** (the deeper "runtime steps, not prompt hints" want).
+5. Parked prompt edits to fold in at the next prompt touch (held pending the under-read fix):
+   `implTier` heuristic (§4.1a), Open-Questions section split (§4.1c C), the stamp guidance.
+
+Shipped this session (all on branch, pushed): wave-map + `instructions wave-plan`; Constraints
+carry-through; Open-Questions triage (gate A); ADR registry (`openspec adr index`) + drift
+(`openspec lint --adr`) + prompt wiring; prime forcing-function/un-skippable reads. Suite 1700.
+lexup: ADR `title:` backfill + the passed planning artifacts committed.
 
 ## Implementation-session protocol (tribal knowledge — read before coding)
 
