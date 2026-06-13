@@ -11,7 +11,7 @@
  * Emitted without a heading so each host supplies its own (a `### ` subsection in
  * explore's "OpenSpec Awareness", step `0` in design's flow).
  */
-export const PRIME_RITUAL = `A ritual, not a fact store (after piv-prime): refresh live state, route to the canonical never-stale sources, copy no facts down. Run it once at the start; don't re-prime mid-session unless something material changed. Scale it to the question — a narrow ask needs only a slice of this, not the whole checklist.
+export const PRIME_RITUAL = `A ritual, not a fact store (after piv-prime): refresh live state, route to the canonical never-stale sources, copy no facts down. Run it once at the start; don't re-prime mid-session unless something material changed. Scale it to the question — a narrow ask needs only a slice of this, not the whole checklist. **Exception, never skippable:** if this session might record or revise an ADR or introduce shared vocabulary, the ADR-registry and glossary reads below are mandatory regardless of scope — skipping them is exactly what mints duplicate ADRs and coins synonyms.
 
 **1 · Refresh live state**
 - \`openspec list --json\` — active changes, their schemas and status.
@@ -24,6 +24,6 @@ export const PRIME_RITUAL = `A ritual, not a fact store (after piv-prime): refre
 - **Thinking records** — the exploration note (\`openspec/explorations/<name>.md\`) for the settled WHAT and its parked design seeds; the design note (\`<changeRoot>/design-notes.md\`) if you're resuming the HOW.
 - **The code** — existing patterns at \`path:line\`. Use the repo's code graph if one is available; otherwise read the real code. Cite reality; don't reinvent it.
 
-**3 · Orient — tight, no filler:** branch / change, what's settled vs still open, the constraints (ADRs) and vocabulary (glossary) in play, and what this session is set up to decide. Then begin.
+**3 · Orient — tight, no filler:** branch / change, what's settled vs still open, and what this session is set up to decide. **State what you loaded (the forcing function):** the count + ids/titles of the ADRs from the registry and the glossary terms in play. If you can't list them, you didn't read them — go back to §2. Then begin.
 
 If any source — a doc, a memory, an ADR — disagrees with what \`git\` or the code actually shows, trust the live observation and flag the stale source.`;
