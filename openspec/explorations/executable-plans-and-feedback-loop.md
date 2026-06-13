@@ -3,7 +3,8 @@
 Status: **partially absorbed (2026-06-12)** — §1's content spec now lands in the
 **wave-plan instruction** and the "fatten tasks.md or sibling artifact" open item is
 RESOLVED (neither: two-level queue — wave map + committed JIT `plans/wave-N.md`); §3's
-report gains routing calibration. See `task-machinery-and-wave-execution.md` §4/§6.4.
+report gains routing calibration *post-v1* (the §6.4 calibration loop is deferred with
+dynamic routing — see the §6 v1 banner). See `task-machinery-and-wave-execution.md` §4/§6.
 Original status: **deferred / to-discuss.** Captured from the archon-dev analysis (the workflow Archon
 uses to plan and ship its own features — `archon/.claude/skills/archon-dev/`, esp.
 `cookbooks/plan.md` and `cookbooks/implement.md`). This is the concrete **content spec for the

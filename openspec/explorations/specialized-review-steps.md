@@ -1,8 +1,15 @@
 # Deferred capability: specialized review steps (WHAT-review + HOW-review)
 
-Status: **deferred / to-discuss.** Captured from the PRP analysis conversation. A dimension
-OpenSpec hasn't covered: dedicated, multi-dimension **review** steps, each dimension ideally a
-focused subagent — applied at two distinct layers, kept separate by the WHAT/HOW line.
+Status: **full review-panel capability deferred / to-discuss.** Captured from the PRP
+analysis conversation. A dimension OpenSpec hasn't covered: dedicated, multi-dimension
+**review** steps, each dimension ideally a focused subagent — applied at two distinct
+layers, kept separate by the WHAT/HOW line.
+
+Important v1 distinction (2026-06-13): the full WHAT/HOW review-panel system is deferred,
+but the engineering harness v1 still includes classification-gated verify/review steps
+after implementation, following the shape of Archon's experimental
+`archon-fix-github-issue-experimental.yaml`. Those v1 gates are execution/review safeguards,
+not the full pre-harness WHAT/HOW plan-review product described here.
 
 ## What it is
 
@@ -42,6 +49,9 @@ explore → proposal/specs → [WHAT-review gate] → design → tasks → [HOW-
 - WHAT-review is the analog of the PRD-validation rubric, one layer down (specs, not PRD).
 - HOW-review is the analog of plan/code review, but on the *plan* (design + tasks), pre-implementation
   — catching design/decomposition defects before the harness spends worktrees on them.
+- **Deferred hardening:** adversarial cross-model review of generated `plans/wave-N.md`
+  belongs here later. It is not part of v1; v1 trusts the JIT wave planner after the user
+  approves the `tasks.md` wave map.
 
 ## Inspiration sources (verified paths — to scout deeply together)
 

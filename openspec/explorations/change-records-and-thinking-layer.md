@@ -24,25 +24,37 @@ To build later:
   editing artifacts. Open question: does this reuse ADRs, or is it a new
   per-change changelog?
 
-## 2. The thinking-record layer is a *shadow* layer (architectural caveat)
+## 2. The remaining shadow layer is narrow (architectural caveat)
 
-The thinking records we introduced — exploration note
-(`openspec/explorations/<name>.md`), design note
-(`<change>/design-notes.md`), and ADRs (`openspec/adr/`) — live **outside**
-OpenSpec's tracked artifact graph. `openspec status` does not know they exist.
+This caveat was too broad in the original note. The core OpenSpec artifacts are already
+schema-tracked by the artifact graph: `proposal.md`, `specs/**/*.md`, `design.md`, and
+`tasks.md` are declared by `schemas/deep-planning/schema.yaml`, ordered by `requires`, and
+surfaced by `openspec status` / artifact instructions.
+
+The remaining prompt-owned layer is narrower:
+- `openspec/explorations/<name>.md` is discoverable (`openspec list --explorations`) and
+  consumed by prompt/schema instructions, but is not a required change artifact.
+- `<change>/design-notes.md` is required by the `design` prompt guard, but not declared as
+  a graph artifact.
+- ADRs (`docs/adr/` by convention) and root `GLOSSARY.md` are project-owned architectural
+  memory. They intentionally live outside `openspec/` and are lifecycle-managed by prompts.
+- Future harness artifacts (`plans/wave-N.md`, `progress.md`, final reports/reviews) need an
+  explicit authority/lifecycle decision when they are implemented.
 
 Consequences to keep in mind:
 - **Ordering can only be guarded at the prompt level**, not via the schema's
-  `requires` graph. (That is why the `deep-planning` `design` artifact instruction
-  hard-stops when `design-notes.md` is missing — the dependency graph can't express
-  "design.md needs the design note".)
-- **Drift is possible**: a stale note behind an updated `design.md`/spec, with
-  nothing flagging the mismatch.
+  `requires` graph, for artifacts not in the graph. That is why the `deep-planning`
+  `design` artifact instruction hard-stops when `design-notes.md` is missing — the
+  dependency graph can't express "design.md needs the design note" unless we promote the
+  note into the schema.
+- **Drift is possible**, but the risk is now specific: stale exploration/design notes,
+  stale ADR/glossary context, or future wave/report artifacts that disagree with the
+  tracked proposal/specs/design/tasks.
 
-Future decision: should notes **graduate into the schema as optional artifacts**
-(so they're tracked, ordered, and drift-checkable), or stay as deliberately
-lightweight shadow files? Don't solve until the workflow has been used enough to
-know whether the drift actually bites.
+Future decision: should any of these files **graduate into the schema as optional
+artifacts** (so they're tracked, ordered, and drift-checkable), or stay deliberately
+lightweight prompt-owned files? Do not solve globally. Decide per artifact after the v1
+harness proof shows where drift actually bites.
 
 ## 3. Deferred cleanup: unify note-incorporation
 
@@ -56,8 +68,8 @@ sources of truth.
 
 ## 4. Durable ADR/glossary layer — LANDED (prompt-level)
 
-Implemented as prompts only (no new CLI), consistent with §2's "don't formalize the
-shadow layer until drift is observed" and the repo's all-markdown convention.
+Implemented as prompts only (no new CLI), consistent with §2's "don't over-formalize
+prompt-owned files until drift is observed" and the repo's all-markdown convention.
 
 What now exists:
 - **ADR lifecycle**: `/opsx:design` writes ADRs at `status: proposed` with front-matter

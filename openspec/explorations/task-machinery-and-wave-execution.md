@@ -9,12 +9,49 @@ task-builder emits, so the writing pass moved ahead of the harness in the build 
 Each item below is tagged: **[CONFIRMED]** user-ratified · **[REC]** Claude's
 recommendation, unchallenged — treat as default, re-confirmable · **[OPEN]** undecided.
 
+## V1 target calibration (2026-06-13)
+
+This note is the active build contract for the engineering harness proof. The target is
+not a product-discovery, workspace, Linear, or research implementation.
+
+V1 done-condition (falsifiable — replaces the earlier "≥50% steering reduction" vibe):
+given the human-approved `tasks.md` wave map for lexup's `account-profile-self-service`,
+the harness runs to a **green-gated, mergeable draft PR with ZERO human turns between
+wave-map approval and PR** — change gate (full suite + coverage + E2E) green, every wave
+carries a TDD trail (per-cycle `test:`→`feat:` commits with pasted RED+GREEN), and the
+report lists zero undocumented deviations. Steering-reduction vs a manual baseline is a
+secondary observation, not the pass/fail bar.
+
+End-goal note: the harness should become provider/project-agnostic; lexup is only the v1
+testbed. Distill lexup's good practices into general mechanisms — never hardcode lexup
+specifics into OpenSpec (§12).
+
+V1 should prove:
+- OpenSpec can produce a `tasks.md` wave map good enough for the user to approve once,
+  then let Archon execute autonomously.
+- `plans/wave-N.md` files are generated just-in-time by the harness. Human approval of
+  every wave plan is not part of v1; adversarial cross-model wave-plan review is a later
+  hardening step.
+- **Static per-node model tiers** (planner node strong, implementer node a fixed lower
+  tier, via Archon config tier keywords) — satisfies the planner ⪰ implementer invariant
+  structurally and needs NO new Archon feature. **Dynamic, per-wave model selection is
+  DEFERRED** to a later hardening step, off the v1 critical path (decided 2026-06-13). The
+  full routing design (portable tier hints in `tasks.md` → config mapping → runtime
+  route/classify/finalize) is preserved in §6 as the post-v1 target; tier hints may still
+  be written into `tasks.md` (cheap, forward-compatible) but v1 does not act on them for
+  model choice.
+- Verify/review are in the initial workflow, but classification-gated like Archon's
+  experimental fix-issue workflow (risk → verification depth; this gating SURVIVES the
+  routing deferral — it gates *which reviewers run*, not model selection).
+- Research follows after v1; PRD/product discovery is a separate future initiative.
+
 ## 0. Relation to other notes (what this supersedes)
 
 - `phase-graph-unified-model.md` → **"Intra-change execution … leaning C (Ralph)" is
   SUPERSEDED** by §5 here (A′ unrolled wave slots; the dispatch/Ralph loop was rejected
   for phase control). Its "Model routing" section is amended by §6 (dynamic substitution
-  is a committed prerequisite, not an option). Everything else (change DAG, two gates,
+  is the **post-v1** target; v1 uses static per-node tiers, no new Archon feature — see §6
+  banner). Everything else (change DAG, two gates,
   right-sizing, capability axis) stands and is assumed here.
 - `executable-plans-and-feedback-loop.md` → §1's content spec (Mandatory Reading,
   Patterns-to-Mirror, per-task Validate, NO_PRIOR_KNOWLEDGE_TEST) now lands in the
@@ -62,7 +99,7 @@ A user challenge ("30 iterations is crazy") exposed a conflation. Decoupled: [CO
 
 | Grain | Unit | Carries |
 |---|---|---|
-| **Commit / state** | TDD cycle | atomic commit = cycle code + its checkbox tick; bisect/revert grain |
+| **Commit / state** | TDD cycle (**LOCKED 2026-06-13**) | atomic commit = cycle code + its checkbox tick, `test:`→`feat:` per cycle; the per-cycle git trail is the *independent* proof TDD held (tests not backfilled). **NO per-wave batching.** Matches ralph's native per-task commit grain — removes a batching step, adds no machinery |
 | **Fresh agent session** | **Wave** | one session executes all of a wave's cycles (they share context: same component, files, plan); priming tax paid once per wave |
 | **Workflow run / worktree / PR** | Change | unchanged from phase-graph model |
 
@@ -97,7 +134,11 @@ machinery, wrong for an autonomous harness. [CONFIRMED]
 ### 4.2 Wave checkbox semantics [REC, unratified]
 
 Tick = **wave gate passed** (not "cycles done") — makes tasks.md progress trustworthy
-for the orchestrator. Cycle ticks live in the wave plan, riding each cycle's commit.
+for the orchestrator. Cycle ticks live in the wave plan. Each cycle tick rides its own
+commit (`test:`→`feat:`); cycle ticks are **NEVER** batched into a wave commit — the
+per-cycle git trail is the independent verification that TDD held and tests weren't
+backfilled (**LOCKED 2026-06-13**; reverses the earlier per-wave allowance, and since
+ralph commits per task natively this removes a step rather than adding one).
 
 ### 4.3 The wave-plan instruction [REC]
 
@@ -107,6 +148,23 @@ OpenSpec-owned, schema-versioned, served as
 Carries: the executable-plans §1 payload spec, Nyquist self-check, scope-reduction ban,
 no-placeholders, the JIT planner's bounded discretion (transcribes design+specs into
 cycles; design decisions stay settled upstream; may split a wave — see §5 growth policy).
+
+**Documented-deviation rule [CONFIRMED 2026-06-13]:** because v1 has no mid-run human
+interruption, if the JIT planner hits a design fork NOT settled by upstream design, it
+records the decision + rationale as a *documented deviation* in progress.md and the final
+report (never silently). End-of-run review treats documented deviations as intentional and
+flags only undocumented ones — this is what keeps the no-interruption contract safe rather
+than silent-drift-prone, and it is the only honest answer to "what happens when wave 3
+discovers the wave-4 plan was wrong in a judgment way."
+
+**Post-v1 evolution [CONFIRMED direction 2026-06-13]: adaptive human gates.** A later
+version layers an *optional* mid-run human gate on top: on a high-risk / low-confidence
+fork the workflow pushes the question to a channel the user watches (e.g. a Telegram
+channel) and waits; if the user does not reply within a timeout (e.g. 30 min), the gate
+**falls back to the documented-deviation rule** (log + continue). This adds an
+opportunistic human-steering channel without sacrificing autonomy — a no-reply run still
+completes to PR. v1 ships the fallback behavior only; the gate + push + timeout is the next
+version.
 
 ### 4.4 progress.md + evidence [REC]
 
@@ -123,9 +181,10 @@ solution" — provisionally accepted after the two objections below were resolve
 
 - **Dispatch loop** (one loop node, iteration types plan/execute/gate routed by disk
   state): REJECTED. Two fatal flaws: (1) a loop node has ONE static `model:` → planner
-  chained to implementer tier, violating the **planner ≻ implementer invariant**
-  [CONFIRMED user requirement: "Planner should always be a stronger model than the
-  implementer"]; (2) control flow becomes a model decision instead of deterministic DAG
+  chained to implementer tier, violating the **planner ⪰ implementer invariant**
+  [CONFIRMED user requirement (corrected 2026-06-13): "Planner should always be at least
+  as strong as the implementer — equal tier is fine, implementer never stronger than the
+  planner"]; (2) control flow becomes a model decision instead of deterministic DAG
   structure [CONFIRMED concern].
 - **Wave-as-run** (B): satisfies the invariant, no slot ceiling, but needs the
   not-yet-built orchestrator + unverified sequential-runs-on-one-worktree mechanics.
@@ -135,21 +194,26 @@ solution" — provisionally accepted after the two objections below were resolve
 
 ### 5.2 The shape
 
-K statically-unrolled slots (K ≈ 6), `when:`-gated; Archon's own "static shape, dynamic
+K statically-unrolled slots (**K = 10**, set 2026-06-13), `when:`-gated; Archon's own "static shape, dynamic
 routing" idiom. Generated once from a template (it's change-independent), linted with
 `archon validate workflows`, reused for every change.
 
 ```
 pull (bash)            instructions apply --json manifest + deps install
-classify+smoke (haiku, allowed_tools: []) — confirm/override wave-map stamps; smoke-
-                       validate change-package claims vs codebase (stale design → abort)
+classify+smoke         V1: classifier confirms/overrides RISK stamps (→ which reviewers
+                       run) + smoke-validate change-package claims vs codebase (stale
+                       design → abort). Model tiers are STATIC in v1 (see §6 banner).
+                       Post-v1: also route tier hints → concrete provider/model fields.
 [slot N=1..K]:
   recount-wN (bash)    re-reads tasks.md AFTER gate-w(N-1) → current wave count
-  plan-wN (prompt)     model: $classify.output.wN_planner — JIT wave plan, fresh,
+  plan-wN (prompt)     model: <strong tier, STATIC in v1> — JIT wave plan, fresh,
                        when: "$recount-wN.output.wave_count >= N"
-  impl-wN (loop)       model: $classify.output.wN_impl — lean ralph: cycles, commit per
-                       cycle; max_iterations ~3 (recovery grain — a wave normally
-                       finishes in one session; resume = re-enter, first unchecked cycle)
+                       (post-v1: model/provider from the classify+smoke node's route
+                       output, e.g. $classify.output.wN_planner_*)
+  impl-wN (loop)       model: <fixed lower tier, STATIC in v1> — lean ralph: execute
+                       cycles; commit per cycle (test:→feat:); max_iterations ~3
+                       (recovery grain — a wave normally finishes in one session;
+                       resume = re-enter, first unchecked cycle)
   gate-wN (bash)       wave acceptance (scoped tests + static checks); tick wave
 change-gate (loop)     full suite + coverage:gate + Playwright; fix-loop, max ~3
 create-pr (prompt)     draft PR (experimental's discipline: .pr-number capture, body
@@ -170,16 +234,27 @@ committed plan exists before execution.
 when: :3063-3068; unparseable when: skips **fail-closed** :3070). DAG *shape* is
 load-time static; execution decisions are runtime. With per-slot `recount` nodes reading
 disk after the previous gate, the wave map can legitimately grow 3→4 (or shrink) mid-run
-within K. **Growth policy [CONFIRMED]: only plan nodes (planner tier) may append/split
-waves; implement loops never invent scope. Overflowing K = mechanical right-sizing
-signal → abort + report "change too big" → split the change.** The K ceiling stays a
-feature (right-sizing enforcement); the rigidity below it is gone.
+within K. **Growth policy [CONFIRMED, K=10 set 2026-06-13]: only plan nodes (planner tier)
+may append/split waves; implement loops never invent scope. Overflowing K=10 = the change
+was mis-sized → abort + report the wave boundary where it overflowed → a HUMAN re-scopes at
+design time.** The remedy is re-scoping, NOT an automatic sibling split: vertical waves are
+dependent by construction (§5.4), so they have no valid sibling boundary to split along —
+>10 dependent waves means "this should have been a smaller change or a different
+decomposition," a design-time human judgment. The K ceiling stays a feature (right-sizing
+enforcement); the rigidity below it is gone.
+
+**Growth within K is allowed but never silent [CONFIRMED 2026-06-13]:** every wave the
+planner appends or splits beyond the human-approved count is **flagged in the final
+report**. The approved wave count is a *floor*, not a frozen shape — but changes to it
+surface at review time, not buried in the diff. (Pairs with the documented-deviation rule
+§4.3: scope growth is just another deviation that must be recorded.)
 
 ### 5.4 No parallel waves inside a change [CONFIRMED — "ok you convinced me"]
 
 Archon runs same-layer nodes concurrently, but all nodes of a run share ONE worktree.
 Parallel code-writing there breaks mechanically: (1) one git index —
-`.git/index.lock` collisions, interleaved history kills cycle-commit atomicity;
+`.git/index.lock` collisions, interleaved history kills commit atomicity (cycle ideal,
+wave-grain v1);
 (2) shared single-writer state files (tasks.md, progress.md, wave plans) — lost
 updates on exactly the resume-state carriers; (3) test infra exclusivity (one Postgres,
 port 3100, coverage runs). Genuinely independent waves (file-disjoint, test-disjoint,
@@ -192,58 +267,105 @@ HOW-slice fallback (phase-graph note). (gsd does parallel plans in one checkout 
 declared files_modified disjointness — known counter-design; it accepts the contention
 we're designing out.)
 
-## 6. Classification & model routing — DYNAMIC end-to-end [CONFIRMED requirement]
+## 6. Classification & model routing — DYNAMIC is the POST-V1 target [amended 2026-06-13]
 
-User: "I don't want static models." No hardcoded `model:` tiers in the workflow YAML.
+User (original): "I don't want static models." That remains the end-state goal and the
+whole of this section is the design for it. **V1 DEFERRAL (2026-06-13): dynamic, per-wave
+model selection is OUT of v1.** V1 ships **static per-node tiers** — plan-wN on a strong
+config tier, impl-wN on a fixed lower config tier — using Archon's config tier keywords,
+which Archon honors on prompt AND loop nodes today (verified `schemas/dag-node.ts:388-394`),
+so **v1 needs no new Archon feature**. The planner ⪰ implementer invariant is preserved by
+that static assignment. The ONLY piece of this section live in v1 is **risk →
+verification-depth** classification (§6.1 — gates which reviewers run via `when:`,
+independent of model choice). Everything else here (tier-hint routing, route/classify/
+finalize, the §6.3 substitution features, §6.5 tier-escalation, §6.4 calibration) is the
+post-v1 hardening design, kept intact below. Tier hints may still be written into `tasks.md`
+now (cheap, forward-compatible); v1 simply does not act on them for model choice.
 
 ### 6.1 The vector (not a scalar)
 
 Per wave: **complexity → model tier** (planner & implementer); **risk
 (security/data-criticality) → verification depth** (which reviewers/gates run — NOT a
 bigger implement model); **novelty → research need** (experimental's
-`needs_external_research`). Classifier instruction enforces the invariant:
-implementer tier ≤ planner tier, always.
+`needs_external_research`). These are portable stamps/tier hints, not concrete
+provider/model names. The classifier instruction enforces the invariant: implementer tier
+≤ planner tier, always.
 
-### 6.2 Where classification happens [REC]
+### 6.2 Where routing happens [CONFIRMED]
 
-Stamped per wave in the wave map at tasks time (design knows complexity; free,
-human-reviewed) = **prior**; runtime classify node confirms/overrides against actual
-code state = **posterior**; **escalation-on-failure** corrects both (cycle fails gate
-twice → next iteration one tier up). "Classification predicts, escalation measures."
+`tasks.md` stamps each wave at tasks time (design knows complexity; free, human-reviewed)
+= **prior**. It may include explicit tier hints such as `plannerTier: large`,
+`implTier: medium`, but it should not normally name concrete providers/models.
+
+Runtime routing is two-step:
+1. **Route defaults** parse `tasks.md` and Archon config to turn stamps/tier hints into
+   default concrete provider/model fields.
+2. **Classify + finalize** confirms/overrides those defaults against actual code state =
+   **posterior**, then emits the final flat provider/model fields consumed by workflow
+   nodes.
+
+If the classifier is unavailable or emits invalid output, the finalizer falls back to the
+deterministic route defaults unless the input is structurally unsafe. Escalation-on-failure
+corrects both prior and posterior (gate failure → next attempt one tier up). "Tasks predict;
+classification refines; escalation measures."
 
 ### 6.3 Archon upstream features — COMMITTED prerequisites (user builds; Archon is local)
 
 1. **Variable substitution on `model:`/`provider:`** — today `resolveModelSpec` consumes
    `node.model` raw (`dag-executor.ts:480`); must pass through substitution first.
-   BLOCKING: without it no dynamic routing exists.
+   Was BLOCKING; **no longer blocks v1** (static tiers). Load-bearing only when dynamic
+   routing is built post-v1.
 2. **`<next-model>` per-iteration loop directive** (parsed like `<promise>`) — for
    **in-slot escalation** only; demoted from phase-control duty.
 
 Tier→provider/model mapping lives in **Archon config** (user-owned) — this is what
 connects routing to the locked compute-locality decision (small tier → local
-ollama/Pi; all compute own-hardware). [OPEN design question, decide when speccing the
-substitution feature: how classifier output reaches N slots — flat fields
-(`w3_planner`, `w3_impl`) work with `$node.output.field` substitution; nested paths
-(`waves[3].planner`) need richer path support. Settle BEFORE writing the workflow YAML.]
+ollama/Pi; all compute own-hardware). **V1 routing contract [CONFIRMED]: use flat final
+route output fields** such as `w3_planner_provider`, `w3_planner_model`,
+`w3_impl_provider`, `w3_impl_model`. These final route fields are derived from
+`tasks.md` defaults plus classifier overrides. Nested paths (`waves[3].planner`) can wait
+until after the proof.
 
 ### 6.4 Calibration loop [REC]
 
 Unit report records predicted tier vs actual (iterations, gate failures, tokens) →
 calibrates the classifier over time (gsd's "estimate in context-window cost", empirical).
 
+### 6.5 Failure and escalation policy [CONFIRMED; v1 path amended 2026-06-13]
+
+For v1, do not plan human interruption checkpoints. After the user approves the wave map,
+the harness runs autonomously until final report unless it is mechanically stuck.
+
+V1 failure path (static tiers — no dynamic tier-escalation available):
+1. If a wave/gate fails, run one self-fix loop (max ~3 iterations) at the same tier.
+2. If still failing, stop and ask the user with 2-3 options and a recommendation.
+
+Post-v1 (once dynamic routing lands), insert tier-escalation ahead of the self-fix loop:
+escalate to a stronger configured tier and retry; only then self-fix; then ask. Further
+expansion: at the top tier, try a different provider at the same tier before asking
+(e.g. Opus → Codex/GPT-5.5), if the routing config supports it.
+
 ## 7. Test-layer routing & TDD discipline [CONFIRMED direction]
 
-TDD-eligibility is NOT "unit-testable or skip". Layer routing per lexup-testing — for
-each spec scenario, the **cheapest layer that genuinely proves it** ("proves" dominates
-"cheap"): pure logic → unit; API procedures → integration with real DB+auth BY DEFAULT
+**Home of the routing table [CONFIRMED 2026-06-13]:** the wave-plan instruction carries
+only the general **principle** — "for each spec scenario, the cheapest layer that genuinely
+proves it; *proves* dominates *cheap*". The concrete per-scenario layer **table** comes
+from a **project-provided "test-strategy" skill** (lexup-testing is the first instance),
+resolved like any other project skill (§8) — NOT baked into OpenSpec. This keeps OpenSpec
+general from day one; the lexup table below is illustrative of the contract, not a
+hardcoded default.
+
+TDD-eligibility is NOT "unit-testable or skip". The lexup-testing instance of the table:
+pure logic → unit; API procedures → integration with real DB+auth BY DEFAULT
 (no service-extraction for testability); UI custom components → component tests; hooks
 → renderHook; **multi-page/gate/redirect flows → Playwright FIRST**, not unit piles.
 Red-green is layer-independent (a failing E2E spec is still RED).
 
 - One checkbox = one red-green-refactor cycle; cycle discipline (write test → watch fail
-  for the right reason → minimal green → refactor → commit) lives in the **executor
-  prompt**, not as sub-checkboxes. Mechanical/non-TDD tasks (config, glue, wiring)
-  marked as standard tasks with a verify command.
+  for the right reason → minimal green → refactor → mark complete; **commit per cycle**
+  (`test:`→`feat:`), LOCKED) lives in the **executor prompt**, not as sub-checkboxes.
+  Mechanical/non-TDD tasks (config, glue, wiring) marked as standard tasks with a verify
+  command.
 - **E2E scoping convention [REC]:** wave gates run unit+integration+component scoped to
   the wave; **Playwright only in the change gate**. The wave-0 tracer E2E is committed
   red without tripping lexup's mechanically-enforced `.skip` ban (it's simply not in
@@ -289,16 +411,21 @@ against old-format tasks.md would validate machinery already decided obsolete.
      `schemas/deep-planning/templates/design.md:26-27`. Design's Testing-approach
      section sharpened to feed layer routing; explore/design gain the skills-discovery +
      ground-truth-references step.
+   - **Project test-strategy skill contract** (the §7 decision): the wave-plan instruction
+     holds the layer-routing *principle* only; the concrete table is consumed from a
+     project-provided "test-strategy" skill (lexup-testing = first instance). Define the
+     contract (what fields/shape the skill must expose) here so OpenSpec stays general.
    - New **wave-plan instruction** (§4.3) + `instructions wave-plan` endpoint.
    - Parity-test re-harvest (`test/core/templates/skill-templates-parity.test.ts`).
 2. **Regenerate lexup's change** through the reworked pipeline (cold-handoff protocol)
    — doubles as the writing-pass acceptance test.
 3. **Author the A′ workflow** in lexup `.archon/workflows/` (slot template, generated
-   once). First validation pass runs everything on one strong tier (baseline before the
-   routing comparison — NOT a dropped feature).
-4. **Run the slice** end-to-end on the regenerated change.
-- **Parallel track (Archon, user-owned):** the two routing features (§6.3) + their open
-  syntax question — before the workflow YAML targets routing.
+   once) with **static per-node tiers** (planner strong, implementer fixed lower, via
+   Archon config tier keywords). Dynamic routing is NOT required for the v1 proof; static
+   `model:` on prompt + loop nodes works today with no new Archon feature.
+4. **Run the slice** end-to-end on the regenerated change at the static tiers.
+- **Deferred track (post-v1, Archon, user-owned):** the two routing features (§6.3) +
+  their open syntax question — no longer blocks v1; pick up when hardening static→dynamic.
 
 ## 10. Verification checklist (before/while authoring)
 
@@ -325,3 +452,29 @@ against old-format tasks.md would validate machinery already decided obsolete.
   (`resolveModelSpec`, `dag-executor.ts:480`); `agents:` stripped on loops.
 - Old README step-1 forks RESOLVED: change-package = stitched CLI (one command);
   work queue = two-level checkboxes (§4.1).
+
+## 12. Generality vs the lexup testbed [CONFIRMED direction 2026-06-13]
+
+End goal = a general, provider/project-agnostic harness; lexup is just today's testbed.
+Rule: **distill lexup's good practices into general mechanisms; never hardcode lexup
+specifics into OpenSpec.** Where the current design leans too narrow, and the fix:
+
+- **Test-layer routing table (§7) is stack-specific** (Next/tRPC/Postgres/Better-Auth/
+  Playwright). The *principle* — "for each scenario, the cheapest layer that genuinely
+  proves it; proves dominates cheap" — is general and belongs in the wave-plan instruction.
+  lexup's concrete table is the **first instance of a general "project test-strategy" skill
+  contract**, supplied by the project (the lexup-testing skill), NOT baked into OpenSpec.
+  **[DECIDED 2026-06-13 — this is the v1 choice; define the project test-strategy skill
+  contract as part of the schema rework, §9.1.]**
+- **Gate commands** are already project-detected (lockfile→runner, project CLAUDE.md) — keep.
+  The change-gate's `coverage:gate`/Playwright/Postgres specifics are lexup's; they come
+  from the change's declared gate commands, not from OpenSpec.
+- **Mechanical-enforcement closure (§8)** ("enforced rules are the gate; unenforced become
+  review dimensions") is general; lexup's Biome/mock-allowlist are just the instances.
+- **Archon coupling is intentional** (locked decision 6 — own-hardware compute). The
+  portable seam is already clean: OpenSpec emits artifacts + `instructions --json`/
+  `instructions wave-plan` (portable); the workflow YAML is the Archon adapter. Generality
+  to another runtime later = a new adapter over the same OpenSpec contract, not a re-arch.
+- **Ecosystem assumptions** (JS/TS lockfile detection, `.agents/skills`/`.claude/skills`
+  globs) are fine for v1; multi-ecosystem project-detection (Python/uv, Rust/cargo) is a
+  deferred generalization, not a v1 concern.
