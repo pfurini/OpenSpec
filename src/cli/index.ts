@@ -20,6 +20,7 @@ import { registerSchemaCommand } from '../commands/schema.js';
 import { registerWorkspaceCommand } from '../commands/workspace.js';
 import { registerContextStoreCommand } from '../commands/context-store.js';
 import { registerInitiativeCommand } from '../commands/initiative.js';
+import { adrIndexCommand, type AdrIndexOptions } from '../commands/adr.js';
 import { findWorkspaceRoot } from '../core/workspace/index.js';
 import {
   statusCommand,
@@ -555,6 +556,26 @@ newCmd
   .action(async (name: string, options: NewChangeOptions) => {
     try {
       await newChangeCommand(name, options);
+    } catch (error) {
+      console.log();
+      ora().fail(`Error: ${(error as Error).message}`);
+      process.exit(1);
+    }
+  });
+
+// ADR command group
+const adrCmd = program.command('adr').description('Architecture Decision Record utilities');
+
+adrCmd
+  .command('index')
+  .description('Generate (or, with --check, verify) the ADR registry from ADR frontmatter')
+  .option('--dir <path>', `ADR directory (default: ${'docs/adr'})`)
+  .option('--check', 'Check the registry is up to date; exit non-zero on drift or parse errors')
+  .option('--force', 'Overwrite a registry file that lacks the generated marker')
+  .option('--json', 'Output as JSON')
+  .action(async (options: AdrIndexOptions) => {
+    try {
+      await adrIndexCommand(options);
     } catch (error) {
       console.log();
       ora().fail(`Error: ${(error as Error).message}`);

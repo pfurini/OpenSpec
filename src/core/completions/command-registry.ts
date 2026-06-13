@@ -298,6 +298,33 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
     ],
   },
   {
+    name: 'adr',
+    description: 'Architecture Decision Record utilities',
+    flags: [],
+    subcommands: [
+      {
+        name: 'index',
+        description: 'Generate (or, with --check, verify) the ADR registry from ADR frontmatter',
+        flags: [
+          {
+            name: 'dir',
+            description: 'ADR directory',
+            takesValue: true,
+          },
+          {
+            name: 'check',
+            description: 'Check the registry is up to date; exit non-zero on drift or parse errors',
+          },
+          {
+            name: 'force',
+            description: 'Overwrite a registry file that lacks the generated marker',
+          },
+          COMMON_FLAGS.json,
+        ],
+      },
+    ],
+  },
+  {
     name: 'workspace',
     description: 'Set up and inspect coordination workspaces',
     flags: [],
