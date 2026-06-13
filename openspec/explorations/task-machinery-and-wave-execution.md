@@ -150,6 +150,21 @@ So per-wave detail and the coverage map must use NO checkboxes. Settled encoding
   (tier hints written now are cheap + forward-compatible; v1 doesn't act on them for model
   choice — README #10). `skills:` bullet lists skill SKILL.md paths (incl. the project
   test-strategy skill).
+  - **`implTier` heuristic [PARKED prompt rule, 2026-06-13 — fold into the tasks/wave-map
+    stamp guidance when prompts are next edited].** Empirical finding from the step-2 artifact:
+    the planner set Wave 4's `implTier:small` because `risk:low`, conflating two different
+    axes. **`implTier` = implementation difficulty *under a detailed JIT plan* (ambiguity,
+    sharp edges, debugging likelihood) — NOT blast-radius `risk`.** A wave can be `risk:low`
+    (admin-only, reuses settled primitives) yet `implTier`-hard. Rule: **floor `implTier` at
+    `medium` for any wave touching UI/component tests, real-DB integration harnesses, or
+    known-fragile libraries** (lexup: MDXEditor — `ssr:false`/`'use no memo'`, `userEvent`
+    async, render-count Vitest↔prod divergence), regardless of `risk`; only pure-logic /
+    mechanical-wiring waves use `small`. Consistency check that catches the error: two waves of
+    the same difficulty class must share `implTier` (Wave 2 and Wave 4 both reuse `BioEditor` +
+    component tests → both `medium`; the artifact had W2 `medium`, W4 `small` — the tell).
+    Bite in v1: static tiers have **no escalation**, so a too-low `implTier` on a thrash-prone
+    wave runs self-fix ×3 then stop-and-ask → directly threatens the zero-human-turns bar.
+    (Hand-fixed Wave 4 → `implTier:medium` in the lexup artifact 2026-06-13.)
 - **Coverage map = one markdown table** (`| Scenario | Layer | Named test | Wave |`) — pipes,
   no checkboxes. The **layer column is TRANSCRIBED from design's Testing Approach**, never
   decided here (mirrors the MECHANICAL-ONLY guard: an unresolved layer is a design gap →
