@@ -134,9 +134,28 @@ artifacts:
       MECHANICAL ONLY - tasks makes NO design decisions. The design (design.md +
       design-notes.md) has already settled everything, INCLUDING the test layer for each
       scenario (design's Testing Approach). If you find an unresolved decision - an unsettled
-      choice, a deferred "?", an "Open Question" that is really a dodged decision, OR a spec
-      scenario whose test layer the design did not settle - STOP: that is a design gap. Do not
-      decide it here; send the user back to /opsx:design to settle it, then resume.
+      choice, a deferred "?", OR a spec scenario whose test layer the design did not settle -
+      STOP: that is a design gap. Do not decide it here; send the user back to /opsx:design to
+      settle it, then resume.
+
+      **Triage design's Open Questions before building anything.** Read design.md's
+      "Open Questions" section and classify EVERY item - the section conflates three cases
+      with different consequences:
+      - **A dodged HOW decision** (design should have settled it - a reasonable engineer could
+        implement it two materially different user-visible ways) -> STOP. Design gap; send the
+        user back to /opsx:design. Never paper over it by picking one here.
+      - **A genuine in-scope unknown** (needs the user or external information to resolve, and a
+        wave in THIS change depends on it) -> STOP. An autonomous run cannot obtain that
+        information, so it must be settled before the wave map is approved. Surface it to the
+        user now.
+      - **Genuinely out of scope / a non-goal** (no wave depends on it) -> safe to carry, but
+        never silently. Echo these items verbatim under a `## Carried-over Open Questions`
+        heading at the TOP of tasks.md (before the coverage map), as plain `-` bullets with NO
+        checkboxes, so the human approving the wave map SEES them instead of having them buried
+        in design.md.
+      If the Open Questions section is empty (the expected state after a complete design),
+      write nothing extra. Mechanical wiring (config, glue, imports) is NOT an open question -
+      it is just a standard step with a verify command.
 
       **Wave model (read before writing):**
       - A **wave** is a vertical slice that delivers one observable unit of value end to end,

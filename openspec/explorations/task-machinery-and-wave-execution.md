@@ -174,6 +174,44 @@ structured schema — referenced by path, cold-handoff safe):
   path in the wave map's per-wave `skills:` refs and surfaced by the wave-plan instruction as
   Mandatory Reading. OpenSpec does NOT auto-detect or parse it in v1.
 
+#### 4.1c Open-Questions gate at the design→tasks boundary — A DONE 2026-06-13, B+C parked
+
+The risk: design.md's `## Open Questions` section can carry an unresolved item into the wave
+map. There is **no mechanical gate** — the artifact graph only checks `design.md` exists,
+`openspec validate` checks format, neither reads design prose (matches executable-plans §2's
+"nothing checks design is grounded"). The v1 human gate is approval of `tasks.md`, but Open
+Questions live in `design.md` — different file from the gate, so a carried item is invisible
+to the approver. The section conflates **three** cases with different blocking semantics:
+dodged HOW decision (defect → block always), genuine in-scope unknown (autonomous **blocker** —
+the run can't fetch external info; legitimate **steering point** under HITL), out-of-scope/
+non-goal (safe to carry). Note the under-count the old prompt had: a *genuine* in-scope unknown
+is also a blocker in autonomous mode, not just dodged ones.
+
+- **A (DONE 2026-06-13, prompt-only):** the `tasks` instruction now triages every Open Question
+  (dodged → STOP; in-scope-unknown → STOP; out-of-scope → echo verbatim under a
+  `## Carried-over Open Questions` heading at the top of tasks.md, plain `-` bullets, no
+  checkboxes) so the wave-map approver SEES carried items. Closes the structural leak with zero
+  code. Still model-judgment + fail-open — hygiene, not a guarantee.
+- **B+C (PARKED — do after the step-2 writing-pass test closes):**
+  - **C — split the section structurally:** replace "Open Questions" with **"Out of scope /
+    non-goals"** (never blocks) + **"Unresolved — needs human"** (always a blocker). Removes the
+    conflation at the root; a dodged decision then has no ambiguous home to hide in. Touches
+    design.ts + design schema instruction + design.md template (the last two not parity-hashed;
+    design.ts is — re-harvest).
+  - **B — mechanical fail-closed gate:** the grounding-lint sketched in executable-plans §2 (or
+    an extended `openspec validate`): non-empty "Unresolved — needs human" → fail unless an
+    explicit override; the harness `classify+smoke`/pull node aborts before planning instead of
+    trusting the tasks-builder model. This is what actually makes the v1 "zero human turns after
+    approval" claim safe.
+  - **Mode-awareness falls out:** same detection, different reaction — hard abort in autonomous
+    v1, push-to-channel steering prompt under HITL — mirroring the documented-deviation →
+    adaptive-gate split (§4.3). Extending the fork policy from *mid-run* back to the *design
+    boundary*, not new machinery.
+  - **Generalize the validation mechanism:** B is the first case of a broader grounding-lint
+    (executable-plans §2) — Files-to-Change paths exist, cited patterns still match, every task
+    has a verify command, no circular deps. Build B as the first rule of that mechanism, not a
+    one-off.
+
 ### 4.2 Wave checkbox semantics [REC, unratified]
 
 Tick = **wave gate passed** (not "cycles done") — makes tasks.md progress trustworthy
