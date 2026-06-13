@@ -480,7 +480,7 @@ Principle: **skills enter as recorded references in artifacts, not session memor
 Old claim "vertical slice needs NO new OpenSpec code" is dead — running the slice
 against old-format tasks.md would validate machinery already decided obsolete.
 
-1. **Deep-planning schema + command rework** (OpenSpec code):
+1. ✅ **DONE 2026-06-13.** **Deep-planning schema + command rework** (OpenSpec code):
    - tasks instruction/template → wave map (§4.1: TDD ordering, wave 0 tracer, stamps,
      skill refs, coverage map, acceptance commands, scope-reduction ban).
    - **design de-parallelization** (the fossil — user caught it): "Build sequence &
@@ -498,8 +498,14 @@ against old-format tasks.md would validate machinery already decided obsolete.
      contract (what fields/shape the skill must expose) here so OpenSpec stays general.
    - New **wave-plan instruction** (§4.3) + `instructions wave-plan` endpoint.
    - Parity-test re-harvest (`test/core/templates/skill-templates-parity.test.ts`).
-2. **Regenerate lexup's change** through the reworked pipeline (cold-handoff protocol)
-   — doubles as the writing-pass acceptance test.
+2. ✅ **PASSED 2026-06-13.** **Regenerate lexup's change** through the reworked pipeline
+   (cold-handoff protocol) — doubles as the writing-pass acceptance test. Result: 5-wave TDD
+   map, coverage-map layers transcribed verbatim from design's Testing Approach, wave-grain
+   progress (5=5), per-wave stamps+skills (all cited skills real), no scope-reduction, design
+   Open Questions "None", ADR registry in sync (`lint --adr` clean, no dup ADR), glossary
+   unpolluted — the three earlier-round defects did not recur. Proves the writing pass; not
+   harness execution. (Minor noted deviation: filtered Playwright runs in wave gates vs the §7
+   change-gate-only [REC].)
 3. **Author the A′ workflow** in lexup `.archon/workflows/` (slot template, generated
    once) with **static per-node tiers** (planner strong, implementer fixed lower, via
    Archon config tier keywords). Dynamic routing is NOT required for the v1 proof; static

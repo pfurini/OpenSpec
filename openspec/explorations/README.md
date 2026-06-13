@@ -136,11 +136,23 @@ section, falsifiability gate, flow-to-gate continueMode, MECHANICAL-ONLY tasks),
    first, needs NO new OpenSpec code" is dead: the slice would validate task output we've
    decided is defective (tests-last, too coarse). New order — read
    `task-machinery-and-wave-execution.md` §9 for the full checklist:
-   1. Deep-planning schema + command rework (wave-map tasks, design de-parallelization,
-      wave-plan instruction + `instructions wave-plan` endpoint, skills wiring, parity
-      re-harvest).
-   2. Regenerate the lexup change through the reworked pipeline (= writing-pass
-      acceptance test, cold-handoff protocol).
+   1. ✅ **DONE (2026-06-13).** Deep-planning schema + command rework (wave-map tasks, design
+      de-parallelization, wave-plan instruction + `instructions wave-plan` endpoint, skills
+      wiring, parity re-harvest). Plus: proposal Constraints carried into propose+template;
+      design Open-Questions triage at the tasks boundary; ADR registry (`openspec adr index`)
+      + drift `openspec lint --adr` + prime forcing-function. All on branch, suite 1700.
+   2. ✅ **PASSED (2026-06-13) — writing-pass acceptance test, cold-handoff regeneration of
+      lexup `account-profile-self-service`.** Verified live: 5-wave TDD map (W0 failing-E2E
+      tracer + scaffold; value-ordered vertical slices); one `- [ ]` per wave → `apply --json`
+      progress.total=5; coverage-map layers transcribed **verbatim** from design's Testing
+      Approach (perfect scenario-by-scenario fidelity); per-wave stamps + skills (all 5 cited
+      skills exist, not fabricated); NO scope-reduction language; design Open Questions "None"
+      (no carried-over, no dodged); proposal Constraints grouped+falsifiable; slice-composition
+      (not parallelism). **The three earlier-round defects did NOT recur:** no duplicate ADR
+      (only ADR-0037), `lint --adr` clean (registry in sync), glossary unpolluted. One noted
+      deviation (not a fail): wave gates run filtered Playwright (§7 [REC] was "change gate
+      only") — defensible for proving the tracer RED→GREEN. Proves the writing pass only —
+      NOT harness execution (steps 3–4: no Archon/tiers/code).
    3. Author the A′ unrolled-slot workflow in lexup `.archon/workflows/`.
    4. Run the slice end-to-end at static per-node tiers (planner strong, impl fixed).
       Dynamic routing is deferred — NOT required for the v1 proof (amended 2026-06-13).
