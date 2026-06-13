@@ -369,7 +369,9 @@ User (original): "I don't want static models." That remains the end-state goal a
 whole of this section is the design for it. **V1 DEFERRAL (2026-06-13): dynamic, per-wave
 model selection is OUT of v1.** V1 ships **static per-node tiers** — plan-wN on a strong
 config tier, impl-wN on a fixed lower config tier — using Archon's config tier keywords,
-which Archon honors on prompt AND loop nodes today (verified `schemas/dag-node.ts:388-394`),
+which Archon honors on prompt AND loop nodes today (verified 2026-06-13 against source:
+`schemas/dag-node.ts:392-394` excludes model/provider from the loop-ignored set +
+`dag-executor.ts:3166-3199` loop dispatch resolves & forwards them — see §11),
 so **v1 needs no new Archon feature**. The planner ⪰ implementer invariant is preserved by
 that static assignment. The ONLY piece of this section live in v1 is **risk →
 verification-depth** classification (§6.1 — gates which reviewers run via `when:`,
@@ -529,18 +531,59 @@ against old-format tasks.md would validate machinery already decided obsolete.
 - **Deferred track (post-v1, Archon, user-owned):** the two routing features (§6.3) +
   their open syntax question — no longer blocks v1; pick up when hardening static→dynamic.
 
-## 10. Verification checklist (before/while authoring)
+## 10. Verification checklist — RESOLVED against Archon source 2026-06-13
 
-- [ ] Archon `.env` stripping vs change-gate needs (Postgres, Better-Auth env,
-      Playwright browsers, `.env.e2e`) — security model docs / live test.
-- [ ] `skills:` on loop nodes (`LOOP_NODE_AI_FIELDS`).
-- [ ] `archon workflow event emit` availability from lexup (ralph uses `bun run cli` in
-      Archon's own repo).
-- [ ] Skipped-slot joins: `trigger_rule` so skipped `plan-w5..K` don't block
-      change-gate (`none_failed` family; experimental proves the pattern).
-- [ ] Wave-as-run mechanics (only if/when B): sequential runs on one branch/worktree.
-- [ ] Task-tool sub-delegation with cheaper model inside Archon nodes (noted variant,
-      unverified, not load-bearing).
+All blocking items verified against `~/Developer/ai/archon` source (file:line refs below).
+Refs are pinned to source, not the skill docs (the skill docs had a stale spot — fixed, see
+§11). Nothing here blocks step-3 authoring.
+
+- [x] **`.env` stripping vs change-gate — RESOLVED (NOT a blocker).** `stripCwdEnv()`
+      (`packages/paths/src/strip-cwd-env.ts:41`) deletes from Archon's `process.env` ONLY the
+      keys present in the four Bun-auto-loaded CWD files (`.env`, `.env.local`,
+      `.env.development`, `.env.production`). It does NOT touch `~/.archon/.env`,
+      `<cwd>/.archon/.env`, or per-codebase env vars. The change-gate gets its env via two
+      channels: **(a)** `worktree.copyFiles: ['.env', '.env.e2e', …]` in lexup's
+      `.archon/config.yaml` copies gitignored files into the fresh worktree (git worktrees
+      hold only TRACKED files — `packages/isolation/src/worktree-copy.ts`; the example entry
+      is literally `.env`); a `bun run test` spawned by a **bash** node then auto-loads the
+      copied `.env` (bash nodes do NOT get `--no-env-file` — only script/Claude subprocesses
+      do, security.md §"Target repo `.env` isolation" items 2-4). **(b)** vars that must live
+      in `process.env` go in `<cwd>/.archon/.env` (trusted, passes to subprocesses) or
+      per-codebase env vars (`codebase_env_vars` DB / config `env:`) — **never** `<cwd>/.env`
+      (the only untrusted source, stripped at boot). Playwright browser binaries live in a
+      global cache (worktree-independent); `node_modules` is gitignored → the `pull` node must
+      run install. (Lexup setup TODO captured here, not an OpenSpec concern: set `copyFiles`
+      for the gate's gitignored env files; put Postgres URL / Better-Auth secret in
+      `<cwd>/.archon/.env`.)
+- [x] **`skills:` on loop nodes — IGNORED (verified).** `model`/`provider` are the ONLY AI
+      fields excluded from `LOOP_NODE_AI_FIELDS` (`packages/workflows/src/schemas/dag-node.ts:392-394`);
+      `skills` is in the ignored set, silently dropped with a `loop_node_ai_fields_ignored`
+      warning (`loader.ts:112-128`). Consequence (already the §8 decision): impl-wN delivers
+      skills as **mandatory-reading paths in the loop prompt body**, never via a node `skills:`
+      field. Now forced, not optional. (`hooks`/`mcp`/`output_format`/`allowed_tools` likewise
+      ignored on loops → gates go in `until_bash` + prompt, not node fields.)
+- [x] **`archon workflow event emit` from lexup — RESOLVED (works, repo-agnostic).**
+      `archon workflow event emit --run-id <uuid> --type <event-type> [--data <json>]` is a
+      top-level CLI command (`packages/cli/src/cli.ts:640-681` → `workflowEventEmitCommand`,
+      `packages/cli/src/commands/workflow.ts:1829`). It writes via `createWorkflowStore()` →
+      the GLOBAL store at `~/.archon/archon.db` (`packages/core/src/db/connection.ts:40`; or
+      `DATABASE_URL` Postgres), keyed by run-id (FK to `remote_agent_workflow_runs`). NOT
+      cwd-bound, so emitting from a lexup worktree reaches the same DB the run lives in.
+      **Best-effort / non-throwing** — if the DB is unreachable the event is dropped (logged),
+      so it never fails a bash node but isn't guaranteed delivered. The ralph `bun run cli
+      workflow event emit` form is just archon's dev-repo invocation of the same command; from
+      lexup use the installed binary `archon workflow event emit`. `$WORKFLOW_ID` supplies the
+      run-id inside nodes.
+- [x] **Skipped-slot joins — RESOLVED.** `trigger_rule: none_failed_min_one_success` on
+      change-gate lets skipped `plan-w5..K`/`impl`/`gate` slots NOT block it (skipped ≠ failed
+      ≠ success). Documented (workflow-dag.md Trigger Rules; parameter-matrix silent-failure
+      #10) and is the experimental fix-issue pattern. Use `all_done` only for run-regardless
+      cleanup/report nodes.
+- [ ] Wave-as-run mechanics (only if/when trajectory B): sequential runs on one
+      branch/worktree. **Deferred — not a v1 concern** (A′ is the v1 shape).
+- [ ] Task-tool sub-delegation (`agents:` inline map) with cheaper model inside Archon nodes.
+      **Verified to EXIST** (per-agent `model`+`skills`, parameter-matrix §"Inline agents"),
+      **not load-bearing** for v1 — left as a noted variant.
 
 ## 11. Facts verified this session (with refs)
 
@@ -550,10 +593,46 @@ against old-format tasks.md would validate machinery already decided obsolete.
 - lexup testbed: `.archon/` exists (config.yaml + workflows/archon-fix-bug.yaml);
   change `account-profile-self-service` 4/4 artifacts, 26 tasks/11 groups (old format).
 - Archon `when:` lazy runtime evaluation: `dag-executor.ts:3030-3068`; fail-closed
-  parse :3070. Loop static `model:` honored; dynamic injection absent
-  (`resolveModelSpec`, `dag-executor.ts:480`); `agents:` stripped on loops.
+  parse :3070.
 - Old README step-1 forks RESOLVED: change-package = stitched CLI (one command);
   work queue = two-level checkboxes (§4.1).
+
+### Verified 2026-06-13 (Archon source, this session — the §6 static-tier spine)
+
+- **Loop `model:`/`provider:` ARE honored at runtime (tier keywords too) — source-confirmed,
+  load-bearing for v1.** `LOOP_NODE_AI_FIELDS` explicitly EXCLUDES `model`+`provider`
+  (`packages/workflows/src/schemas/dag-node.ts:392-394`, with a comment saying the executor
+  forwards them per iteration). Loop dispatch (`packages/workflows/src/dag-executor.ts:3166-3199`)
+  calls `resolveNodeProviderAndModel(node,…)` (def ~:466-533) which reads `node.model` (:480) →
+  `resolveModelSpec(aiProfile, node.model)` (tier-keyword `large`/`medium`/`small` → Archon
+  config tiers) → resolved spec flows into every iteration's `sendQuery` via `resolvedOptions`.
+  Provider likewise (`node.provider ?? workflowProvider`, used for `getAgentProvider`).
+  **Last hop — the one that actually decides it (closed after an adversarial check):**
+  `resolveNodeProviderAndModel` returns `{ provider, model, options }` as siblings, and the loop
+  dispatch (`:3167`) destructures only `{ provider, options }`, DROPPING the sibling `model`.
+  Harmless, because the resolved model is ALSO embedded in `options`: `if (model)
+  baseOptions.model = model` (`:600`) → `options = { ...baseOptions, nodeConfig, assistantConfig }`
+  (`:642-646`) → loop `resolvedOptions` → `iterationOptions = { ...resolvedOptions, abortSignal }`
+  (`:2167-2170`) → `aiClient.sendQuery(…, iterationOptions)`. So `iterationOptions.model` = the
+  per-node resolved tier; the loop runs at impl-wN's tier, NOT the workflow fallback. The dropped
+  sibling is redundant, not the carrier.
+  **So v1's static per-node tiers (plan-wN prompt @strong, impl-wN loop @lower) work with NO
+  new Archon feature.** ⚠️ The earlier ref `resolveModelSpec, dag-executor.ts:480` was the
+  per-node path; `resolveModelSpec` itself is imported from `model-validation` and called at
+  `executor.ts:477` (workflow-level) + `dag-executor.ts:482` (per-node). The OLD note line
+  "dynamic injection absent" was MISLEADING — per-node static `model:` (incl. on loops) IS the
+  injection point; what's deferred is *classifier-driven* substitution (§6.3), not the field.
+- **Skill docs FIXED 2026-06-13.** The Archon skill refs (`workflow-dag.md`,
+  `parameter-matrix.md`) AND the canonical `packages/docs-web/.../guides/loop-nodes.md` all
+  wrongly said loop `model`/`provider` were "silently ignored." Corrected + committed on the
+  archon repo branch `feat/claude-terminal-provider` (commit `7f5327b`). The README
+  "known stale spots" caveat is now obsolete for this fact.
+- **Env / `.env` model:** `stripCwdEnv()` strips ONLY CWD `.env*` keys
+  (`packages/paths/src/strip-cwd-env.ts:41`); `worktree.copyFiles` injects gitignored files
+  into worktrees (`packages/isolation/src/worktree-copy.ts`); managed env via
+  `<cwd>/.archon/.env` + `codebase_env_vars`. See §10 for the change-gate consequence.
+- **`workflow event emit`** = top-level CLI, global store `~/.archon/archon.db`, repo-agnostic,
+  best-effort. See §10.
 
 ## 12. Generality vs the lexup testbed [CONFIRMED direction 2026-06-13]
 

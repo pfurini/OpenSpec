@@ -208,5 +208,13 @@ lexup: ADR `title:` backfill + the passed planning artifacts committed.
 - **Archon**: `/Users/paolof/Developer/ai/archon` — skills at `.claude/skills/archon`
   (runtime) and `.claude/skills/archon-dev` (their dev workflow); stock workflows at
   `.archon/workflows/defaults/` (ralph-dag is the Ralph reference). Verify capability claims
-  against `packages/workflows/src/` — the skill docs have known stale spots (loop `model:`
-  IS honored; docs say ignored).
+  against `packages/workflows/src/`. (The loop-`model:`-is-ignored stale spot was FIXED
+  2026-06-13 — archon commit `7f5327b`, branch `feat/claude-terminal-provider` — in the skill
+  refs AND docs-web. Loop `model:`/`provider:` ARE honored; tier keywords resolve.)
+- **Step-3 prerequisites VERIFIED against Archon source 2026-06-13** (all in
+  `task-machinery-and-wave-execution.md` §10-§11, source-pinned, do not re-litigate): loop
+  `model:`/`provider:` honored (static per-node tiers work, no new Archon feature); `skills:`
+  on loop nodes ignored → deliver as prompt-body mandatory reading; `archon workflow event
+  emit` is a repo-agnostic top-level CLI writing to the global `~/.archon/archon.db`; `.env`
+  reaches the change-gate via `worktree.copyFiles` + `<cwd>/.archon/.env` (cwd `.env` is
+  stripped at boot); skipped-slot joins use `trigger_rule: none_failed_min_one_success`.
