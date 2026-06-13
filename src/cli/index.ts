@@ -21,6 +21,7 @@ import { registerWorkspaceCommand } from '../commands/workspace.js';
 import { registerContextStoreCommand } from '../commands/context-store.js';
 import { registerInitiativeCommand } from '../commands/initiative.js';
 import { adrIndexCommand, type AdrIndexOptions } from '../commands/adr.js';
+import { lintCommand, type LintCommandOptions } from '../commands/lint.js';
 import { findWorkspaceRoot } from '../core/workspace/index.js';
 import {
   statusCommand,
@@ -556,6 +557,23 @@ newCmd
   .action(async (name: string, options: NewChangeOptions) => {
     try {
       await newChangeCommand(name, options);
+    } catch (error) {
+      console.log();
+      ora().fail(`Error: ${(error as Error).message}`);
+      process.exit(1);
+    }
+  });
+
+// Lint command (deterministic grounding-lint rules)
+program
+  .command('lint')
+  .description('Run deterministic grounding-lint rules (e.g. ADR registry drift)')
+  .option('--adr', 'Run only the ADR registry rule')
+  .option('--adr-dir <path>', `ADR directory (default: ${'docs/adr'})`)
+  .option('--json', 'Output as JSON')
+  .action(async (options: LintCommandOptions) => {
+    try {
+      await lintCommand(options);
     } catch (error) {
       console.log();
       ora().fail(`Error: ${(error as Error).message}`);

@@ -298,6 +298,22 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
     ],
   },
   {
+    name: 'lint',
+    description: 'Run deterministic grounding-lint rules (e.g. ADR registry drift)',
+    flags: [
+      {
+        name: 'adr',
+        description: 'Run only the ADR registry rule',
+      },
+      {
+        name: 'adr-dir',
+        description: 'ADR directory',
+        takesValue: true,
+      },
+      COMMON_FLAGS.json,
+    ],
+  },
+  {
     name: 'adr',
     description: 'Architecture Decision Record utilities',
     flags: [],
