@@ -31,6 +31,7 @@ When ready to implement, run /opsx:apply
      - **Problem / Why** → \`proposal.md\` (Why)
      - **Scope & Non-Goals** → \`proposal.md\` (What Changes) and spec scope
      - **Capabilities (new vs modified)** → \`proposal.md\` (Capabilities) and the \`specs/\` to create
+     - **Constraints** → \`proposal.md\` (Constraints) — transcribe the note's given limits (compatibility / performance / security / operational); do NOT drop them
      - **Parked Design Seeds** → carry forward as input to \`design.md\` when you reach it (do NOT discard them)
      - **Open Questions** → resolve with the user only if they block the proposal or specs; otherwise record them under design's Open Questions
 
@@ -155,6 +156,7 @@ When ready to implement, run /opsx:apply
      - **Problem / Why** → \`proposal.md\` (Why)
      - **Scope & Non-Goals** → \`proposal.md\` (What Changes) and spec scope
      - **Capabilities (new vs modified)** → \`proposal.md\` (Capabilities) and the \`specs/\` to create
+     - **Constraints** → \`proposal.md\` (Constraints) — transcribe the note's given limits (compatibility / performance / security / operational); do NOT drop them
      - **Parked Design Seeds** → carry forward as input to \`design.md\` when you reach it (do NOT discard them)
      - **Open Questions** → resolve with the user only if they block the proposal or specs; otherwise record them under design's Open Questions
 
