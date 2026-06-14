@@ -801,3 +801,48 @@ this bug — they are bash nodes; only the change-gate (a loop with an AI agent)
 trap. The principle — deterministic test runs belong in bash; the agent only fixes — should be the
 default shape for ALL gate/fix loops. (The impl loop is fine: its per-cycle tests are single-file
 scoped + one-cycle-per-iteration, so each turn stays short.)
+
+## 15. Review/fix/simplify tail — structure fixes [CONFIRMED issues 2026-06-14]
+
+The first full end-to-end run reached a draft PR (PR #114, zero human turns) — but the report
+flagged the v1 **failure class**: undocumented deviations. Root cause is the TAIL (change-gate,
+self-fix, simplify): these nodes mutate code but the §4.3/§4.4 logging discipline was only wired
+into the wave impl loop, so their commits are undocumented by construction. Four fixes, all in the
+tail (do together — they're one restructure):
+
+### 15.1 Tail nodes MUST log to progress.md [CONFIRMED bug]
+Observed post-wave-4-gate commits with NO progress.md entry: `61ed62d3` (change-gate added unit
+tests, likely to hit coverage:gate 80%), `d799ba60` (change-gate fixed a red e2e), `82271794`
+(self-fix review findings), `a3254070` (simplify). The report flags undocumented deviations as the
+ONLY failure class (§4.3), so these fail the run even though a PR was produced. **Fix:** change-gate,
+self-fix, and simplify each append a progress.md entry (what changed + why) on every mutation —
+same documented-deviation discipline the impl loop already follows. Then the end-review sees them
+as intentional.
+
+### 15.2 change-gate scope-awareness — flag, don't fix, out-of-scope reds [CONFIRMED bug]
+`d799ba60` is worse than undocumented: the change-gate FIXED a **pre-existing, out-of-scope** test
+(admin role-assignment e2e the change never touched) to force the full suite green — scope creep.
+**Fix:** the change-gate fixes only failures **caused by this change**; pre-existing/unrelated reds
+are **flagged + reported** (a wait-for-toast flake in an unrelated e2e is not this change's job),
+not silently fixed. Distinguishing "caused by this change" = failure in a file the diff touches, or
+a test that passed on the base branch. (Also: if coverage:gate forces adding tests beyond the wave
+plans (`61ed62d3`), that signals the WAVES under-covered — a wave-plan gap to surface, not just a
+silent top-up.)
+
+### 15.3 Gate must verify the FINAL shipped code (gate-after-mutation) [CONFIRMED bug]
+self-fix + simplify mutate code AFTER the change-gate, so the draft PR ships code the gate never
+verified. The gate must run after the last mutation. Friction: review/code-review/self-fix are
+PR-oriented (`gh pr diff`/`.pr-number`/`gh pr comment`) so they need create-pr first; only simplify
+is base-diff. Two options:
+- **(a) re-gate** after simplify: `change-gate → create-pr(draft) → review → self-fix → simplify →
+  change-gate#2 → report`; run succeeds only if gate#2 is green. Reuses the PR-oriented review
+  defaults; costs a second full gate (could run gate#2 lighter, risking missed e2e regressions).
+- **(b) diff-based review, single gate last** (cleaner): adapt review/self-fix to `git diff
+  $BASE_BRANCH...HEAD` (no PR, like simplify), order `waves → review → self-fix → simplify →
+  change-gate → create-pr`. One gate, PR = verified code. Needs moving review off `gh pr`.
+Lean: (b) is the right end state; (a) is the pragmatic path if keeping the archon PR-review defaults.
+
+### 15.4 Simplify placement [CONFIRMED 2026-06-14]
+A **single end-of-run simplify** suffices (GSD-style per-phase/per-wave simplify is more granular
+than needed). It runs last among the mutators, so it sits immediately BEFORE the final re-gate
+(15.3) — never after the gate.
