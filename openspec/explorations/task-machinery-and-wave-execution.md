@@ -746,3 +746,18 @@ thrashes any tier, and you can't tell plan-failure from tier-failure. While plan
 being hardened, run impl=large to isolate the variable; introduce rubric-driven impl tier +
 escalation once plans run clean. The rubric is the right architecture either way; this is just
 when to flip it on.
+
+**Tier floors [CONFIRMED 2026-06-14]:**
+- **impl ∈ {medium, large} — never small.** Haiku-class (small) models are not reliable for
+  autonomous TDD implementation (the per-cycle protocol is instruction-following + tool-discipline
+  as much as code-gen; small models skip steps, mis-commit, thrash on real-test debugging).
+  Sonnet (medium) is the practical floor; haiku stays for GLUE only (classify, review-classify).
+  **Bonus:** this collapses the impl rubric to a BINARY decision — `medium` (default) vs `large`
+  (a hard-difficulty signal from §13.3 fires) — which is materially more reliable to classify than
+  the 3-way split that helped sink §4.1a, AND serves the "faster" goal (medium/sonnet fast by
+  default, large only when earned). Escalation ladder: `medium → large` (on thrash) → self-fix at
+  large → stop-and-ask / cross-provider (§6.5).
+- **plan = large, constant — and likely permanent, not just "for now."** Planning is the
+  highest-leverage step (a bad plan thrashes ANY impl tier) and a tiny cost fraction (one node vs
+  N impl cycles), so downshifting it buys little and risks much. The dynamic tier lever lives on
+  **impl only**, where the volume + speed payoff are. Revisit plan-downshift post-proof at most.
