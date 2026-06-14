@@ -761,3 +761,41 @@ when to flip it on.
   highest-leverage step (a bad plan thrashes ANY impl tier) and a tiny cost fraction (one node vs
   N impl cycles), so downshifting it buys little and risks much. The dynamic tier lever lives on
   **impl only**, where the volume + speed payoff are. Revisit plan-downshift post-proof at most.
+
+## 14. change-gate structure bug — the agent must NOT run the gate in-turn [CONFIRMED bug 2026-06-14]
+
+**Symptom:** a live run reached all 5 waves green (assert 5/5) then the change-gate FAILED with
+`claude-terminal turn exceeded 900000ms`. Raising `turnTimeoutMs` to 30 min is a band-aid, not the
+fix — the structure is wrong.
+
+**Root cause:** the change-gate loop prompt has the AGENT run the FULL gate
+(`check-types && test && coverage:gate && test:e2e`) as Bash tool calls *inside its own turn*, to
+see failures and fix them. So the slow, deterministic gate (full vitest + coverage + Playwright
+e2e) executes inside the agent turn and blows the per-turn cap. This violates Archon good-practice
+#1 ("use deterministic nodes for deterministic work; never make the AI run a check a computer can
+run"). The `until_bash` completion check re-runs the same gate — so it runs twice, and the
+expensive run is in the worst place (the capped agent turn). The wave gates (`gate-wN`) do NOT have
+this bug — they are bash nodes; only the change-gate (a loop with an AI agent) does.
+
+**The fix [REC — user's proposal, do immediately after the current run completes]:** separate
+"agent fixes" from "gate runs". The gate execution moves OUT of the agent turn:
+- **`until_bash` (or a preceding bash step) RUNS the gate** — deterministic, NOT subject to the
+  agent turn cap (it has its own/bash timeout, which can be generous). On failure it CAPTURES the
+  failures to a file (e.g. `$ARTIFACTS_DIR/gate-failures.txt`).
+- **The agent loop prompt FIXES ONLY** — it reads `$ARTIFACTS_DIR/gate-failures.txt` and fixes
+  those specific failures; it MUST NOT run the full suite itself. Each agent turn is now bounded
+  (just fixing reported failures) → no turn-cap blowup.
+- **Loop:** agent fixes (reads failure file) → `until_bash` re-runs the gate + re-captures →
+  exit 0 = done, else next iteration with the fresh failure file.
+- **First-iteration nuance:** the gate must run ONCE before the agent has anything to fix — either
+  a bash gate-run node before the loop (writes the initial failure file), or the prompt no-ops on
+  iteration 1 when the file is absent and lets `until_bash` produce it.
+- **Implementation constraint (verified):** the loop does NOT expose `until_bash` output to the
+  next iteration's prompt — only `$LOOP_USER_INPUT` / `$LOOP_PREV_OUTPUT` exist
+  (`dag-executor.ts:1647-1648,2476-2477`). So failures MUST be passed via a file the prompt reads,
+  not an until_bash-output variable.
+
+**Generalizes:** any loop where the agent runs a slow full-suite/e2e command in-turn has this
+trap. The principle — deterministic test runs belong in bash; the agent only fixes — should be the
+default shape for ALL gate/fix loops. (The impl loop is fine: its per-cycle tests are single-file
+scoped + one-cycle-per-iteration, so each turn stays short.)
