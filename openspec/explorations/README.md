@@ -5,7 +5,8 @@ harness work on branch `feat/explore-what-brainstorming`. An implementing sessio
 read this index, then ONLY the note(s) for its chosen track — not the whole corpus.
 
 Two families of files:
-- **Ours (this effort)** — the 9 notes below.
+- **Ours (this effort)** — the notes in the table below (the harness track's build contract is
+  `task-machinery-and-wave-execution.md`; read its §13–§16 first for current state).
 - **Upstream** (`workspace-*.md`, `explore-workflow-ux.md`) — inherited context; read only
   if a track touches workspaces/initiatives.
 
@@ -13,7 +14,7 @@ Two families of files:
 
 | Note | Role | Status |
 |---|---|---|
-| `task-machinery-and-wave-execution.md` | **The current build contract (read FIRST for the active track).** TDD wave model (3 grains, commit-per-cycle, two-level queue, JIT wave plans), A′ unrolled-slot workflow, **static per-node tiers in v1** (planner ⪰ implementer; dynamic routing deferred post-v1), test-layer routing via project skill, skills backbone, K=10, documented-deviation rule, reversed build order. Supersedes phase-graph's intra-change section + parts of executable-plans | Brainstorm **SETTLED**, v1 scope refined 2026-06-13; impl NOT started; user has more seeds pending |
+| `task-machinery-and-wave-execution.md` | **The current build contract (read FIRST for the active track).** TDD wave model (3 grains, commit-per-cycle, two-level queue, JIT wave plans), A′ unrolled-slot workflow, static per-node tiers (planner ⪰ implementer), test-layer routing via project skill, skills backbone, K=10, documented-deviation rule. **§13–§16 = the 2026-06-14 build+run findings** (execution grain, impl-tier rubric + tier floors, change-gate + tail restructure, the canonical-source decision). Supersedes phase-graph's intra-change section + parts of executable-plans | **Harness AUTHORED + ran END-TO-END 2026-06-14 → green-gated draft PR (PR #114), 0 human turns.** One v1 bar open (zero undocumented deviations → tail restructure §14/§15). Read §13–§16 for current state |
 | `phase-graph-unified-model.md` | **The architecture.** OpenSpec↔Archon harness model: unit = right-sized change; change DAG (orchestrator) + task DAG; validation gates; build order; size ceiling. *Intra-change execution + model routing sections superseded — see task-machinery note* | Core model **CONFIRMED**; intra-change parts superseded |
 | `executable-plans-and-feedback-loop.md` | Content spec for the rich task-builder (self-sufficiency standard, ralph `prd.json` convergence) + implementation report / feedback loop. *§1 now lands in the wave-plan instruction; "fatten tasks.md" item resolved — see task-machinery note* | Partially absorbed into task-machinery note |
 | `change-records-and-thinking-layer.md` | Amendment model, shadow-layer caveat, ADR/glossary layer (§4 LANDED), small parked items (§5) | Mixed: §4 shipped, rest deferred |
@@ -26,7 +27,16 @@ Two families of files:
 | `linear-github-sync.md` | v1: outbound push to Linear (configurable mapping, ids in metadata). Future vision: Linear as driver (Agents API = protocol-not-runtime; all compute on own hardware) | Buildable later; out of scope for this initiative |
 | `explore-workflow-ux.md` | Earlier explore UX thinking (pre-dates this effort) | Historical |
 
-## Current v1 target (2026-06-13)
+## Current v1 target (2026-06-13) — STATUS 2026-06-14: 3-of-4 bars met
+
+**Progress 2026-06-14:** the harness was authored (A′ workflow + generator in lexup) and ran
+end-to-end → a **green-gated draft PR (PR #114) with zero human turns**. Of the four
+done-condition bars below, three are met: green-gated PR ✅, zero human turns ✅, per-wave TDD
+trail ✅. The fourth — **zero undocumented deviations** — is OPEN: the tail nodes (change-gate /
+self-fix / simplify) mutate code without logging to progress.md. Fix = the §14/§15 tail
+restructure in `task-machinery-and-wave-execution.md` §16.4; then a clean re-run should pass all
+four. (Also decided 2026-06-14: the harness workflow should be **OpenSpec-canonical, CLI-installed**
+— see decision 16 + task-machinery §16.3.)
 
 This initiative is the **engineering harness proof**, not the product-discovery,
 workspace, Linear, or research initiative.
@@ -102,14 +112,35 @@ V1 operating contract:
     wave-plan instruction holds the "cheapest layer that proves it" principle; the concrete
     per-scenario table comes from a project "test-strategy" skill (lexup-testing = first
     instance), keeping OpenSpec general from day one. task-machinery §7.
+16. **Harness workflow is OpenSpec-canonical, CLI-installed** (2026-06-14): the A′ workflow YAML
+    + its generator are project-agnostic and live in **OpenSpec** (this repo), installed into a
+    target's `.archon/workflows/` via the CLI — exactly like commands and skills. Hand-authoring
+    in lexup was the testbed bootstrap, not the home. Project specifics (gate commands, tier
+    mapping, `copyFiles`, test-strategy skill) stay in the target's config/skills; the emitted
+    workflow references them, parameterized. Extends decision-12 generality: the Archon adapter
+    (the workflow YAML) is now OpenSpec-owned + installed, not copied per project. task-machinery §16.3.
+17. **impl-tier = multi-dimensional prediction + escalation; tier floors** (2026-06-14): per-wave
+    `implTier` is predicted by a 5-dimension complexity rubric (library fragility / test layer /
+    pattern availability / behavioral pinning / algorithmic complexity — NOT size or risk), with
+    escalation as the backstop. **impl ∈ {medium, large}, never small** (haiku = glue only);
+    **plan = large, constant**. task-machinery §13.3.
 
 ## What is code vs notes (already shipped on this branch)
 
-Shipped: interactive `/opsx:design` (interview discipline, ADR floor), enriched
-`/opsx:explore` (one-sentence gate, given-constraints, glossary seeding), shared prime
+Shipped (OpenSpec code, on branch): interactive `/opsx:design` (interview discipline, ADR floor),
+enriched `/opsx:explore` (one-sentence gate, given-constraints, glossary seeding), shared prime
 ritual (`shared-prime.ts`), ADR lifecycle in archive, `deep-planning` schema (Constraints
-section, falsifiability gate, flow-to-gate continueMode, MECHANICAL-ONLY tasks),
-`openspec list --explorations`. All tests green (1665).
+section, falsifiability gate, flow-to-gate continueMode, MECHANICAL-ONLY tasks, wave-map tasks +
+`instructions wave-plan`, the 2026-06-14 hardening rules: atomic-slicing,
+behavior-change-includes-its-test, ground-named-test-paths), `openspec list --explorations`,
+ADR registry (`openspec adr index`) + `lint --adr`. Suite ~1700 (2026-06-14 changes are
+prompt/schema content, no OpenSpec test-count change).
+
+**NOT yet OpenSpec code (lives in the lexup testbed, to be canonicalized — decision 16):** the
+A′ harness workflow (`opsx-wave-harness.gen.mjs` + `.yaml`), the lexup `.archon/config.yaml`
+wiring, and the lexup-testing skill grounding. These ran the v1 proof but must move into OpenSpec
+as an emitted/installed artifact (task-machinery §16.3). archon-side (separate repo, branch
+`feat/claude-terminal-provider`): `claude-terminal` tier-defaults + loop-`model:` doc fix.
 
 ## Recommended next steps (in order)
 
@@ -155,9 +186,11 @@ section, falsifiability gate, flow-to-gate continueMode, MECHANICAL-ONLY tasks),
       deviation (not a fail): wave gates run filtered Playwright (§7 [REC] was "change gate
       only") — defensible for proving the tracer RED→GREEN. Proves the writing pass only —
       NOT harness execution (steps 3–4: no Archon/tiers/code).
-   3. Author the A′ unrolled-slot workflow in lexup `.archon/workflows/`.
-   4. Run the slice end-to-end at static per-node tiers (planner strong, impl fixed).
-      Dynamic routing is deferred — NOT required for the v1 proof (amended 2026-06-13).
+   3. ✅ **DONE 2026-06-14.** Authored the A′ workflow (generator + `opsx-wave-harness.yaml`)
+      in lexup `.archon/workflows/`; validated + wiring-proven. task-machinery §16.
+   4. ✅ **DONE 2026-06-14 (near-pass).** Ran the slice end-to-end → green-gated draft PR
+      (PR #114), all 5 waves green, zero human turns. One v1 bar open (zero undocumented
+      deviations) → the §14/§15 tail restructure (task-machinery §16.4) is the next build.
    Deferred track (post-v1, user-owned, in Archon): substitution on `model:`/`provider:` +
    `<next-model>` loop directive — no longer blocks v1; pick up when hardening static→dynamic.
 2. **Inter-change graph:** implement `add-change-stacking-awareness`
@@ -167,27 +200,40 @@ section, falsifiability gate, flow-to-gate continueMode, MECHANICAL-ONLY tasks),
    capability tracks (review steps, discovery, research grounding, Linear v1) slot in
    independently. (Task-DAG formalization is absorbed by the wave model.)
 
-## Open stack after the 2026-06-13 build session (ordered map for the next session)
+## Open stack after the 2026-06-14 harness run (ordered map for the next session)
 
-Step 1 (task-machinery rework) **shipped**; step 2 (writing-pass acceptance) **PASSED**. What's
-open, roughly in priority order:
+Steps 1-4 of the harness track are DONE: schema/command rework **shipped**, writing-pass
+**PASSED**, A′ workflow **authored**, slice **ran end-to-end to a draft PR** (PR #114, 0 human
+turns). The harness mechanically works; the open work is the tail restructure + then hardening.
 
-1. **Step 3 — author the A′ unrolled-slot workflow** in lexup `.archon/workflows/` (static
-   per-node tiers). First track that exercises harness *execution* (Archon/tiers/code). Then
-   step 4 (run the slice). See §9 of `task-machinery-and-wave-execution.md`.
-2. **Multi-file skill generation** (`multi-file-skill-generation.md`) → then the **`design.ts`
-   rewrite** (`prompt-adherence-and-design-rewrite.md` §2). Prereq chain; the rewrite needs
-   `references/` to stop flattening. The rewrite also needs the **bisection** (§1 there) first.
-3. **`openspec lint` → hook/CI wiring** + **B/C grounding-lint rules** into `ALL_RULES`
-   (Files-to-Change-exist, design Open-Questions gate) — `prompt-adherence-and-design-rewrite.md` §3.
-4. **Deterministic command-flow enforcement** (the deeper "runtime steps, not prompt hints" want).
-5. Parked prompt edits to fold in at the next prompt touch (held pending the under-read fix):
-   `implTier` heuristic (§4.1a), Open-Questions section split (§4.1c C), the stamp guidance.
+1. **Tail restructure — the one open v1 bar (zero undocumented deviations) + turn-cap robustness.**
+   Single coherent change; full punch list in `task-machinery-and-wave-execution.md` §16.4
+   (details §14 + §15): change-gate runs tests in bash / agent only fixes; review/self-fix off
+   `gh pr` → base diff; reorder `waves → simplify → review → self-fix → change-gate → create-pr →
+   post-review-comments → report`; tail nodes log to progress.md; change-gate flags out-of-scope
+   reds; add `post-review-comments`. Then re-run → expect all four done-condition bars green.
+2. **Make the harness OpenSpec-canonical, CLI-installed** (decision 16; task-machinery §16.3).
+   The workflow YAML + generator live in lexup today (the testbed); they belong in OpenSpec,
+   emitted/installed like commands + skills, with project specifics (gate commands, tiers,
+   copyFiles, test-strategy skill) staying in the target. Pairs naturally with the multi-file
+   skill generation track (same emit/install machinery).
+3. **impl-tier rubric + escalation** (task-machinery §13.3) — the cheaper/faster-impl lever:
+   5-dimension complexity classifier → `implTier` ∈ {medium, large}; escalate on thrash;
+   calibration loop. Flip on once plan quality is solid (do after the clean re-run).
+4. **Plan-validation + reconciliation** (`plan-validation-and-recovery.md`, SEED) — the
+   anti-brittleness capability (cross-model wave-map validation + self-fix→replan→resume→human
+   gate). The next major capability after the harness reaches a clean pass.
+5. **Multi-file skill generation** (`multi-file-skill-generation.md`) → then the **`design.ts`
+   rewrite** (`prompt-adherence-and-design-rewrite.md` §2, after the **bisection** §1).
+6. **`openspec lint` → hook/CI wiring** + **B/C grounding-lint rules**
+   (`prompt-adherence-and-design-rewrite.md` §3); **deterministic command-flow enforcement**.
 
-Shipped this session (all on branch, pushed): wave-map + `instructions wave-plan`; Constraints
-carry-through; Open-Questions triage (gate A); ADR registry (`openspec adr index`) + drift
-(`openspec lint --adr`) + prompt wiring; prime forcing-function/un-skippable reads. Suite 1700.
-lexup: ADR `title:` backfill + the passed planning artifacts committed.
+Shipped 2026-06-14 (pushed): the lexup harness (generator + `opsx-wave-harness.yaml` + config +
+lexup-testing grounding); archon `claude-terminal` tier-defaults + loop-`model:` doc fix
+(`feat/claude-terminal-provider`); OpenSpec schema hardening rules (atomic-slicing,
+behavior-change-includes-its-test, ground-named-test-paths); notes §13–§16 +
+`plan-validation-and-recovery.md`. Earlier (2026-06-13, suite 1700): wave-map +
+`instructions wave-plan`; Constraints carry-through; Open-Questions triage; ADR registry + drift.
 
 ## Implementation-session protocol (tribal knowledge — read before coding)
 
@@ -206,6 +252,19 @@ lexup: ADR `title:` backfill + the passed planning artifacts committed.
   `node ./bin/openspec.js update --force <lexup-path>` (NO --force = skipped on unchanged
   version stamp). Schema YAML is NOT propagated — it resolves at runtime from this repo's
   `schemas/deep-planning/schema.yaml` because lexup runs this dev binary.
+- **Harness (lexup testbed, TO CANONICALIZE — decision 16):** the A′ workflow lives at lexup
+  `.archon/workflows/opsx-wave-harness.{gen.mjs,yaml,stub.yaml}` (generator + emitted real + stub).
+  Regenerate: `node opsx-wave-harness.gen.mjs [--k N] [--mode real|stub]`. Validate:
+  `archon validate workflows opsx-wave-harness`. The run loads config from the **worktree** cwd
+  (`executor.ts:383`); `--resume` matches the run's `working_path` exactly, so resume from the
+  worktree dir or via run-id (`archon workflow run opsx-wave-harness --resume`). Wave gates =
+  bash; change-gate + impl = loops. lexup config: `assistant: claude-terminal` (REPO key is
+  `assistant:`, not `defaultAssistant:`), `copyFiles: [.env, apps/web/.env]`,
+  `turnTimeoutMs: 1800000`. Standalone CLI needs `DATABASE_URL` in `~/.archon/.env` to use
+  Postgres (else SQLite). The next build moves all this into OpenSpec as an installable artifact.
+- **Archon source of truth**: harness execution facts are pinned in task-machinery §10–§11
+  (loop-`model:` honored, env model, `event emit`, trigger rules) and the §13–§16 build/run
+  findings. Verify capability claims against `~/Developer/ai/archon/packages/workflows/src/`.
 - **Archon**: `/Users/paolof/Developer/ai/archon` — skills at `.claude/skills/archon`
   (runtime) and `.claude/skills/archon-dev` (their dev workflow); stock workflows at
   `.archon/workflows/defaults/` (ralph-dag is the Ralph reference). Verify capability claims

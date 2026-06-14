@@ -1,10 +1,15 @@
 # Task machinery rework + wave execution model (the TDD harness synthesis)
 
-Status: **brainstorm SETTLED 2026-06-12, implementation NOT started.** This note is the
-re-priming record for the session that pivoted from "build the vertical slice" (README
-step 1) to "fix the task-generation machinery first" — the harness consumes what the
-task-builder emits, so the writing pass moved ahead of the harness in the build order.
-**The user has more seeds to expand — this design is open at the edges, not final.**
+Status: **harness AUTHORED + ran END-TO-END 2026-06-14 — reached a green-gated draft PR
+(PR #114), all 5 waves green, ZERO human turns from wave-map approval.** The §9 build order
+is now done through step 4 (the slice ran). One v1 done-condition bar remains open: *zero
+undocumented deviations* — the tail nodes don't log to progress.md (see **§15**). The
+build + run findings live in **§13** (execution grain, plan/impl separation, impl-tier
+prediction + tier floors), **§14** (change-gate structure bug), **§15** (review/fix/simplify
+tail restructure), and **§16** (the harness build summary + the canonical-source decision:
+the workflow belongs in OpenSpec, not hand-authored per-project). Originally a brainstorm
+(SETTLED 2026-06-12); this note remains the re-priming record for the harness track — read
+§13–§16 first for the current state.
 
 Each item below is tagged: **[CONFIRMED]** user-ratified · **[REC]** Claude's
 recommendation, unchallenged — treat as default, re-confirmable · **[OPEN]** undecided.
@@ -526,11 +531,19 @@ against old-format tasks.md would validate machinery already decided obsolete.
    unpolluted — the three earlier-round defects did not recur. Proves the writing pass; not
    harness execution. (Minor noted deviation: filtered Playwright runs in wave gates vs the §7
    change-gate-only [REC].)
-3. **Author the A′ workflow** in lexup `.archon/workflows/` (slot template, generated
-   once) with **static per-node tiers** (planner strong, implementer fixed lower, via
-   Archon config tier keywords). Dynamic routing is NOT required for the v1 proof; static
-   `model:` on prompt + loop nodes works today with no new Archon feature.
-4. **Run the slice** end-to-end on the regenerated change at the static tiers.
+3. ✅ **DONE 2026-06-14.** **Authored the A′ workflow** via a generator
+   (`opsx-wave-harness.gen.mjs` → `opsx-wave-harness.yaml`, K=10 slots, claude-terminal
+   provider, tier keywords). `archon validate workflows` clean; wiring proven by a bash-only
+   stub run (slots fire/skip on the numeric `when:` over bash-JSON dot-notation; join via
+   `none_failed_min_one_success`). See §16. Static per-node tiers (plan large / impl medium);
+   the loop-`model:` honored fact is §11.
+4. ✅ **DONE 2026-06-14 (near-pass).** **Ran the slice end-to-end** → green-gated draft PR
+   (PR #114), all 5 waves green, zero human turns. Surfaced + fixed a chain of real defects
+   along the way (claude-terminal config gap, setName cross-wave slicing, e2e path grounding,
+   MDXEditor jsdom test-layer, the one-cycle turn-cap fix, the change-gate turn-cap §14).
+   **One v1 bar still open:** zero undocumented deviations — the tail nodes (change-gate /
+   self-fix / simplify) mutate code without logging to progress.md (§15). Fix the §14/§15 tail
+   restructure, then a clean re-run should clear all four done-condition bars.
 - **Deferred track (post-v1, Archon, user-owned):** the two routing features (§6.3) +
   their open syntax question — no longer blocks v1; pick up when hardening static→dynamic.
 
@@ -863,3 +876,77 @@ runs **BEFORE review**, not at the end. simplify is the broadest mutator (refact
 diff) and can incidentally introduce bugs; review + self-fix must run AFTER it so its output is
 covered. Mutator risk order: **simplify (broadest) → review → self-fix (narrowest, targeted) →
 change-gate**. Never after the gate.
+
+## 16. Harness build + the canonical-source decision (2026-06-14)
+
+### 16.1 What was built (and where it lives NOW — the testbed, not the home)
+The A′ harness was authored in the **lexup** testbed at
+`/Users/paolof/Developer/Projects/lexup/lexup-new/.archon/`:
+- `workflows/opsx-wave-harness.gen.mjs` — the **generator/template** (the note's "generated once
+  from a template" §5.2). Parameterized on `--k` (slot count) and `--mode real|stub`. Emits the
+  YAML; stub mode is a bash-only wiring probe.
+- `workflows/opsx-wave-harness.yaml` — the real workflow (K=10, ~58 nodes): the full A′ shape
+  (pull → classify → smoke → 10×[recount·plan·impl(loop)·gate] → assert-waves-complete →
+  change-gate → create-pr → review chain → report). `provider: claude-terminal`, tiers
+  plan=`large` / impl=`medium` / classifiers=`small`, one-cycle-per-iteration impl loop
+  (`max_iterations:15`, `fresh_context:true`), per-cycle `vitest run <file>` (no coverage).
+- `workflows/opsx-wave-harness.stub.yaml` — the wiring probe (regenerable).
+- `config.yaml` — `assistant: claude-terminal` (the REPO key is `assistant:`, NOT
+  `defaultAssistant:` — that was a real bug; §see below), `worktree.copyFiles: [.env,
+  apps/web/.env]`, `turnTimeoutMs: 1800000` (30-min band-aid for the change-gate §14).
+- `.agents/skills/lexup-testing/SKILL.md` — grounding added: MDXEditor/Lexical-under-jsdom →
+  e2e (in the "What to test where" table AND a fragility note), per-cycle `vitest run` (no
+  coverage).
+
+Archon-side (branch `feat/claude-terminal-provider`): `tier-defaults.json` gained a
+`claude-terminal` entry (small→haiku, medium→sonnet, large→opus; user later set large→
+`claude-opus-4-6[1m]`); the stale loop-`model:`-ignored docs were fixed (commit `7f5327b`).
+
+### 16.2 claude-terminal config gaps closed [CONFIRMED 2026-06-14]
+- **Tiers:** claude-terminal wasn't in `tier-defaults.json` → tier keywords threw. Added it
+  (mirrors claude). `buildAiProfile` uses `config.assistant` as defaultProvider.
+- **Repo config key:** a REPO `.archon/config.yaml` selects its provider via **`assistant:`**;
+  only the GLOBAL `~/.archon/config.yaml` uses `defaultAssistant:`. The repo had
+  `defaultAssistant:` → silently ignored → fell back to builtin `claude`. Fixed to `assistant:`.
+- **DB:** the standalone CLI uses SQLite (`~/.archon/archon.db`) unless `DATABASE_URL` is set;
+  the user's Postgres needed `DATABASE_URL` in `~/.archon/.env`. (The run config is loaded from
+  the **worktree** cwd — `executor.ts:383 loadConfig(workingCwd)` — so a `--resume` reads the
+  worktree's config; and `--resume` matches the run's `working_path` exactly, so resume must be
+  invoked from the worktree dir or via run-id.)
+
+### 16.3 The canonical-source decision [CONFIRMED 2026-06-14] — workflow lives in OpenSpec, CLI-installed
+The harness workflow YAML + its generator are **project-agnostic** and must live in **OpenSpec
+(this repo) as the canonical source**, installed into a target repo's `.archon/workflows/` via the
+CLI — **exactly like commands and skills are emitted/installed today**. Hand-authoring them in
+lexup was the testbed bootstrap, NOT the home. This extends §12 (OpenSpec emits portable artifacts;
+the workflow YAML is the Archon *adapter*) — now the adapter itself is OpenSpec-owned and installed,
+not copied per project.
+
+What this implies for the build:
+- OpenSpec owns the generator/template (the source of `opsx-wave-harness.yaml`), alongside the
+  command + skill emitters in `src/core/templates/`.
+- `openspec update`/install writes the harness workflow into the target's `.archon/workflows/`
+  (capability-gated per tool, like the multi-file skill generation note).
+- **Project-specific bits stay in the project, not hardcoded:** gate commands (`pnpm test`,
+  `coverage:gate`, `test:e2e`), tier mapping, `copyFiles`, the test-strategy skill — all come from
+  the target's `config.yaml` / skills. The emitted workflow references them, parameterized. This is
+  the §12 generality rule applied to the workflow itself: distill lexup's shape into a general,
+  installable harness; never bake lexup specifics into it.
+- Open question for the build session: how much is a static emitted YAML vs a generator the CLI
+  runs at install time (K, provider, tiers as install params). The lexup `.gen.mjs` is the
+  prototype of the latter.
+
+### 16.4 Tail-restructure punch list (the next build session) [carry-forward]
+The one open v1 bar (zero undocumented deviations) + the turn-cap robustness reduce to a single
+tail restructure (§14 + §15), in this order:
+1. change-gate: tests in bash / `until_bash`, agent only fixes; gate verifies final code (§14, §15.3).
+2. Fork review/self-fix off `gh pr` → base diff (`git diff $BASE_BRANCH...HEAD`); drop inline
+   comment-posting (§15.3).
+3. Reorder tail: `waves → simplify → review → self-fix → change-gate → create-pr →
+   post-review-comments → report` (§15.3/§15.4).
+4. Tail nodes append progress.md deviation entries (§15.1); change-gate flags out-of-scope reds
+   instead of fixing (§15.2).
+5. Add the `post-review-comments` node (batch-posts saved review artifacts to the PR).
+Then a clean re-run should clear all four done-condition bars. (Separately: the impl-tier rubric
+§13.3 and the plan-validation/reconciliation seed `plan-validation-and-recovery.md` are the
+post-clean-run hardening, in that order.)
