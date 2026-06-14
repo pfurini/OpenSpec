@@ -840,7 +840,17 @@ is base-diff. Two options:
 - **(b) diff-based review, single gate last** (cleaner): adapt review/self-fix to `git diff
   $BASE_BRANCH...HEAD` (no PR, like simplify), order `waves → review → self-fix → simplify →
   change-gate → create-pr`. One gate, PR = verified code. Needs moving review off `gh pr`.
-Lean: (b) is the right end state; (a) is the pragmatic path if keeping the archon PR-review defaults.
+
+**DECIDED 2026-06-14 → (b).** The PR-coupling in the archon review defaults is incidental, not
+essential: the review chain already flows through `$ARTIFACTS_DIR/review/*.md` artifacts (synthesize
++ self-fix read findings from artifacts, not the PR); the PR is used only as (i) the diff source
+(`gh pr diff` → `git diff $BASE_BRANCH...HEAD`) and (ii) a place to post comments (`gh pr comment` —
+pure publishing, droppable for an autonomous internal review). None of it is in the workflow engine
+— it's the default `.md` prompts (written for human-facing PR review). So fork/adapt the review +
+self-fix commands to base-diff + drop comment-posting, and create-pr moves LAST (PR = the verified,
+reviewed, simplified code; no re-gate, no double-gate cost). A real open PR is needed only for the
+FUTURE capability of reviewing CI failures / external PR comments (codex et al. commenting *on* the
+PR) — a separate node, not part of the internal review chain.
 
 ### 15.4 Simplify placement [CONFIRMED 2026-06-14]
 A **single end-of-run simplify** suffices (GSD-style per-phase/per-wave simplify is more granular
