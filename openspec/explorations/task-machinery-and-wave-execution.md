@@ -316,8 +316,10 @@ change-gate (loop)     full suite + coverage:gate + Playwright; fix-loop, max ~3
 create-pr (prompt)     draft PR (experimental's discipline: .pr-number capture, body
                        file in $ARTIFACTS_DIR, never repo root)
 review-scope → review-classify (haiku, structured) → conditional reviewers
-                       (when: by scope/risk stamps; security-critical forces reviewers
-                       ON regardless of size) → synthesize → self-fix → simplify
+                       (when: by scope/risk stamps; security-critical forces ON only the
+                       SAFETY-relevant reviewers — error-handling + test-coverage — NOT
+                       comment-quality/docs-impact, which gate on their own diff vote;
+                       amended 2026-06-14) → synthesize → self-fix → simplify
 report                 unit report + assessment-vs-reality (incl. routing calibration §6.4)
 ```
 
