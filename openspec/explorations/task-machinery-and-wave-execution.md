@@ -150,8 +150,9 @@ So per-wave detail and the coverage map must use NO checkboxes. Settled encoding
   (tier hints written now are cheap + forward-compatible; v1 doesn't act on them for model
   choice — README #10). `skills:` bullet lists skill SKILL.md paths (incl. the project
   test-strategy skill).
-  - **`implTier` heuristic [PARKED prompt rule, 2026-06-13 — fold into the tasks/wave-map
-    stamp guidance when prompts are next edited].** Empirical finding from the step-2 artifact:
+  - **`implTier` heuristic [UN-PARKED 2026-06-14 — the size/risk confusion below is the FAILURE
+    MODE; §13 gives the multi-dimensional rubric + predict-then-escalate model that supersedes it].**
+    Empirical finding from the step-2 artifact:
     the planner set Wave 4's `implTier:small` because `risk:low`, conflating two different
     axes. **`implTier` = implementation difficulty *under a detailed JIT plan* (ambiguity,
     sharp edges, debugging likelihood) — NOT blast-radius `risk`.** A wave can be `risk:low`
@@ -659,3 +660,89 @@ specifics into OpenSpec.** Where the current design leans too narrow, and the fi
 - **Ecosystem assumptions** (JS/TS lockfile detection, `.agents/skills`/`.claude/skills`
   globs) are fine for v1; multi-ecosystem project-detection (Python/uv, Rust/cargo) is a
   deferred generalization, not a v1 concern.
+
+## 13. Execution grain & impl-tier prediction (2026-06-14 exploration)
+
+Captured from a design conversation while debugging the lexup harness run. Two questions:
+"is one-cycle-per-iteration the right grain?" and "can we predict per-wave complexity well
+enough to run impl on a cheaper/FASTER model?" Both **[CONFIRMED direction]**, details below.
+
+### 13.1 Execution grain — one cycle per iteration is right, but it's adaptive [CONFIRMED]
+
+The impl loop runs ONE red-green-refactor cycle per fresh iteration (not a whole wave in one
+turn). This is right, and we have empirical proof of the alternative failing:
+
+- **Whole-wave-in-one-turn was the ORIGINAL design and it DIED**: impl-w1 hit claude-terminal's
+  15-min turn cap (14m37s, killed mid-cycle-3). One-cycle-per-iteration was the fix.
+- **Why one-cycle wins** (the deciding axes): context rot (a whole-wave turn accumulates every
+  cycle's reads + test output → crosses sonnet's ~50% degradation point on multi-cycle waves);
+  turn cap (each cycle is a short turn); TDD purity; observability. Resumability is a TIE — it
+  comes from the per-cycle COMMIT grain, which both approaches share.
+- **The principled defense (not just a context hack): coherence lives in the PLAN, not the
+  execution.** The planner (strong model) pre-orders + relates all cycles; the implementer runs
+  one bounded, fresh, rot-free cycle. Whole-wave conflates planning-coherence with execution and
+  forces the weaker implementer to hold the whole-wave model in a bloating context. One-cycle
+  puts the coherence burden where the strong model already is (matches planner ⪰ implementer).
+- **Not fundamental — provider-tuned.** The 15-min wall is claude-terminal's; 200k is sonnet's.
+  The true rule is "the largest coherent chunk that fits one context window (≤~50%) AND the turn
+  budget." On a larger-context / no-turn-cap engine the viable chunk grows. **Adaptive-grain
+  refinement (deferred):** size:S (1-cycle) waves MAY merge plan+execute into one step (§5.2
+  seed) — handoff removal, NOT a downshift. One-cycle stays the safe default; re-derive the grain
+  if the execution engine changes.
+
+### 13.2 Plan and impl stay SEPARATE nodes — do NOT merge [CONFIRMED]
+
+Considered merging plan+impl into one node. Rejected. Keep them separate (current shape), for
+three reasons, strongest first:
+1. **The plan node is a context-compression boundary.** Planning is exploration-heavy (reads
+   design+specs+codebase+skills → distills `plans/wave-N.md`). Merging makes impl run in that
+   bloated context → rot sooner. Separated, impl starts FRESH from the compressed plan. A context
+   win independent of model tier.
+2. **Separation decouples plan-quality from impl-cost.** Plan stays large ALWAYS; impl tier is
+   tuned independently. Merging forces all-or-nothing — a downshift would hit the plan too (the
+   "mediocre plan + mediocre impl" risk). Separation protects the plan.
+3. **The plan→impl seam is the insertion point** for a plan-validation gate / replan-on-failure
+   (see `plan-validation-and-recovery.md`). Merge it away and you lose it.
+
+Also: **keep impl as a LOOP** (don't make it a single non-loop node) — a non-loop impl of a
+multi-cycle wave re-imports the turn-cap + rot failures. The loop generalizes (S-wave = loop with
+one iteration ≈ single shot).
+
+### 13.3 impl-tier prediction: a multi-dimensional rubric + predict-then-escalate [CONFIRMED]
+
+Supersedes the parked §4.1a heuristic. Goal: run impl on a cheaper/**faster** model where safe.
+The §4.1a failure was the INPUT — `size`/`risk` are bad proxies. But difficulty itself IS
+approximable by a strong authoring model (opus, stronger soon) reading design+specs+codebase+
+skills — senior engineers estimate "1-pointer vs gnarly" routinely.
+
+**The reframe that makes it safe: you don't need PERFECT prediction — just good-enough to put
+MOST waves on the fast model first-try, with ESCALATION as the backstop for the misses.** Perfect
+prediction is impossible (some difficulty only surfaces at runtime — the MDXEditor jsdom crash was
+only understood by running probes). Good-enough prior + escalate-on-thrash is very achievable, and
+that is the bar. (This is exactly §6.2's prior→posterior→escalation: tasks predict, classification
+refines, escalation measures — this section makes the PRIOR good.)
+
+**The rubric dimensions** (predict IMPL difficulty — NOT size, NOT risk):
+1. **Library/framework fragility** — touches a flagged-hard lib under test (MDXEditor/Lexical/
+   jsdom…)? The project test-strategy skill already catalogs these — feed it in.
+2. **Test layer** — pure unit = easy; real-DB integration + e2e = hard (fixtures, timing, flake).
+3. **Pattern availability** — strong mirror to copy-adapt = easy; net-new, no precedent = hard
+   (the plan's "Patterns to Mirror" is the signal).
+4. **Behavioral pinning / ambiguity** — fully-specified behavior + exact acceptance = easy; sharp
+   edges (concurrency, async timing, state machines, judgment calls) = hard.
+5. **Algorithmic complexity** — "wire two things" vs "implement a non-trivial algorithm".
+
+**Home:** a project-agnostic "complexity-classification" skill (the 5 dimensions) + the project
+test-strategy skill's fragility catalog; applied by the tasks/design step to stamp `implTier`.
+**Grain:** per-wave tier = the MAX-difficulty cycle in the wave (one gnarly cycle pulls the wave
+up). Per-cycle routing (`<next-model>` loop directive, §6.3) is a later refinement.
+**Trustworthy over time via two mechanisms:** the escalation backstop (turns imperfect prediction
+into safe), and the §6.4 calibration loop (record predicted-tier vs actual iterations/gate-fails/
+escalations → tune the rubric; a wave class that keeps escalating gets re-stamped harder — the
+prior LEARNS).
+
+**Sequencing caveat [REC]:** downshift only pays off once PLAN quality is solid — a mediocre plan
+thrashes any tier, and you can't tell plan-failure from tier-failure. While plan quality is still
+being hardened, run impl=large to isolate the variable; introduce rubric-driven impl tier +
+escalation once plans run clean. The rubric is the right architecture either way; this is just
+when to flip it on.
