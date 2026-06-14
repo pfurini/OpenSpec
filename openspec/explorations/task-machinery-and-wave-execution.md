@@ -846,13 +846,20 @@ essential: the review chain already flows through `$ARTIFACTS_DIR/review/*.md` a
 + self-fix read findings from artifacts, not the PR); the PR is used only as (i) the diff source
 (`gh pr diff` → `git diff $BASE_BRANCH...HEAD`) and (ii) a place to post comments (`gh pr comment` —
 pure publishing, droppable for an autonomous internal review). None of it is in the workflow engine
-— it's the default `.md` prompts (written for human-facing PR review). So fork/adapt the review +
-self-fix commands to base-diff + drop comment-posting, and create-pr moves LAST (PR = the verified,
-reviewed, simplified code; no re-gate, no double-gate cost). A real open PR is needed only for the
-FUTURE capability of reviewing CI failures / external PR comments (codex et al. commenting *on* the
-PR) — a separate node, not part of the internal review chain.
+— it's the default `.md` prompts (written for human-facing PR review). So fork/adapt review +
+self-fix to base-diff and drop their INLINE comment-posting (they write findings to
+`$ARTIFACTS_DIR/review/*.md` only). **Order (amended 2026-06-14):**
+`waves → simplify → review → self-fix → change-gate → create-pr → post-review-comments → report` —
+simplify FIRST among mutators (§15.4), create-pr LAST (PR = verified code; one gate, no re-gate).
+**PR comments kept but DEFERRED:** a `post-review-comments` node AFTER create-pr batch-posts the
+saved review/self-fix artifacts (`consolidated-review.md`, `fix-report.md`) as PR comments — the
+review logic stays PR-independent (base diff + artifacts); only the publishing waits for the PR.
+A real open PR is needed only for the FUTURE capability of reviewing CI failures / external PR
+comments (codex et al. commenting *on* the PR) — a separate node, not part of the internal chain.
 
 ### 15.4 Simplify placement [CONFIRMED 2026-06-14]
-A **single end-of-run simplify** suffices (GSD-style per-phase/per-wave simplify is more granular
-than needed). It runs last among the mutators, so it sits immediately BEFORE the final re-gate
-(15.3) — never after the gate.
+A **single simplify** suffices (GSD-style per-phase/per-wave is more granular than needed) — but it
+runs **BEFORE review**, not at the end. simplify is the broadest mutator (refactors across the whole
+diff) and can incidentally introduce bugs; review + self-fix must run AFTER it so its output is
+covered. Mutator risk order: **simplify (broadest) → review → self-fix (narrowest, targeted) →
+change-gate**. Never after the gate.
