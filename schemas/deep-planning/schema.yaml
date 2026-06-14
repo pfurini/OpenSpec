@@ -244,6 +244,10 @@ wavePlan:
       single scoped test). Commit grain is per cycle: `test:` (RED) then `feat:`/`refactor:` (GREEN).
 
     HARD RULES:
+    - **Plan only, never implement**: you read and write plans/wave-<N>.md. Do NOT write, edit,
+      or run source/test files or commands (no probes, no test runs, no library spelunking).
+      Library/jsdom/tooling fragility is the implementer's job - capture it as a Gotcha, never
+      solve it here. Running code is how the planner blows its turn budget.
     - **Nyquist self-check**: every cycle has an automated way to verify it (a Validate command).
       A cycle with no automated verification is a planning defect - fix it (add the scaffold, or
       flag the wave-0 scaffold gap) before saving the plan.
@@ -255,6 +259,10 @@ wavePlan:
       settled upstream - you do not re-open them. You MAY split this wave into ordered cycles and,
       if the wave map genuinely under- or over-counted, append/split a wave (planner authority) -
       but never invent scope the design did not call for.
+    - **Plan scope = cycles only**: the plan's checkboxes are THIS wave's red-green-refactor
+      cycles. The plan MUST NOT add any step that edits tasks.md or ticks the wave-map checkbox -
+      that wave-level tick is the orchestrator's job (the harness wave gate, or the human working
+      the wave map), never the per-wave implementer's.
     - **Documented-deviation rule**: v1 runs with no mid-run human gate. If you hit a design fork
       the upstream design did NOT settle, do not silently pick and bury it. Record the decision +
       rationale as a **documented deviation** in progress.md and the final report. End-of-run
