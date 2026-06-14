@@ -206,12 +206,16 @@ Steps 1-4 of the harness track are DONE: schema/command rework **shipped**, writ
 **PASSED**, A′ workflow **authored**, slice **ran end-to-end to a draft PR** (PR #114, 0 human
 turns). The harness mechanically works; the open work is the tail restructure + then hardening.
 
-1. **Tail restructure — the one open v1 bar (zero undocumented deviations) + turn-cap robustness.**
-   **Ready-to-paste handoff: `handoff-tail-restructure.md`.** Single coherent change; full punch list in `task-machinery-and-wave-execution.md` §16.4
-   (details §14 + §15): change-gate runs tests in bash / agent only fixes; review/self-fix off
-   `gh pr` → base diff; reorder `waves → simplify → review → self-fix → change-gate → create-pr →
-   post-review-comments → report`; tail nodes log to progress.md; change-gate flags out-of-scope
-   reds; add `post-review-comments`. Then re-run → expect all four done-condition bars green.
+1. ~~**Tail restructure — the one open v1 bar (zero undocumented deviations) + turn-cap robustness.**~~
+   **BUILT 2026-06-14** (lexup dev `84a0ea2a`; build record `task-machinery-and-wave-execution.md`
+   §16.5). All five §16.4 items shipped in the generator: change-gate is now UNROLLED bash
+   gate-runs + agent fix turns (the loop's `until_bash` is hardcapped at 120s — too short for the
+   e2e gate — so the loop was infeasible; unrolled slots keep §14's principle); review/self-fix/
+   simplify forked to base-diff `opsx-*` commands emitted by the generator; tail reordered;
+   progress.md logged atomically with each mutator commit; `post-review-comments` added. Verified
+   by `archon validate` + a full stub probe (gate cascade + reviewer gating confirmed). **OPEN: the
+   USER runs the real slice** (`archon workflow run opsx-wave-harness --branch <new>
+   "account-profile-self-service"` from a clean worktree) → expect all four bars green.
 2. **Make the harness OpenSpec-canonical, CLI-installed** (decision 16; task-machinery §16.3).
    The workflow YAML + generator live in lexup today (the testbed); they belong in OpenSpec,
    emitted/installed like commands + skills, with project specifics (gate commands, tiers,

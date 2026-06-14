@@ -1,5 +1,11 @@
 # Handoff — opsx wave-harness TAIL RESTRUCTURE (next build session)
 
+> **DONE 2026-06-14** (lexup dev `84a0ea2a`). All five punch-list items built + verified by
+> `archon validate` and a full stub probe. Build record + the forced loop→unrolled-gate pivot
+> (until_bash's 120s hardcap) live in `task-machinery-and-wave-execution.md` §16.5. **Only open
+> item: the USER runs the real slice.** This file is kept for provenance — the prompt below was
+> the handoff that drove the build.
+
 Paste the block below into a fresh session. It's the next recommended step (README "Open stack"
 #1): close the last v1 done-condition bar (zero undocumented deviations) + fix the change-gate
 turn-cap. Full rationale is durable in `task-machinery-and-wave-execution.md` §14, §15, §16.4 —

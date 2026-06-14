@@ -950,3 +950,59 @@ tail restructure (§14 + §15), in this order:
 Then a clean re-run should clear all four done-condition bars. (Separately: the impl-tier rubric
 §13.3 and the plan-validation/reconciliation seed `plan-validation-and-recovery.md` are the
 post-clean-run hardening, in that order.)
+
+### 16.5 Tail restructure — BUILT [2026-06-14, lexup dev `84a0ea2a`]
+All five §16.4 items are implemented in the lexup generator (`opsx-wave-harness.gen.mjs`,
+regenerated + `archon validate … ok`). The build forced ONE mechanism change from §14's letter
+(but not its principle), recorded below so it's not re-litigated.
+
+**The forced pivot — change-gate is UNROLLED bash slots, not a loop (§14 mechanism amended):**
+§14 proposed `until_bash` (or a preceding bash step) runs the gate. The empirical constraint:
+the archon loop's ONLY per-iteration deterministic hook is `until_bash`, and its timeout is
+**hardcoded to 120s** (`dag-executor.ts:2470` `SUBPROCESS_DEFAULT_TIMEOUT`, no `node.timeout`
+override) — too short for the full vitest+coverage+Playwright e2e gate. A loop therefore CANNOT
+re-run a slow gate per iteration (until_bash too short; the agent running it = the original §14
+bug; loop exhaustion `state:'failed'`). So the change-gate is the harness's own unrolled-slot
+idiom (§13.1) — the "preceding bash step" the note also sanctioned:
+- `gate-run-i` (i=0..G; G=`GATE_FIX_ATTEMPTS`=2 ⇒ 3 verifying runs) — a **bash node** with a
+  configurable `timeout: 1800000`. Runs check-types · test · coverage:gate · test:e2e, captures
+  each failure to `$ARTIFACTS_DIR/gate-failures.txt`, writes green/red to `gate-status`, and emits
+  a **single pure-JSON line** `{"green":"true|false"}` on stdout (all diagnostics → stderr, so
+  `$gate-run-i.output.green` parses). Always `exit 0` (a node failure must not abort the run).
+- `gate-fix-i` (i=0..G-1) — an **agent prompt** gated `when: $gate-run-i.output.green == 'false'`.
+  Reads gate-failures.txt and FIXES ONLY (never runs the suite — that was the bug). A green run
+  when-skips the next fix and **cascade-skips** later runs (verified). `create-pr` depends on ALL
+  gate nodes with `trigger_rule: all_done`, so it fires after a cascade-skipped tail.
+- This keeps §14's PRINCIPLE intact (deterministic gate in bash, agent only fixes, short turns) —
+  only the loop→unroll mechanism changed. The 30-min turnTimeoutMs band-aid is gone (config back
+  to 900s).
+- **Archon follow-up (out of scope here):** if `until_bash` honored `node.timeout`, the elegant
+  single loop would work — worth an archon issue. Recorded here, not actioned this session.
+
+**Items 2–5 as built:**
+- (2/3) Forked review/self-fix/simplify to base-diff + pnpm + artifact-only (no inline `gh pr
+  comment`), emitted as `opsx-*` commands **from the generator** (single source — decision 16;
+  `writeCommands()` writes `.archon/commands/opsx-*.md` on every regen, alongside the YAML).
+  Reviewers read `scope.md` + `diff.patch`; the findings-filename contract
+  (`*-findings.md` → synthesize `consolidated-review.md` → self-fix `fix-report.md`) is unbroken.
+  Tail order = `assert-waves-complete → simplify → review-scope → review-classify → {code-review +
+  4 when-gated reviewers} → synthesize(one_success) → self-fix → gate-run/fix×3 → create-pr →
+  post-review-comments → report`.
+- (4) simplify / self-fix / change-gate each append a progress.md entry **atomically with** the
+  mutating commit (the bar is "no commit since base lacks a progress.md entry"). change-gate
+  fixes only IN-SCOPE reds (heuristic: failing path ∈ `git diff --name-only`) and WAIVES +
+  documents out-of-scope reds. **create-pr-on-red is a deliberate policy:** a still-red gate still
+  ships a DRAFT PR for human triage; the **report** (not a node failure) judges the gate and
+  distinguishes three terminal states — GREEN / RED-all-waived-out-of-scope (acceptable) /
+  RED-unfixed-in-scope (the real bar failure) — so a waiver isn't miscounted.
+- (5) `post-review-comments` (bash, after create-pr) batch-posts `consolidated-review.md` +
+  `fix-report.md` + `simplify-report.md` via `gh pr comment --body-file`; never fails the run.
+
+**Verification done this session:** `archon validate … ok`; `bash -n` clean on all 26 generated
+bash blocks; findings-filename contract checked across producers/consumers; the **stub probe ran
+end-to-end** and confirmed the live dependency graph — gate cascade (run-0 red→fix-0 fires;
+run-1 green→fix-1 skips; run-2 cascade-skips; create-pr fires via all_done) and reviewer
+when-gating (comment-quality + docs-impact skip). **Not done (handed to the user):** the real
+slice — `archon workflow run opsx-wave-harness --branch <new> "account-profile-self-service"`
+from a clean worktree — expecting all four done-condition bars green incl. zero undocumented
+deviations.
