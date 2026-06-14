@@ -179,6 +179,13 @@ artifacts:
       one change, that is a re-scoping decision for the human at design time, not a silent
       trim here. Write the full scenario.
 
+      **Breaking changes are sliced atomically.** Every wave must leave the WHOLE suite green.
+      A breaking reshape of an EXISTING API (one with current callers) goes in the SAME wave as
+      the migration of all those callers AND their existing tests - never reshape in one wave and
+      migrate a caller (or its test) in a later wave, which leaves an intermediate red the gate
+      rejects. If a caller's full rework is a later wave, put the reshape in that wave (or keep
+      the API backward-compatible until then).
+
       **IMPORTANT: Follow the template format exactly** (the parser counts checkboxes as
       progress units, so checkboxes appear at WAVE grain ONLY):
       - One `## Wave N` heading per wave (`## Wave 0` first).
@@ -255,6 +262,9 @@ wavePlan:
       just". The wave map is the contract; plan the whole behavior.
     - **No placeholders**: no "TODO", "implement later", "..." stubs, or invented APIs. Every
       referenced symbol/file/command must be real and verified.
+    - **A behavior change includes its test**: if a cycle reshapes a shared API or migrates a
+      caller, the SAME cycle updates that caller's existing tests to the new shape. Never leave a
+      test asserting the old shape - it red-fails the gate.
     - **Bounded discretion**: you TRANSCRIBE design + specs into cycles. Design decisions stay
       settled upstream - you do not re-open them. You MAY split this wave into ordered cycles and,
       if the wave map genuinely under- or over-counted, append/split a wave (planner authority) -
