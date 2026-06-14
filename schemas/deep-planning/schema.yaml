@@ -202,6 +202,11 @@ artifacts:
         `| Scenario | Layer | Named test | Wave |`. TRANSCRIBE the Layer column from design's
         Testing Approach - do not choose layers here. The Named test column (a concrete test
         name/path you are introducing) is the only new content. No checkboxes in the table.
+      - **Ground every named-test path against the repo.** Before writing a test path, confirm it
+        matches the project's actual convention for that layer - grep an EXISTING test of the same
+        layer and mirror its directory/suffix (e.g. e2e specs may live under `playwright/tests/`,
+        not `playwright/`). Never invent a path the repo's layout doesn't support, and never name
+        an existing file that does not exist.
 
       Reference specs for what each wave must prove and design for how to build it.
     requires:
