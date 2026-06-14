@@ -207,7 +207,7 @@ Steps 1-4 of the harness track are DONE: schema/command rework **shipped**, writ
 turns). The harness mechanically works; the open work is the tail restructure + then hardening.
 
 1. **Tail restructure — the one open v1 bar (zero undocumented deviations) + turn-cap robustness.**
-   Single coherent change; full punch list in `task-machinery-and-wave-execution.md` §16.4
+   **Ready-to-paste handoff: `handoff-tail-restructure.md`.** Single coherent change; full punch list in `task-machinery-and-wave-execution.md` §16.4
    (details §14 + §15): change-gate runs tests in bash / agent only fixes; review/self-fix off
    `gh pr` → base diff; reorder `waves → simplify → review → self-fix → change-gate → create-pr →
    post-review-comments → report`; tail nodes log to progress.md; change-gate flags out-of-scope
