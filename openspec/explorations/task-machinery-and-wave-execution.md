@@ -989,12 +989,17 @@ idiom (§13.1) — the "preceding bash step" the note also sanctioned:
   4 when-gated reviewers} → synthesize(one_success) → self-fix → gate-run/fix×3 → create-pr →
   post-review-comments → report`.
 - (4) simplify / self-fix / change-gate each append a progress.md entry **atomically with** the
-  mutating commit (the bar is "no commit since base lacks a progress.md entry"). change-gate
-  fixes only IN-SCOPE reds (heuristic: failing path ∈ `git diff --name-only`) and WAIVES +
-  documents out-of-scope reds. **create-pr-on-red is a deliberate policy:** a still-red gate still
-  ships a DRAFT PR for human triage; the **report** (not a node failure) judges the gate and
-  distinguishes three terminal states — GREEN / RED-all-waived-out-of-scope (acceptable) /
-  RED-unfixed-in-scope (the real bar failure) — so a waiver isn't miscounted.
+  mutating commit. change-gate fixes only IN-SCOPE reds (heuristic: failing path ∈
+  `git diff --name-only`) and WAIVES + documents out-of-scope reds. **create-pr-on-red is a
+  deliberate policy:** a still-red gate still ships a DRAFT PR for human triage; the **report**
+  (not a node failure) judges the gate across FOUR terminal states — GREEN / RED-all-waived
+  (acceptable) / RED-unfixed-in-scope (bar failure) / INCOMPLETE (gate-status missing/stale, e.g.
+  a gate-run timeout → bar failure, not a silent pass) — so a waiver isn't miscounted.
+  **Deviation criterion (precise):** the bar flags a commit that modifies SOURCE/TEST files
+  without a matching progress.md entry — NOT the harness's own bookkeeping (`docs(plan):` =
+  plans/ only, `chore(wave):` = tasks.md only, per-cycle impl commits log inline). The naive
+  "any commit lacking a log" would spuriously red the bar on a clean run (~2K bookkeeping commits
+  at K-wave scale) — only the tail mutators count.
 - (5) `post-review-comments` (bash, after create-pr) batch-posts `consolidated-review.md` +
   `fix-report.md` + `simplify-report.md` via `gh pr comment --body-file`; never fails the run.
 
