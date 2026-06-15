@@ -993,8 +993,12 @@ idiom (§13.1) — the "preceding bash step" the note also sanctioned:
   `git diff --name-only`) and WAIVES + documents out-of-scope reds. **create-pr-on-red is a
   deliberate policy:** a still-red gate still ships a DRAFT PR for human triage; the **report**
   (not a node failure) judges the gate across FOUR terminal states — GREEN / RED-all-waived
-  (acceptable) / RED-unfixed-in-scope (bar failure) / INCOMPLETE (gate-status missing/stale, e.g.
-  a gate-run timeout → bar failure, not a silent pass) — so a waiver isn't miscounted.
+  (acceptable) / RED-unfixed-in-scope (bar failure) / INCOMPLETE (gate-status reads "running" or is
+  missing → a gate-run was killed before finishing, e.g. a 30-min timeout → bar failure,
+  not a silent pass) — so a waiver isn't miscounted. Each gate-run writes a "running"
+  sentinel to gate-status at start (overwritten with green/red on completion), so a kill
+  leaves an unambiguous INCOMPLETE marker rather than a stale green (verified by a
+  SIGTERM-mid-run simulation).
   **Deviation criterion (precise):** the bar flags a commit that modifies SOURCE/TEST files
   without a matching progress.md entry — NOT the harness's own bookkeeping (`docs(plan):` =
   plans/ only, `chore(wave):` = tasks.md only, per-cycle impl commits log inline). The naive
