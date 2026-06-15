@@ -1092,3 +1092,9 @@ loop (N attempts before failing the node); (b) the impl escalation-on-thrash bac
 wave on opus) would ALSO catch a transient cursor failure as a side effect; (c) both. Given cursor is
 now the default execution provider, transient-error resilience moves up the priority list — likely
 the real "most important next step", ahead of or alongside the impl escalation backstop.
+**Ready-to-implement archon patch spec written 2026-06-15:** `archon repo docs/plans/loop-transient-
+error-retry.md` — root cause is CLASSIFICATION (loops already go through the 2× retry wrapper, but an
+opaque `cursor_error`/"run error" classifies UNKNOWN → not retried; `classifyError` patterns don't
+match it). Fix (A): make opaque cursor errors retryable with FATAL precedence preserved (structural
+`errorSubtype` signal preferred; adding `cursor_error` to `TRANSIENT_PATTERNS` is the 1-line stopgap).
+(B) per-iteration loop retry is an optional follow-up. Hand the spec to a focused archon-patch agent.
