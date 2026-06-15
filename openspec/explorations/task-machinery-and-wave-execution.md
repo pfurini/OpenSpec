@@ -1127,6 +1127,14 @@ consumer (separate, later): `impl-wN` loop gains `escalate: {provider: claude-te
 effort: high, stall_after: 3}`. **Timing: build after a clean run confirms whether composer even needs
 it** (no thrash observed yet; §13.3 — don't escalate before plans run clean).
 
+> **[LANDED 2026-06-15]** Archon shipped the feature (loop schema `escalate: {model, provider, effort,
+> stall_after:default 3}`, `packages/workflows/src/schemas/loop.ts:36`; git-commit stall detection in
+> `executeLoopNode`). Spec marked implemented. **Consumer wired** (lexup dev `334cb13d`): every
+> `impl-wN` loop now emits `escalate: {provider: claude-terminal, model: opus, effort: high,
+> stall_after: 3}`. Decided to wire it now rather than wait for an observed thrash — it's a pure
+> backstop (a healthy wave never escalates; max_iterations 15 unchanged), so the downside is nil and it
+> closes the abort-on-stall failure mode that run 83a7bf8e hit (impl-w4 cursor_error → abort).
+
 ### 16.9 Gate-runner env leak — archon DATABASE_URL poisons e2e [FIXED 2026-06-15, lexup dev `785d5093`]
 The resumed run's change-gate e2e kept failing: `[setup]` storageState seeding → `send-verification-
 otp` HTTP 500 (`relation "verification" does not exist`). Root cause (diagnosed live by the gate-fix
@@ -1149,6 +1157,14 @@ via a `buildTargetCommandEnv` helper. Denylist NOT blanket-strip: managed creds 
 `post-review-comments`'s `gh pr comment`, provider keys) also live in `~/.archon/.env` and must keep
 flowing. Provider-subprocess env isolation is a separate (credential-aware) patch. Hand to an archon
 agent; pairs with the loop-escalation spec.
+
+> **[LANDED 2026-06-15]** Archon shipped it: `ARCHON_INTERNAL_ENV_KEYS` denylist (conservative —
+> `DATABASE_URL` only) + `buildTargetCommandEnv` helper (`packages/paths/src/archon-internal-env.ts`),
+> applied at the three target-command env sites (`dag-executor.ts:1683/1860/~2708`); managed creds
+> (GitHub token for `gh pr comment`) still flow. Spec marked implemented. **Consumer follow-up
+> (optional, NOT done):** the harness's `env -u DATABASE_URL pnpm test:e2e` gate workaround is now
+> redundant — kept as belt-and-suspenders (a no-op once archon strips it); remove in a follow-up only
+> after a fresh run confirms the archon fix end-to-end.
 
 ### 16.10 Guardrails vs reward-hacking — deterministic lint wall + anti-hack steering [BUILT 2026-06-15, lexup dev `e9460246`]
 **Problem.** A real run surfaced a cursor review finding: a **synchronous `XMLHttpRequest` in a
