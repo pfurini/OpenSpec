@@ -181,10 +181,22 @@ migration:
   `references/*.md` (the depth that will carry the borrowed material in the later rewrite).
 - Bundle types (mergeable, additive): `SkillBundle { references?: SkillFile[]; scripts?: SkillFile[] }`,
   `SkillFile { relPath; content; executable? }`. `getOpsxDesignSkillTemplate()` reads its dir.
-- Capability gate on `AIToolOption`: `skillBundle?: 'full' | 'flatten'` (default `flatten`; Claude =
-  `full`). Converges with the future `ToolProfile`. **`full`** → write `references/*.md` alongside
-  `SKILL.md`. **`flatten`** → concat references into `SKILL.md` under headings (self-contained, no
-  broken links), surfaced never silently dropped.
+- Capability gate on `AIToolOption`: `skillBundle?: 'full' | 'flatten'`. **`full`** → write
+  `references/*.md` alongside `SKILL.md`. **`flatten`** → concat references into `SKILL.md` under
+  headings (self-contained, no broken links), surfaced never silently dropped. Converges with the
+  future `ToolProfile`.
+- **Capability default = `full` [CONFIRMED 2026-06-15, corrected].** Initial guess was "Claude-only
+  = full" — WRONG. "Agent Skills" (`SKILL.md` + `references/` + `scripts/` + progressive disclosure)
+  is a **cross-tool open standard** supported by 30+ platforms (verified against authoritative docs:
+  Cursor `cursor.com/docs/context/skills`, Codex — both load `references/` on demand and execute
+  `scripts/`; Cursor even reads `.claude/skills` / `.codex/skills` for compat; Vercel `npx skills`
+  spans 27+ agents). OpenSpec already emits the Agent Skills layout to every `skillsDir` tool, so
+  `getSkillBundleCapability` **defaults to `full` for any tool with a skillsDir**; `flatten` is opt-in
+  per tool. Risk asymmetry drove the shape: `flatten` always yields a *complete* (larger) SKILL.md,
+  whereas a wrong `full` silently drops `references/` a tool ignores — so `flatten` is the safe
+  fallback and exceptions get marked as discovered (none known yet; candidates to verify if needed:
+  the hyphen-command-transform tools opencode/pi). Consequence: flatten is now the *rare* path, so the
+  wave-1 flatten-reorder debt is low-stakes (full = clean progressive disclosure, no reorder).
 - **Scripts deferred** to a later wave (the design skill has none — references-only keeps the pilot
   tight). Script exec-bit/capability gate is the next slice.
 - **Parity rework:** hash the emitted *tree* (SKILL.md + each reference) per capability mode, not a

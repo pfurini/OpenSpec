@@ -14,8 +14,13 @@ export interface OpenSpecConfig {
  * - `full`: progressive disclosure — references/scripts written as separate files
  * - `flatten`: single SKILL.md only — references concatenated, scripts dropped
  *
- * Defaults to `flatten` when unset. Converges with the future `ToolProfile`
- * capability model (`unify-template-generation-pipeline`).
+ * "Agent Skills" (SKILL.md + references/ + scripts/) is a cross-tool open standard
+ * supported by 30+ platforms (Claude, Codex, Cursor, Gemini CLI, Copilot, …), and
+ * OpenSpec already emits the Agent Skills layout to every tool with a skillsDir — so
+ * `full` is the default. `flatten` is opt-in for tools known not to read subdirectories
+ * (it always yields a complete, if larger, SKILL.md — never silent content loss).
+ * Converges with the future `ToolProfile` capability model
+ * (`unify-template-generation-pipeline`).
  */
 export type SkillBundleCapability = 'full' | 'flatten';
 
@@ -26,12 +31,18 @@ export interface AIToolOption {
   successLabel?: string;
   skillsDir?: string; // e.g., '.claude' - /skills suffix per Agent Skills spec
   detectionPaths?: string[]; // Override skillsDir for auto-detection; any path existing triggers detection
-  skillBundle?: SkillBundleCapability; // multi-file bundle support; defaults to 'flatten'
+  skillBundle?: SkillBundleCapability; // multi-file bundle support; defaults to 'full' for skillsDir tools
 }
 
-/** Resolves a tool's skill-bundle capability, defaulting to `flatten` when unset. */
+/**
+ * Resolves a tool's skill-bundle capability. Tools with a skillsDir default to
+ * `full` (the Agent Skills standard); set `skillBundle: 'flatten'` to opt a tool
+ * out. Tools with no skillsDir resolve to `flatten` (no multi-file surface).
+ */
 export function getSkillBundleCapability(toolValue: string): SkillBundleCapability {
-  return AI_TOOLS.find((t) => t.value === toolValue)?.skillBundle ?? 'flatten';
+  const tool = AI_TOOLS.find((t) => t.value === toolValue);
+  if (tool?.skillBundle) return tool.skillBundle;
+  return tool?.skillsDir ? 'full' : 'flatten';
 }
 
 export const AI_TOOLS: AIToolOption[] = [
@@ -39,7 +50,7 @@ export const AI_TOOLS: AIToolOption[] = [
   { name: 'Antigravity', value: 'antigravity', available: true, successLabel: 'Antigravity', skillsDir: '.agent' },
   { name: 'Auggie (Augment CLI)', value: 'auggie', available: true, successLabel: 'Auggie', skillsDir: '.augment' },
   { name: 'Bob Shell', value: 'bob', available: true, successLabel: 'Bob Shell', skillsDir: '.bob' },
-  { name: 'Claude Code', value: 'claude', available: true, successLabel: 'Claude Code', skillsDir: '.claude', skillBundle: 'full' },
+  { name: 'Claude Code', value: 'claude', available: true, successLabel: 'Claude Code', skillsDir: '.claude' },
   { name: 'Cline', value: 'cline', available: true, successLabel: 'Cline', skillsDir: '.cline' },
   { name: 'Codex', value: 'codex', available: true, successLabel: 'Codex', skillsDir: '.codex' },
   { name: 'ForgeCode', value: 'forgecode', available: true, successLabel: 'ForgeCode', skillsDir: '.forge' },

@@ -6,6 +6,7 @@ import {
 } from '../../../src/core/shared/skill-bundle.js';
 import { buildSkillArtifacts, generateSkillContent } from '../../../src/core/shared/skill-generation.js';
 import { getOpsxDesignSkillTemplate } from '../../../src/core/templates/skill-templates.js';
+import { getSkillBundleCapability } from '../../../src/core/config.js';
 import type { SkillTemplate } from '../../../src/core/templates/types.js';
 
 const BASE: SkillTemplate = {
@@ -80,6 +81,19 @@ describe('loadSkillSource (real design skill directory)', () => {
     const flow = source.bundle.references!.find((r) => r.relPath === 'references/flow.md')!;
     expect(flow.content).toContain('PRIMED-SENTINEL');
     expect(flow.content).not.toContain('${PRIME_RITUAL}');
+  });
+});
+
+describe('getSkillBundleCapability (Agent Skills standard: full by default)', () => {
+  it('defaults to full for tools that support the Agent Skills layout', () => {
+    // Authoritatively verified to support multi-file Agent Skills (references/ + scripts/).
+    expect(getSkillBundleCapability('claude')).toBe('full');
+    expect(getSkillBundleCapability('codex')).toBe('full');
+    expect(getSkillBundleCapability('cursor')).toBe('full');
+  });
+
+  it('resolves flatten for an unknown tool with no skills surface', () => {
+    expect(getSkillBundleCapability('not-a-real-tool')).toBe('flatten');
   });
 });
 
