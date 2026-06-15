@@ -12,7 +12,7 @@ import * as fs from 'fs';
 import { createRequire } from 'module';
 import { FileSystemUtils } from '../utils/file-system.js';
 import { transformToHyphenCommands } from '../utils/command-references.js';
-import { AI_TOOLS, OPENSPEC_DIR_NAME } from './config.js';
+import { AI_TOOLS, OPENSPEC_DIR_NAME, getSkillBundleCapability } from './config.js';
 import {
   generateCommands,
   CommandAdapterRegistry,
@@ -22,6 +22,7 @@ import {
   getSkillTemplates,
   getCommandContents,
   generateSkillContent,
+  buildSkillArtifacts,
   getToolsWithSkillsDir,
   type ToolVersionStatus,
 } from './shared/index.js';
@@ -192,14 +193,18 @@ export class UpdateCommand {
 
         // Generate skill files if delivery includes skills
         if (shouldGenerateSkills) {
+          // Degrade multi-file bundles to the tool's capability.
+          // Use hyphen-based command references for tools where filename = command name.
+          const capability = getSkillBundleCapability(tool.value);
+          const transformer = (tool.value === 'opencode' || tool.value === 'pi') ? transformToHyphenCommands : undefined;
           for (const { template, dirName } of skillTemplates) {
             const skillDir = path.join(skillsDir, dirName);
-            const skillFile = path.join(skillDir, 'SKILL.md');
-
-            // Use hyphen-based command references for OpenCode
-            const transformer = (tool.value === 'opencode' || tool.value === 'pi') ? transformToHyphenCommands : undefined;
-            const skillContent = generateSkillContent(template, OPENSPEC_VERSION, transformer);
-            await FileSystemUtils.writeFile(skillFile, skillContent);
+            const artifacts = buildSkillArtifacts(template, OPENSPEC_VERSION, capability, transformer);
+            for (const artifact of artifacts) {
+              const filePath = path.join(skillDir, artifact.relPath);
+              await FileSystemUtils.writeFile(filePath, artifact.content);
+              if (artifact.executable) await fs.promises.chmod(filePath, 0o755);
+            }
           }
 
           removedDeselectedSkillCount += await this.removeUnselectedSkillDirs(skillsDir, desiredWorkflows);

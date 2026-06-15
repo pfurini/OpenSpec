@@ -33,8 +33,8 @@ import { generateSkillContent } from '../../../src/core/shared/skill-generation.
 
 const EXPECTED_FUNCTION_HASHES: Record<string, string> = {
   getExploreSkillTemplate: '64df102d2739077150be9790d50d9cca06c762cfebcff87273b2decdb832621e',
-  getOpsxDesignSkillTemplate: 'ff2fdeda2529b9ce0b31a46c1d7acfb68ba07e0ee84cd886cb161d7dd81c8691',
-  getOpsxDesignCommandTemplate: 'f162addef3800080127468eba8811b59cc4ebf5d87826154eb1b8dc202602c53',
+  getOpsxDesignSkillTemplate: 'f31e8dfd006438182eb14f7d24b1aae9fefe305300086ea36b02487b0477ecdf',
+  getOpsxDesignCommandTemplate: '0e8ad7e12ac8fd08c4ae0cd77bbd0785fbd6a5ecc09f856788e21318996e145e',
   getNewChangeSkillTemplate: '8dd042e33d5db66fb3bacc0bba806c669c1c02802abf4bc7e0fbe74c189c2d87',
   getContinueChangeSkillTemplate: '902e702dfd32300b9075e121b081bcb289c428fc198b8f9b300066a77917527c',
   getApplyChangeSkillTemplate: 'e746f230c2513a5fd40842bde494bb3cdb3c5f7c1bcece101f92090983d4ff55',
@@ -61,7 +61,7 @@ const EXPECTED_FUNCTION_HASHES: Record<string, string> = {
 
 const EXPECTED_GENERATED_SKILL_CONTENT_HASHES: Record<string, string> = {
   'openspec-explore': '77464713d816c1b6af978ea70a5ecae32c2bb673e53fc615f330c1f663052ee4',
-  'openspec-design': '590df65c0dff7f0207f53a61e25435c9c80b884e40988276b90b5b12385e7959',
+  'openspec-design': 'a43d7ed19fab890650262b83eb2f24e6b9e41b173730792d480bb5586aa24f66',
   'openspec-new-change': '56d91ad2d746f35ab87990e0875985f1421a07ad965e40fee4f46a96fd5c6bcb',
   'openspec-continue-change': 'a186bc8f703e4c809ad059191c1eb834bc969e2cc2dde18b9e592da3eb4b6e4e',
   'openspec-apply-change': 'd849442efd925b9247651e254a5cd696945321610cca5a9432ad420430554548',

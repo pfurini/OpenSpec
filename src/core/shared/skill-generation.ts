@@ -32,6 +32,11 @@ import {
   type SkillTemplate,
 } from '../templates/skill-templates.js';
 import type { CommandContent } from '../command-generation/index.js';
+import {
+  flattenSkillBody,
+  type GeneratedSkillFile,
+  type SkillBundleCapability,
+} from './skill-bundle.js';
 
 /**
  * Skill template with directory name and workflow ID mapping.
@@ -150,4 +155,56 @@ metadata:
 
 ${instructions}
 `;
+}
+
+/**
+ * Builds the full set of files for one skill, degraded to the tool's bundle capability.
+ *
+ * - Single-file skills (no bundle) and `flatten` tools: one `SKILL.md`, with any
+ *   reference files concatenated into the body (self-contained, nothing dropped silently).
+ * - `full` tools: a short `SKILL.md` plus each reference and script as a separate file.
+ *
+ * @param template - The skill template (may carry a `bundle`)
+ * @param generatedByVersion - The OpenSpec version to embed in the frontmatter
+ * @param capability - How the target tool consumes bundles (`full` | `flatten`)
+ * @param transformInstructions - Optional per-tool content transform (e.g. command-reference rewrites)
+ */
+export function buildSkillArtifacts(
+  template: SkillTemplate,
+  generatedByVersion: string,
+  capability: SkillBundleCapability = 'flatten',
+  transformInstructions?: (instructions: string) => string
+): GeneratedSkillFile[] {
+  const bundle = template.bundle;
+  const hasBundle = Boolean(
+    bundle && ((bundle.references?.length ?? 0) > 0 || (bundle.scripts?.length ?? 0) > 0)
+  );
+
+  if (!hasBundle || capability === 'flatten') {
+    const flattened: SkillTemplate = {
+      ...template,
+      instructions: flattenSkillBody(template.instructions, bundle),
+    };
+    return [
+      {
+        relPath: 'SKILL.md',
+        content: generateSkillContent(flattened, generatedByVersion, transformInstructions),
+      },
+    ];
+  }
+
+  const applyTransform = transformInstructions ?? ((content: string) => content);
+  const files: GeneratedSkillFile[] = [
+    {
+      relPath: 'SKILL.md',
+      content: generateSkillContent(template, generatedByVersion, transformInstructions),
+    },
+  ];
+  for (const ref of bundle?.references ?? []) {
+    files.push({ relPath: ref.relPath, content: applyTransform(ref.content) });
+  }
+  for (const script of bundle?.scripts ?? []) {
+    files.push({ relPath: script.relPath, content: script.content, executable: true });
+  }
+  return files;
 }

@@ -16,6 +16,7 @@ import {
   AI_TOOLS,
   OPENSPEC_DIR_NAME,
   AIToolOption,
+  getSkillBundleCapability,
 } from './config.js';
 import { PALETTE } from './styles/palette.js';
 import { isInteractive } from '../utils/interactive.js';
@@ -38,7 +39,7 @@ import {
   getToolStates,
   getSkillTemplates,
   getCommandContents,
-  generateSkillContent,
+  buildSkillArtifacts,
   type ToolSkillStatus,
 } from './shared/index.js';
 import { getGlobalConfig, type Delivery, type Profile } from './global-config.js';
@@ -531,18 +532,18 @@ export class InitCommand {
           // Use tool-specific skillsDir
           const skillsDir = path.join(projectPath, tool.skillsDir, 'skills');
 
-          // Create skill directories and SKILL.md files
+          // Create skill directories, degrading multi-file bundles to the tool's capability.
+          // Use hyphen-based command references for tools where filename = command name.
+          const capability = getSkillBundleCapability(tool.value);
+          const transformer = (tool.value === 'opencode' || tool.value === 'pi') ? transformToHyphenCommands : undefined;
           for (const { template, dirName } of skillTemplates) {
             const skillDir = path.join(skillsDir, dirName);
-            const skillFile = path.join(skillDir, 'SKILL.md');
-
-            // Generate SKILL.md content with YAML frontmatter including generatedBy
-            // Use hyphen-based command references for tools where filename = command name
-            const transformer = (tool.value === 'opencode' || tool.value === 'pi') ? transformToHyphenCommands : undefined;
-            const skillContent = generateSkillContent(template, OPENSPEC_VERSION, transformer);
-
-            // Write the skill file
-            await FileSystemUtils.writeFile(skillFile, skillContent);
+            const artifacts = buildSkillArtifacts(template, OPENSPEC_VERSION, capability, transformer);
+            for (const artifact of artifacts) {
+              const filePath = path.join(skillDir, artifact.relPath);
+              await FileSystemUtils.writeFile(filePath, artifact.content);
+              if (artifact.executable) await fs.promises.chmod(filePath, 0o755);
+            }
           }
         }
         if (!shouldGenerateSkills) {

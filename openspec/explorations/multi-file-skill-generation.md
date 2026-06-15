@@ -123,3 +123,88 @@ This is too big to wedge mid-test.
 3. Per-tool degradation in the command/skill generation adapters (+ surfacing of dropped/
    flattened content).
 4. Migrate the opsx skills to multi-file; then the `design.ts` rewrite can use references.
+
+## 8. Decided approach — design pass 2026-06-15 [the §5 forks, settled]
+
+### 8.1 The upstream collision (new, decision-shaping)
+
+This track collides head-on with an **unbuilt upstream proposal stack** authored by the OpenSpec
+maintainer (Tabish Bidiwale, PRs #698/#733/#741), present on `main` and `upstream/main`:
+
+- **`unify-template-generation-pipeline`** (0/24 tasks, NOT built — confirmed: `WorkflowManifest`/
+  `ToolProfileRegistry`/`ArtifactSyncEngine` absent from `src/`). Introduces a canonical
+  `WorkflowManifest` (kills the three hand-kept parallel arrays in `skill-generation.ts`), a
+  `ToolProfileRegistry` (centralizes per-tool capabilities), a first-class **transform pipeline**
+  (`preAdapter`/`postAdapter` phases, `skill`/`command`/`both` scope), and a shared
+  `ArtifactSyncEngine` (unifies the duplicated `init`/`update`/legacy write loops).
+- **`add-tool-command-surface-capabilities`** (0/33, NOT built). Adds a `adapter | skills-invocable
+  | none` command-surface capability on tool metadata.
+- **`simplify-skill-installation`** (90/90, **DONE** — this is the current base): profiles, delivery
+  modes (`both|skills|commands`), `SkillTemplateEntry`, `getProfileWorkflows`. Extend THIS shape.
+
+**Finding:** upstream's pipeline is well-architected and its structures are *exactly* the homes our
+multi-file work needs — but it keeps `skill: SkillTemplate` as a **string blob** and never touches
+real-dirs/references/scripts. So it is **complementary, not competing**: upstream = the *plumbing*
+(manifest/profile/transform/sync) we lack; this note = the *multi-file semantics* on top, which
+upstream lacks. They are different layers. Multi-file **extends** the manifest's skill field from a
+string to a directory + files reference; it does not contradict anything upstream proposed.
+
+### 8.2 Decision: mergeable-shaped, NOT a 24-task prerequisite [CONFIRMED 2026-06-15]
+
+Build the **minimal** real-dirs multi-file capability now, **shaped to converge** with upstream's
+proposed interfaces — but do **not** gate on implementing their full refactor. Rationale: this is the
+single highest-churn area of the repo on a fork that tracks `upstream/main`; diverging the pipeline
+here makes every future sync a merge fight. Aligning names now makes their eventual refactor a
+near-clean convergence, and the multi-file *mechanism* becomes a clean candidate to upstream later
+(the design-skill *content* stays on our fork). Mergeable footprint is narrow — additive bundle
+types on the skill template, a capability flag on tool metadata named like a future `ToolProfile`
+field, and degradation modeled as a transform (same pattern as the existing
+`transformToHyphenCommands` for opencode/pi). We do NOT build `ArtifactSyncEngine` etc.
+
+### 8.3 Authoring representation [CONFIRMED — fork settled to real dirs]
+
+Per §4 the empirical-validation requirement locks this: opsx skill source becomes **real directories
+in-repo** under `schemas/skills/<dir>/` (`SKILL.md` + `references/*.md` [+ later `scripts/`]), read +
+templated at generation time. `schemas/` already ships in `package.json` `files`, so the sources are
+present at runtime (no embed/build step). Templating seam stays minimal — `${PRIME_RITUAL}` and
+version stamps injected only at the seams, source kept as close to literal markdown as possible so
+external validators run against it directly. The legacy string-const path stays for the other 11
+skills; the manifest entry supports **both** "string instructions" and "directory source" so the
+migration is incremental, not a big-bang.
+
+### 8.4 The pilot — design skill as the tracer bullet (wave 0)
+
+Do the whole vertical slice on the **`design` skill only** first (matches the project's
+decision-7 tracer-bullet philosophy), proving the full pipeline end-to-end before any broad
+migration:
+- Convert `design.ts`'s `DESIGN_BODY` into `schemas/skills/openspec-design/SKILL.md` (short) +
+  `references/*.md` (the depth that will carry the borrowed material in the later rewrite).
+- Bundle types (mergeable, additive): `SkillBundle { references?: SkillFile[]; scripts?: SkillFile[] }`,
+  `SkillFile { relPath; content; executable? }`. `getOpsxDesignSkillTemplate()` reads its dir.
+- Capability gate on `AIToolOption`: `skillBundle?: 'full' | 'flatten'` (default `flatten`; Claude =
+  `full`). Converges with the future `ToolProfile`. **`full`** → write `references/*.md` alongside
+  `SKILL.md`. **`flatten`** → concat references into `SKILL.md` under headings (self-contained, no
+  broken links), surfaced never silently dropped.
+- **Scripts deferred** to a later wave (the design skill has none — references-only keeps the pilot
+  tight). Script exec-bit/capability gate is the next slice.
+- **Parity rework:** hash the emitted *tree* (SKILL.md + each reference) per capability mode, not a
+  single string. New expected-hash map for bundle outputs alongside the existing two.
+
+### 8.5 Build order (TDD waves, supersedes §7 for the pilot)
+
+0. **Tracer bullet — DONE 2026-06-15.** Design skill authored at `schemas/skills/openspec-design/`
+   (`SKILL.md` + `references/flow.md`, the flow carrying the `${PRIME_RITUAL}` seam). `SkillFile`/
+   `SkillBundle` on `SkillTemplate`; `loadSkillSource`/`flattenSkillBody` (`skill-bundle.ts`);
+   `buildSkillArtifacts` (`skill-generation.ts`); `skillBundle: 'full'|'flatten'` on `AIToolOption`
+   (Claude=`full`, default `flatten`) + `getSkillBundleCapability`. Wired into `init`/`update` write
+   loops. Verified end-to-end: Claude → `SKILL.md`+`references/flow.md`; cursor → one flattened
+   `SKILL.md`, no `references/`. Parity re-harvested (only the 3 design hashes moved; 24 others
+   byte-identical). Suite 1707 green (+7).
+1. **flatten-seam refinement** (the one wave-0 debt): flatten currently *appends* references after
+   Guardrails, reordering the command/flatten body vs the original (Flow now trails Guardrails). Fix
+   = marker-based inline (replace the `## The Flow` pointer in-place) so flatten is order-lossless.
+   Plus: surface dropped scripts; broaden the `full` capability set beyond Claude where supported.
+2. Tree-based parity test; re-harvest hashes.
+3. **Then** the `design.ts` content rewrite lands as edits to `references/*.md`
+   (`prompt-adherence-and-design-rewrite.md` §2) — the actual goal this unblocks.
+4. (Later) scripts support + capability gate; migrate the remaining opsx skills.

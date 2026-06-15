@@ -9,6 +9,16 @@ export interface OpenSpecConfig {
   aiTools: string[];
 }
 
+/**
+ * How a tool consumes multi-file skill bundles (references/, scripts/):
+ * - `full`: progressive disclosure — references/scripts written as separate files
+ * - `flatten`: single SKILL.md only — references concatenated, scripts dropped
+ *
+ * Defaults to `flatten` when unset. Converges with the future `ToolProfile`
+ * capability model (`unify-template-generation-pipeline`).
+ */
+export type SkillBundleCapability = 'full' | 'flatten';
+
 export interface AIToolOption {
   name: string;
   value: string;
@@ -16,6 +26,12 @@ export interface AIToolOption {
   successLabel?: string;
   skillsDir?: string; // e.g., '.claude' - /skills suffix per Agent Skills spec
   detectionPaths?: string[]; // Override skillsDir for auto-detection; any path existing triggers detection
+  skillBundle?: SkillBundleCapability; // multi-file bundle support; defaults to 'flatten'
+}
+
+/** Resolves a tool's skill-bundle capability, defaulting to `flatten` when unset. */
+export function getSkillBundleCapability(toolValue: string): SkillBundleCapability {
+  return AI_TOOLS.find((t) => t.value === toolValue)?.skillBundle ?? 'flatten';
 }
 
 export const AI_TOOLS: AIToolOption[] = [
@@ -23,7 +39,7 @@ export const AI_TOOLS: AIToolOption[] = [
   { name: 'Antigravity', value: 'antigravity', available: true, successLabel: 'Antigravity', skillsDir: '.agent' },
   { name: 'Auggie (Augment CLI)', value: 'auggie', available: true, successLabel: 'Auggie', skillsDir: '.augment' },
   { name: 'Bob Shell', value: 'bob', available: true, successLabel: 'Bob Shell', skillsDir: '.bob' },
-  { name: 'Claude Code', value: 'claude', available: true, successLabel: 'Claude Code', skillsDir: '.claude' },
+  { name: 'Claude Code', value: 'claude', available: true, successLabel: 'Claude Code', skillsDir: '.claude', skillBundle: 'full' },
   { name: 'Cline', value: 'cline', available: true, successLabel: 'Cline', skillsDir: '.cline' },
   { name: 'Codex', value: 'codex', available: true, successLabel: 'Codex', skillsDir: '.codex' },
   { name: 'ForgeCode', value: 'forgecode', available: true, successLabel: 'ForgeCode', skillsDir: '.forge' },
