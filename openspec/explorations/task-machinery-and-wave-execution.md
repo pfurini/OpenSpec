@@ -1141,4 +1141,11 @@ correctly distinguished an infra/out-of-scope red (waive, don't hack) from an in
 create-pr `one_success` change means a waived-red gate still ships the PR (state b). **Archon
 follow-up:** archon should not leak its internal `DATABASE_URL` (and other archon-private env) into
 target-repo gate/bash commands at all — a general env-isolation fix (mirror of the existing
-target→archon `.env` strip, but the other direction). Worth an archon issue.
+target→archon `.env` strip, but the other direction). **Spec written:** `archon repo
+docs/plans/gate-env-isolation.md` — root cause is `loadArchonEnv` (`override:true`) → `process.env`
+→ the three target-command env sites spread it (`dag-executor.ts:1680/1855/2563`). Fix = strip an
+archon-internal-infra **denylist** (charter: `DATABASE_URL`) from bash/script/until_bash command env
+via a `buildTargetCommandEnv` helper. Denylist NOT blanket-strip: managed creds (GitHub token used by
+`post-review-comments`'s `gh pr comment`, provider keys) also live in `~/.archon/.env` and must keep
+flowing. Provider-subprocess env isolation is a separate (credential-aware) patch. Hand to an archon
+agent; pairs with the loop-escalation spec.
