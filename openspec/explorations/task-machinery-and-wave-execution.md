@@ -1020,11 +1020,15 @@ deviations.
 Introduced the **cursor** provider as the workflow default to cut cost/latency, keeping only the
 two highest-leverage REASONING nodes on claude-terminal opus. Provider map now:
 - **Default = cursor** (`provider: cursor`, `model: composer-2.5`). Bulk of the harness — impl
-  loop, change-gate fix turns, glue (classify/smoke/review-classify), the review chain
-  (review-scope + reviewers + synthesize), self-fix, simplify, create-pr, report — runs on cursor.
-- **claude-terminal opus** on exactly two nodes via per-node `provider:` override: **plan-wN**
+  loop, change-gate fix turns, the review chain (review-scope + reviewers + synthesize), self-fix,
+  simplify, create-pr, report — runs on cursor.
+- **claude-terminal opus** on the two reasoning nodes via per-node `provider:` override: **plan-wN**
   (`claude-opus-4-6[1m]`, effort high — coherence lives in the plan, §13.1) and **code-review**
   (`opus`, effort high — the quality gate).
+- **claude-terminal haiku** on the three glue nodes — classify / smoke / review-classify (literal
+  `model: haiku` + `provider: claude-terminal` + `allowed_tools`). These are trivial read-only
+  JSON-classification tasks: haiku is the right-sized cheap tier, and claude-terminal (unlike
+  cursor) honors `allowed_tools`, so they keep their read-only sandbox.
 
 **The mechanism that makes this work (non-obvious, cost a full investigation):** tier keywords
 (`small`/`medium`/`large`) resolve against the aiProfile built from **`config.assistant`** (still
@@ -1037,9 +1041,11 @@ a literal unchanged (pass-through), so `composer-2.5` / `opus` / `claude-opus-4-
 whatever `provider:` is set. This is exactly how the pre-existing `archon-fix-bug.yaml` does it
 (provider cursor + literal composer-2.5; per-node claude-terminal + literal opus). **No
 `config.assistant` change needed** — the switch is entirely in the workflow. Consequences encoded
-in the generator: glue nodes drop `model` (inherit the cursor literal) AND `allowed_tools` (cursor
-ignores tool restrictions → was emitting validate warnings); the `cmd()` helper gained
-provider/model/effort emission (real-mode only).
+in the generator: the `cmd()` helper gained provider/model/effort emission (real-mode only, for
+code-review). NOTE on glue: an interim version dropped their `model`+`allowed_tools` to inherit the
+cursor default, but that (a) upgraded trivial JSON tasks from haiku to composer-2.5 and (b) lost
+the tool sandbox (cursor ignores `allowed_tools` → validate warnings). Reverted: glue is pinned to
+claude-terminal haiku with `allowed_tools` restored (see provider map above).
 
 **The bet [user decision 2026-06-15]:** impl + gate-fix on cursor **composer-2.5** overrides
 §13.3's "sonnet is the autonomous-TDD floor / don't downshift impl until plans run clean." The
