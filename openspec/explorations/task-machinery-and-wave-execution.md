@@ -1126,3 +1126,19 @@ capability/stronger model). Telemetry `loop_node_escalated` feeds the §13.3 cal
 consumer (separate, later): `impl-wN` loop gains `escalate: {provider: claude-terminal, model: opus,
 effort: high, stall_after: 3}`. **Timing: build after a clean run confirms whether composer even needs
 it** (no thrash observed yet; §13.3 — don't escalate before plans run clean).
+
+### 16.9 Gate-runner env leak — archon DATABASE_URL poisons e2e [FIXED 2026-06-15, lexup dev `785d5093`]
+The resumed run's change-gate e2e kept failing: `[setup]` storageState seeding → `send-verification-
+otp` HTTP 500 (`relation "verification" does not exist`). Root cause (diagnosed live by the gate-fix
+node, which correctly WAIVED it as out-of-scope per §15.2 — not a code defect): the gate's bash env
+inherits **archon's own `DATABASE_URL`** (from `~/.archon/.env`, archon's Postgres). lexup's e2e loads
+its DB via `dotenv -e .env.e2e --`, and **dotenv-cli does not override an already-set shell var**, so
+the leaked url wins → `next start` (Playwright webServer) connects to the unmigrated archon DB → OTP
+500. vitest steps load their own env (green), so only e2e (which shells out to `next start`) was hit.
+**Fix:** run the e2e step as `env -u DATABASE_URL pnpm test:e2e` in `gateCapture()` so `.env.e2e`
+populates it cleanly (scoped to e2e). This validates the §15.2 design end-to-end: the gate-fix node
+correctly distinguished an infra/out-of-scope red (waive, don't hack) from an in-scope one, and the
+create-pr `one_success` change means a waived-red gate still ships the PR (state b). **Archon
+follow-up:** archon should not leak its internal `DATABASE_URL` (and other archon-private env) into
+target-repo gate/bash commands at all — a general env-isolation fix (mirror of the existing
+target→archon `.env` strip, but the other direction). Worth an archon issue.
