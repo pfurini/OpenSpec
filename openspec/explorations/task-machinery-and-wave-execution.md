@@ -1015,3 +1015,36 @@ when-gating (comment-quality + docs-impact skip). **Not done (handed to the user
 slice — `archon workflow run opsx-wave-harness --branch <new> "account-profile-self-service"`
 from a clean worktree — expecting all four done-condition bars green incl. zero undocumented
 deviations.
+
+### 16.6 Cursor as default provider — the economic lever [2026-06-15, lexup dev `c1cb2175`]
+Introduced the **cursor** provider as the workflow default to cut cost/latency, keeping only the
+two highest-leverage REASONING nodes on claude-terminal opus. Provider map now:
+- **Default = cursor** (`provider: cursor`, `model: composer-2.5`). Bulk of the harness — impl
+  loop, change-gate fix turns, glue (classify/smoke/review-classify), the review chain
+  (review-scope + reviewers + synthesize), self-fix, simplify, create-pr, report — runs on cursor.
+- **claude-terminal opus** on exactly two nodes via per-node `provider:` override: **plan-wN**
+  (`claude-opus-4-6[1m]`, effort high — coherence lives in the plan, §13.1) and **code-review**
+  (`opus`, effort high — the quality gate).
+
+**The mechanism that makes this work (non-obvious, cost a full investigation):** tier keywords
+(`small`/`medium`/`large`) resolve against the aiProfile built from **`config.assistant`** (still
+`claude-terminal`) — `buildAiProfile(provider)` only emits tier aliases for THAT provider
+(model-validation.ts). So a tier `model:` ALWAYS pins to config.assistant's provider, regardless
+of the workflow/node `provider:` field; worse, a workflow-level tier model + `provider: cursor`
+trips the conflict check (executor.ts:482) and silently reverts the WHOLE workflow to
+claude-terminal. **The fix is to use LITERAL model ids, never tiers:** `resolveModelSpec` returns
+a literal unchanged (pass-through), so `composer-2.5` / `opus` / `claude-opus-4-6[1m]` stay on
+whatever `provider:` is set. This is exactly how the pre-existing `archon-fix-bug.yaml` does it
+(provider cursor + literal composer-2.5; per-node claude-terminal + literal opus). **No
+`config.assistant` change needed** — the switch is entirely in the workflow. Consequences encoded
+in the generator: glue nodes drop `model` (inherit the cursor literal) AND `allowed_tools` (cursor
+ignores tool restrictions → was emitting validate warnings); the `cmd()` helper gained
+provider/model/effort emission (real-mode only).
+
+**The bet [user decision 2026-06-15]:** impl + gate-fix on cursor **composer-2.5** overrides
+§13.3's "sonnet is the autonomous-TDD floor / don't downshift impl until plans run clean." The
+user chose the full cost play now; composer-2.5 is Cursor's agentic coding model (plausibly
+adequate for the per-cycle TDD protocol) but UNPROVEN in this harness. Watch the first real run for
+impl thrash / gate-fix quality — if it thrashes, the §13.3 fallback is to pin impl+gate-fix back to
+`provider: claude-terminal` + literal `sonnet` while keeping the cheap nodes on cursor. Prereq:
+`CURSOR_API_KEY` in `~/.archon/.env` (present). Verified: `archon validate … ok`, stub probe green.
