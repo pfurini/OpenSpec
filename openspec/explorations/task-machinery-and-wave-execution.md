@@ -1029,6 +1029,14 @@ two highest-leverage REASONING nodes on claude-terminal opus. Provider map now:
   `model: haiku` + `provider: claude-terminal` + `allowed_tools`). These are trivial read-only
   JSON-classification tasks: haiku is the right-sized cheap tier, and claude-terminal (unlike
   cursor) honors `allowed_tools`, so they keep their read-only sandbox.
+- **Escalation ladder on the change-gate fix turns:** `gate-fix-0` runs on the cursor default
+  (composer-2.5); the LAST attempt (`gate-fix-1`, generalized as `i === GATE_FIX_ATTEMPTS-1`)
+  escalates to **claude-terminal opus** + effort high. It only fires when every cheaper attempt
+  already failed → the residual reds are the hard ones, warranting the strong model on the code
+  that ships (§6.5/§13.3 escalate-on-thrash; the unrolled gate structure gives this nearly free).
+  **self-fix stays on cursor** — it applies fixes that code-review (opus) already reasoned out
+  (execution against findings, like impl against a plan §13.1), and the change-gate backstops it;
+  opus there would pay twice for the same thinking.
 
 **The mechanism that makes this work (non-obvious, cost a full investigation):** tier keywords
 (`small`/`medium`/`large`) resolve against the aiProfile built from **`config.assistant`** (still
