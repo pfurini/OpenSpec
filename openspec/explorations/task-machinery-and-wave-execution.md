@@ -1062,3 +1062,33 @@ adequate for the per-cycle TDD protocol) but UNPROVEN in this harness. Watch the
 impl thrash / gate-fix quality — if it thrashes, the §13.3 fallback is to pin impl+gate-fix back to
 `provider: claude-terminal` + literal `sonnet` while keeping the cheap nodes on cursor. Prereq:
 `CURSOR_API_KEY` in `~/.archon/.env` (present). Verified: `archon validate … ok`, stub probe green.
+
+### 16.7 First cursor run (83a7bf8e) — two findings [2026-06-15]
+The first cursor run aborted at wave 4 and surfaced one real STRUCTURAL bug plus one robustness gap.
+
+**(1) FIXED — create-pr shipped a PR for an ABORTED run [lexup dev `27f10f6f`].** Sequence:
+`impl-w4` hit a `cursor_error` → wave 4 incomplete → `assert-waves-complete` correctly **failed**
+("incomplete: 4/5 waves") → the whole tail (simplify → review chain → self-fix → ALL gate nodes)
+correctly cascade-**skipped** — **but `create-pr` ran anyway** and shipped PR #116 for the partial
+change (then post-review-comments + report ran too). Root cause: `create-pr.trigger_rule: all_done`
+counts a SKIPPED dep as "done" (`checkTriggerRule` dag-executor.ts:691 — `all_done` = every dep not
+pending/running), so the abort cascade (every gate node skipped) satisfied it. `all_done` was chosen
+to tolerate the LEGIT green-early gate cascade (gate-run-0 done, later attempts skipped) but it can't
+tell that from the abort cascade. **Fix: `one_success`** (fires iff ≥1 dep `completed`). gate-run-0
+exits 0 whenever the pipeline reaches it, so "a gate node completed" == "the change-gate ran":
+ships the PR when the gate ran (green or red — the triage policy) and on the green-early cascade, but
+SKIPS create-pr + post-review-comments + report when the pipeline aborted upstream. (`assert-waves-
+complete` keeps `all_done` — it MUST run to DETECT incompleteness; it's the detector, not a shipper.)
+Empirically verified with a forced-abort stub probe: create-pr + downstream skip. **General lesson:**
+`all_done` on a SHIPPING/terminal node is a foot-gun — it fires on abort cascades; use `one_success`
+(or `none_failed_min_one_success`) for "run iff the upstream actually produced something."
+
+**(2) OPEN — a single transient `cursor_error` killed the impl loop on iteration 1.** `impl-w4`
+failed not from thrash but from one provider-side SDK error on its first iteration; the loop has no
+retry for transient provider errors, so one blip aborts a whole wave (and, pre-fix, the run). This is
+distinct from the §13.3 escalate-on-thrash discussion (that's about capability, this is about
+flakiness). Mitigation options for the next build: (a) retry transient provider errors within the
+loop (N attempts before failing the node); (b) the impl escalation-on-thrash backstop (re-run the
+wave on opus) would ALSO catch a transient cursor failure as a side effect; (c) both. Given cursor is
+now the default execution provider, transient-error resilience moves up the priority list — likely
+the real "most important next step", ahead of or alongside the impl escalation backstop.
