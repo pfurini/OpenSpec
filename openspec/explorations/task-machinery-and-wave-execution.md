@@ -1098,3 +1098,31 @@ opaque `cursor_error`/"run error" classifies UNKNOWN → not retried; `classifyE
 match it). Fix (A): make opaque cursor errors retryable with FATAL precedence preserved (structural
 `errorSubtype` signal preferred; adding `cursor_error` to `TRANSIENT_PATTERNS` is the 1-line stopgap).
 (B) per-iteration loop retry is an optional follow-up. Hand the spec to a focused archon-patch agent.
+**UPDATE 2026-06-15: the archon patch landed (A1 + B).** Loops now own per-iteration retry inside
+`executeLoopNode` (`dag-executor.ts:2126`), with structural `errorSubtype` retryability + FATAL
+precedence. The resumed run progressed past the wave-4 blip.
+
+### 16.8 impl escalation (b) + max_iterations calibration [2026-06-15]
+**max_iterations counts EVERY iteration (one TDD cycle each), not retries/failures.** Calibration
+from run 83a7bf8e: actual iterations per wave = `impl-w0=1, w1=10, w2=6, w3=9, w4=8` vs the fixed cap
+`15`. Wave-1 had 10 cycles → exactly 10 iterations (zero retries — cursor composer-2.5 did each cycle
+first-try). So **15 is NOT "too much"** (peak 10/15, only 5 headroom; arguably tight for the biggest
+waves) — but a FIXED cap is mis-shaped because wave sizes vary 1→10 cycles: too loose for small waves
+(a stuck 1-cycle wave burns all 15 before failing), tight for large ones. A completing wave exits on
+`COMPLETE` early, so the cap is invisible on the success path — it only bites the thrash/failure path.
+
+**Decision: don't tune the number — make the thrash trigger PROGRESS-based.** The loop's real progress
+unit is the per-cycle git commit. So escalation/abort should fire on STALL (no new commit for K
+consecutive iterations), which is size-independent: a 10-cycle wave committing each iteration is
+healthy; a wave stuck for 3 iterations is thrashing regardless of size. Keep `max_iterations` ~15-18
+as a generous hard backstop, not the primary trigger.
+
+**(b) escalation-on-thrash = an archon loop feature** (not workflow-unrolled — archon has no
+`on_failure` trigger, and impl is a single loop). Spec written: `archon repo
+docs/plans/loop-model-escalation.md` — adds a loop `escalate: { model, provider, effort, stall_after }`
+block; on stall (git-commit-based) the loop swaps to the fallback model (claude-terminal opus) for the
+remaining budget; composes with the (B) per-iteration retry (retry = transient/same model; escalate =
+capability/stronger model). Telemetry `loop_node_escalated` feeds the §13.3 calibration prior. Harness
+consumer (separate, later): `impl-wN` loop gains `escalate: {provider: claude-terminal, model: opus,
+effort: high, stall_after: 3}`. **Timing: build after a clean run confirms whether composer even needs
+it** (no thrash observed yet; §13.3 — don't escalate before plans run clean).
