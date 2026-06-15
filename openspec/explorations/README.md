@@ -198,7 +198,9 @@ behavior-change-includes-its-test, ground-named-test-paths) + notes §13–§16.
 - **Parity test**: any template change breaks
   `test/core/templates/skill-templates-parity.test.ts` (SHA-256 hashes). Re-harvest by
   computing hashes with the same stableStringify+sha256 (tsx script) and updating
-  `EXPECTED_FUNCTION_HASHES` + `EXPECTED_GENERATED_SKILL_CONTENT_HASHES`.
+  `EXPECTED_FUNCTION_HASHES` + `EXPECTED_GENERATED_SKILL_CONTENT_HASHES` +
+  `EXPECTED_BUNDLE_TREE_HASHES` (the multi-file tree hashes for bundled skills, per
+  `full`/`flatten` capability — added by the multi-file-skill-generation track).
 - **Suite**: `npx vitest run` (1665 tests); build: `npm run build`.
 - **Testbed**: lexup at `/Users/paolof/Developer/Projects/lexup/lexup-new`
   (`openspec/config.yaml` → `schema: deep-planning`; active change

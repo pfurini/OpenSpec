@@ -216,7 +216,10 @@ migration:
    Guardrails, reordering the command/flatten body vs the original (Flow now trails Guardrails). Fix
    = marker-based inline (replace the `## The Flow` pointer in-place) so flatten is order-lossless.
    Plus: surface dropped scripts; broaden the `full` capability set beyond Claude where supported.
-2. Tree-based parity test; re-harvest hashes.
+2. **Tree-based parity — DONE 2026-06-15.** `EXPECTED_BUNDLE_TREE_HASHES` in the parity test hashes
+   the full emitted file set (SKILL.md + references/* [+ scripts/*]) per `full`/`flatten` capability
+   for bundled skills — so `references/` content is guarded, not just the single SKILL.md. Re-harvest
+   with the same stableStringify+sha256 over `buildSkillArtifacts(...)`. Suite 1710 green.
 3. **Then** the `design.ts` content rewrite lands as edits to `references/*.md`
    (`prompt-adherence-and-design-rewrite.md` §2) — the actual goal this unblocks.
 4. (Later) scripts support + capability gate; migrate the remaining opsx skills.

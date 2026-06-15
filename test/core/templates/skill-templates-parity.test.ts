@@ -29,7 +29,7 @@ import {
   getSyncSpecsSkillTemplate,
   getVerifyChangeSkillTemplate,
 } from '../../../src/core/templates/skill-templates.js';
-import { generateSkillContent } from '../../../src/core/shared/skill-generation.js';
+import { generateSkillContent, buildSkillArtifacts } from '../../../src/core/shared/skill-generation.js';
 
 const EXPECTED_FUNCTION_HASHES: Record<string, string> = {
   getExploreSkillTemplate: '64df102d2739077150be9790d50d9cca06c762cfebcff87273b2decdb832621e',
@@ -72,6 +72,11 @@ const EXPECTED_GENERATED_SKILL_CONTENT_HASHES: Record<string, string> = {
   'openspec-verify-change': 'a2acecd0c2b4e57080a314e5e7a093e0688293c37e446eb45d378f5050058550',
   'openspec-onboard': 'b924ea3c97543ebb7ee82c5f194afe7ce87a521c32b85616f445240ab33a02ab',
   'openspec-propose': '1a913f212df682d7a72295097c167d6781b7b38a1e593d60d27ef82357b09fc6',
+};
+
+const EXPECTED_BUNDLE_TREE_HASHES: Record<string, string> = {
+  'openspec-design:full': 'aeb04e7079ce2f45eeb82a8272796b37dd734affd81ec589cf80f6feaca64823',
+  'openspec-design:flatten': '9ee5856ba01ab835017be90a7f3ec3a1e65a8c3d0b56975662343ea009f8a00c',
 };
 
 function stableStringify(value: unknown): string {
@@ -157,6 +162,27 @@ describe('skill templates split parity', () => {
     );
 
     expect(actualHashes).toEqual(EXPECTED_GENERATED_SKILL_CONTENT_HASHES);
+  });
+
+  it('preserves the multi-file bundle tree exactly (full + flatten)', () => {
+    // Tree parity for skills carrying a `bundle`: hashes the full emitted file set
+    // (SKILL.md + references/* [+ scripts/*]) per capability, so reference content is
+    // guarded — not just the single SKILL.md. Extend `bundledSkillFactories` as more
+    // skills become multi-file.
+    const bundledSkillFactories: Array<[string, () => SkillTemplate]> = [
+      ['openspec-design', getOpsxDesignSkillTemplate],
+    ];
+
+    const actualHashes = Object.fromEntries(
+      bundledSkillFactories.flatMap(([dirName, createTemplate]) =>
+        (['full', 'flatten'] as const).map((capability) => [
+          `${dirName}:${capability}`,
+          hash(stableStringify(buildSkillArtifacts(createTemplate(), 'PARITY-BASELINE', capability))),
+        ])
+      )
+    );
+
+    expect(actualHashes).toEqual(EXPECTED_BUNDLE_TREE_HASHES);
   });
 
   it('guards unsupported workspace workflows from repo-local fallback edits', () => {
