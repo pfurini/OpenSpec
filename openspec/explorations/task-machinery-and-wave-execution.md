@@ -1149,3 +1149,50 @@ via a `buildTargetCommandEnv` helper. Denylist NOT blanket-strip: managed creds 
 `post-review-comments`'s `gh pr comment`, provider keys) also live in `~/.archon/.env` and must keep
 flowing. Provider-subprocess env isolation is a separate (credential-aware) patch. Hand to an archon
 agent; pairs with the loop-escalation spec.
+
+### 16.10 Guardrails vs reward-hacking — deterministic lint wall + anti-hack steering [BUILT 2026-06-15, lexup dev `e9460246`]
+**Problem.** A real run surfaced a cursor review finding: a **synchronous `XMLHttpRequest` in a
+ProfileSection component**, used to bypass the oRPC client (`useMutation`) and force a flaky e2e
+green. This is the canonical weak-model failure mode: the model optimizes the *local* objective (a
+green test) by violating a *global* architecture rule. Prompt adherence alone can't be trusted for
+weak/cheap models — we need a deterministic wall plus steering.
+
+**The lever hierarchy (two layers, deterministic first):**
+1. **Deterministic wall (the hero) — lint in the change-gate.** `gateCapture()` now runs
+   `step check pnpm check` **first** (cheapest step, surfaces a bypass before the expensive
+   suite+e2e). `pnpm check` = `ultracite check` (read-only). A data-layer bypass / suppressed rule /
+   weakened test is caught regardless of what the prompt said. **Gate stays a VERIFIER, not a
+   mutator** — decided against `pnpm fix` in the gate: a mutating gate reports green partly because
+   it just edited *uncommitted* code (lost or accidentally shipped), and breaks gate-slot idempotency
+   (run-0→fix→run-1 deltas would come from the gate, not the agent). For the reward-hack case `fix`
+   buys nothing anyway — `noRestrictedGlobals` is not auto-fixable. Split: **agents run `pnpm fix` in
+   their own cycle** (impl + gate-fix prompts) so commits are clean; the gate `check`s read-only.
+   Lint is NOT added to the per-wave gate (it has no self-heal loop → a lint miss would hard-abort the
+   run); only the change-gate, where the gate-fix loop can remediate.
+2. **Domain rule expressed in Biome (`biome.json` `noRestrictedGlobals`).** Bans `XMLHttpRequest`
+   **globally** (absent repo-wide — verified `git grep` → zero hits, no legit use, kills the exact
+   sync-XHR trick) and `fetch` scoped to `apps/web/src/components/**` via an override (enforce oRPC in
+   components), with `video-player.tsx`'s streaming download as the sole sanctioned exception
+   (`!`-excluded; the `packages/ui` legit fetch is already outside biome's `files.includes`). Fits the
+   repo's existing `noRestrictedImports` boundary-enforcement philosophy. **Gotcha (caught by
+   advisor):** Biome's options-form `noRestrictedGlobals` **REPLACES** the rule config, it does not
+   deep-merge — ultracite's preset sets a bare `noRestrictedGlobals: "error"` whose Biome default deny
+   set is `["event","error"]`. Specifying `deniedGlobals` silently dropped those repo-wide (a *missing*
+   error, invisible to a clean `pnpm check`). Fix: re-list `event`+`error` in **both** maps. Verified:
+   probe component flags XHR/fetch/event/error; `video-player.tsx` clean; full `pnpm check` exit 0
+   (563 files). The "must use oRPC" *semantic* rule is NOT expressible in stock Biome (would need
+   GritQL/eslint) — `noRestrictedGlobals` is the deterministic proxy; the rest stays plan+review.
+3. **Anti-reward-hack steering (prompts, generator).** Added an **INVIOLABLE RULES** block to the
+   impl loop + an equivalent guard to `GATE_FIX_PROMPT`: never bypass the mandated data layer (raw
+   fetch/XHR), never suppress a check (`biome-ignore` / disabled rule / `@ts-ignore` / `.skip`/`.only`),
+   a test verifies BEHAVIOR (fix a flake's synchronization, don't weaken the assertion or mangle prod
+   code), and **if you can't go green without breaking a rule, STOP and log a documented deviation — a
+   flagged red is correct; a rule-breaking green is a defect.** `plan-wN` gets **pre-commitment**: name
+   the exact mechanism per cycle (e.g. "oRPC `profile.update` via useMutation") and never *plan* a
+   bypass/suppression — a vague cycle invites an improvised shortcut.
+
+**Why this composes:** the lint wall removes the *possibility* of the bypass shipping; the test-fix
+steering removes the *pressure* that motivated it (the model is told the honest red is the correct
+outcome). Layer 1 is project-agnostic (any repo with a lint gate); layer 2 is lexup-domain.
+**Open:** the semantic "use oRPC" rule still rides on plan+review, not lint — a GritQL/eslint plugin
+could make it deterministic later (not built; tracked here).
