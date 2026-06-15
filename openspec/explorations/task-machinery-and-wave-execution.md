@@ -1162,9 +1162,10 @@ agent; pairs with the loop-escalation spec.
 > `DATABASE_URL` only) + `buildTargetCommandEnv` helper (`packages/paths/src/archon-internal-env.ts`),
 > applied at the three target-command env sites (`dag-executor.ts:1683/1860/~2708`); managed creds
 > (GitHub token for `gh pr comment`) still flow. Spec marked implemented. **Consumer follow-up
-> (optional, NOT done):** the harness's `env -u DATABASE_URL pnpm test:e2e` gate workaround is now
-> redundant — kept as belt-and-suspenders (a no-op once archon strips it); remove in a follow-up only
-> after a fresh run confirms the archon fix end-to-end.
+> (DONE, lexup dev `a02c8682`):** the harness's `env -u DATABASE_URL pnpm test:e2e` gate workaround was
+> removed — the archon strip makes it redundant, so the gate is now just `step e2e pnpm test:e2e` and
+> `.env.e2e` populates `DATABASE_URL` cleanly. Removed eagerly (lean gate) rather than waiting for a
+> fresh run to re-confirm; the archon-side test suite already covers the strip.
 
 ### 16.10 Guardrails vs reward-hacking — deterministic lint wall + anti-hack steering [BUILT 2026-06-15, lexup dev `e9460246`]
 **Problem.** A real run surfaced a cursor review finding: a **synchronous `XMLHttpRequest` in a
