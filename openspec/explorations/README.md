@@ -14,7 +14,7 @@ Two families of files:
 
 | Note | Role | Status |
 |---|---|---|
-| `task-machinery-and-wave-execution.md` | **The current build contract (read FIRST for the active track).** TDD wave model (3 grains, commit-per-cycle, two-level queue, JIT wave plans), A′ unrolled-slot workflow, static per-node tiers (planner ⪰ implementer), test-layer routing via project skill, skills backbone, K=10, documented-deviation rule. **§13–§16 = the 2026-06-14 build+run findings** (execution grain, impl-tier rubric + tier floors, change-gate + tail restructure, the canonical-source decision). Supersedes phase-graph's intra-change section + parts of executable-plans | **Harness AUTHORED + ran END-TO-END 2026-06-14 → green-gated draft PR (PR #114), 0 human turns.** One v1 bar open (zero undocumented deviations → tail restructure §14/§15). Read §13–§16 for current state |
+| `task-machinery-and-wave-execution.md` | **The current build contract (read FIRST for the active track).** TDD wave model (3 grains, commit-per-cycle, two-level queue, JIT wave plans), A′ unrolled-slot workflow, static per-node tiers (planner ⪰ implementer), test-layer routing via project skill, skills backbone, K=10, documented-deviation rule. **§13–§16 = the build/run trail** (execution grain, impl-tier rubric + tier floors, change-gate + tail restructure, cursor switch, guardrails). Supersedes phase-graph's intra-change section + parts of executable-plans | **Harness BUILT + runs end-to-end.** claude-terminal PR #114 met 3/4 bars (it's the run whose undocumented deviations motivated the tail restructure); cursor-era runs add the restructure + guardrails. **Bar 4 (zero undocumented deviations on a clean run) BUILT but not yet PROVEN** — no run has gone 4/4-green. Read §13–§16 for the trail |
 | `phase-graph-unified-model.md` | **The architecture.** OpenSpec↔Archon harness model: unit = right-sized change; change DAG (orchestrator) + task DAG; validation gates; build order; size ceiling. *Intra-change execution + model routing sections superseded — see task-machinery note* | Core model **CONFIRMED**; intra-change parts superseded |
 | `executable-plans-and-feedback-loop.md` | Content spec for the rich task-builder (self-sufficiency standard, ralph `prd.json` convergence) + implementation report / feedback loop. *§1 now lands in the wave-plan instruction; "fatten tasks.md" item resolved — see task-machinery note* | Partially absorbed into task-machinery note |
 | `change-records-and-thinking-layer.md` | Amendment model, shadow-layer caveat, ADR/glossary layer (§4 LANDED), small parked items (§5) | Mixed: §4 shipped, rest deferred |
@@ -27,16 +27,25 @@ Two families of files:
 | `linear-github-sync.md` | v1: outbound push to Linear (configurable mapping, ids in metadata). Future vision: Linear as driver (Agents API = protocol-not-runtime; all compute on own hardware) | Buildable later; out of scope for this initiative |
 | `explore-workflow-ux.md` | Earlier explore UX thinking (pre-dates this effort) | Historical |
 
-## Current v1 target (2026-06-13) — STATUS 2026-06-14: 3-of-4 bars met
+## Current state (2026-06-15)
 
-**Progress 2026-06-14:** the harness was authored (A′ workflow + generator in lexup) and ran
-end-to-end → a **green-gated draft PR (PR #114) with zero human turns**. Of the four
-done-condition bars below, three are met: green-gated PR ✅, zero human turns ✅, per-wave TDD
-trail ✅. The fourth — **zero undocumented deviations** — is OPEN: the tail nodes (change-gate /
-self-fix / simplify) mutate code without logging to progress.md. Fix = the §14/§15 tail
-restructure in `task-machinery-and-wave-execution.md` §16.4; then a clean re-run should pass all
-four. (Also decided 2026-06-14: the harness workflow should be **OpenSpec-canonical, CLI-installed**
-— see decision 16 + task-machinery §16.3.)
+The harness is **built and mechanically working**; the open work is a clean validating run, then
+hardening. What's landed since the first end-to-end run (full trail in task-machinery §16):
+- **PR #114** (claude-terminal, pre-restructure) met 3/4 bars — green-gated, 0 human turns, per-wave
+  TDD trail — but had undocumented tail deviations (the 4th bar), which motivated the restructure.
+- **Tail restructure BUILT** (§16.5): change-gate moved to unrolled bash gate-runs + agent fix turns,
+  review/self-fix/simplify forked to base-diff commands, progress.md logged on every mutation.
+- **Cursor is the default provider** (§16.6, economic lever); plan/code-review pinned to
+  claude-terminal opus; impl on cursor with **opus escalation-on-stall** (§16.8, archon feature LANDED + wired).
+- **Guardrails** against weak-model reward-hacking (§16.10): a deterministic `pnpm check` lint wall in
+  the change-gate + `noRestrictedGlobals` (bans XHR / component `fetch`) + anti-reward-hack prompt steering.
+- **Archon fixes LANDED** (separate repo): loop transient-retry (A1+B), loop model-escalation,
+  gate env-isolation (strips archon's `DATABASE_URL` from target commands).
+
+**The one bar still unproven: zero undocumented deviations on a clean 4/4-green run.** No cursor-era
+run has yet gone fully green-gated to a PR (the last exited before create-pr on a red gate). The
+next milestone is a clean validating run. (Decided 2026-06-14: the harness should become
+**OpenSpec-canonical, CLI-installed** — decision 16 / §16.3 — still pending.)
 
 This initiative is the **engineering harness proof**, not the product-discovery,
 workspace, Linear, or research initiative.
@@ -138,106 +147,47 @@ prompt/schema content, no OpenSpec test-count change).
 
 **NOT yet OpenSpec code (lives in the lexup testbed, to be canonicalized — decision 16):** the
 A′ harness workflow (`opsx-wave-harness.gen.mjs` + `.yaml`), the lexup `.archon/config.yaml`
-wiring, and the lexup-testing skill grounding. These ran the v1 proof but must move into OpenSpec
-as an emitted/installed artifact (task-machinery §16.3). archon-side (separate repo, branch
-`feat/claude-terminal-provider`): `claude-terminal` tier-defaults + loop-`model:` doc fix.
+wiring (now cursor-default + guardrails biome rule), and the lexup-testing skill grounding. These
+ran the v1 proof but must move into OpenSpec as an emitted/installed artifact (task-machinery
+§16.3). **archon-side (separate repo) — LANDED:** `claude-terminal` tier-defaults + loop-`model:`
+doc fix; loop transient-retry (A1+B); loop model-escalation (`escalate` block); gate env-isolation
+(`ARCHON_INTERNAL_ENV_KEYS` strips `DATABASE_URL` from target commands).
 
-## Recommended next steps (in order)
+## Open stack (ordered, for the next session)
 
-0. ✅ **DONE (2026-06-12, 100% pass under the cold-handoff protocol).** Verified live:
-   archive moved all 5 artifacts; ADR-0037 re-derived through the interview and promoted
-   (`change:` link, `accepted` + date); proposal Constraints grouped + falsifiable with an
-   HONEST "None" (no fabrication); specs vibe-word-clean; tasks zero deferred decisions;
-   design fed a spec-wording fix back to the WHAT properly. lexup reverted to pre-test
-   state afterward (the change is active again, planning artifacts regenerated and valid).
-   ~~Acceptance tests on lexup (~30 min, validates shipped prompt work):~~
-   (a) run `/opsx:design` on a real change — expect one-question-at-a-time interview,
-   ADR-worthy decisions confirmed with the user, nothing deferred to tasks;
-   (b) design→archive ADR lifecycle — ADR written to `docs/adr/` with `change:` +
-   `status: proposed`, archive flips it to `accepted`.
-   **Setup (account-profile-self-service):** keep the exploration note + `.openspec.yaml`
-   + ADR-0036; delete the stale `proposal.md`, `specs/`, `design-notes.md` (pre-dates the
-   interview work) and `docs/adr/ADR-0037-*` (minted unilaterally, old format). Archive
-   dry-run: git-checkpoint first, confirm the incomplete-tasks warning, **DECLINE spec
-   sync** (feature is unimplemented), verify ADR flip + move, then `git reset --hard`.
-   **Cold-handoff protocol — `/clear` at every command boundary, never mid-interview:**
-   artifacts must carry ALL state (the architecture's central claim; Archon consumers are
-   fresh-context by design). Warm sessions produce FALSE PASSES (the model remembers what
-   the note should have carried). Bisection rule: cold-fail + warm-pass = artifact/prime
-   gap; fails both = prompt gap.
-1. **REVERSED (2026-06-12) — task machinery BEFORE the slice.** The old "vertical slice
-   first, needs NO new OpenSpec code" is dead: the slice would validate task output we've
-   decided is defective (tests-last, too coarse). New order — read
-   `task-machinery-and-wave-execution.md` §9 for the full checklist:
-   1. ✅ **DONE (2026-06-13).** Deep-planning schema + command rework (wave-map tasks, design
-      de-parallelization, wave-plan instruction + `instructions wave-plan` endpoint, skills
-      wiring, parity re-harvest). Plus: proposal Constraints carried into propose+template;
-      design Open-Questions triage at the tasks boundary; ADR registry (`openspec adr index`)
-      + drift `openspec lint --adr` + prime forcing-function. All on branch, suite 1700.
-   2. ✅ **PASSED (2026-06-13) — writing-pass acceptance test, cold-handoff regeneration of
-      lexup `account-profile-self-service`.** Verified live: 5-wave TDD map (W0 failing-E2E
-      tracer + scaffold; value-ordered vertical slices); one `- [ ]` per wave → `apply --json`
-      progress.total=5; coverage-map layers transcribed **verbatim** from design's Testing
-      Approach (perfect scenario-by-scenario fidelity); per-wave stamps + skills (all 5 cited
-      skills exist, not fabricated); NO scope-reduction language; design Open Questions "None"
-      (no carried-over, no dodged); proposal Constraints grouped+falsifiable; slice-composition
-      (not parallelism). **The three earlier-round defects did NOT recur:** no duplicate ADR
-      (only ADR-0037), `lint --adr` clean (registry in sync), glossary unpolluted. One noted
-      deviation (not a fail): wave gates run filtered Playwright (§7 [REC] was "change gate
-      only") — defensible for proving the tracer RED→GREEN. Proves the writing pass only —
-      NOT harness execution (steps 3–4: no Archon/tiers/code).
-   3. ✅ **DONE 2026-06-14.** Authored the A′ workflow (generator + `opsx-wave-harness.yaml`)
-      in lexup `.archon/workflows/`; validated + wiring-proven. task-machinery §16.
-   4. ✅ **DONE 2026-06-14 (near-pass).** Ran the slice end-to-end → green-gated draft PR
-      (PR #114), all 5 waves green, zero human turns. One v1 bar open (zero undocumented
-      deviations) → the §14/§15 tail restructure (task-machinery §16.4) is the next build.
-   Deferred track (post-v1, user-owned, in Archon): substitution on `model:`/`provider:` +
-   `<next-model>` loop directive — no longer blocks v1; pick up when hardening static→dynamic.
-2. **Inter-change graph:** implement `add-change-stacking-awareness`
-   (spec: `openspec/changes/add-change-stacking-awareness/` — upstream-authored, check
-   upstream for in-flight implementation first). The orchestration contract.
-3. Then per the phase-graph build order: validation gates → right-sizing/split;
-   capability tracks (review steps, discovery, research grounding, Linear v1) slot in
-   independently. (Task-DAG formalization is absorbed by the wave model.)
+**Done so far** (provenance in task-machinery §9 + §16): cold-handoff protocol validated
+(2026-06-12); deep-planning schema/command rework shipped + writing-pass PASSED (2026-06-13); A′
+workflow authored → ran end-to-end to PR #114; tail restructure + cursor switch + guardrails built
+(2026-06-14/15). The harness mechanically works. Open work:
 
-## Open stack after the 2026-06-14 harness run (ordered map for the next session)
-
-Steps 1-4 of the harness track are DONE: schema/command rework **shipped**, writing-pass
-**PASSED**, A′ workflow **authored**, slice **ran end-to-end to a draft PR** (PR #114, 0 human
-turns). The harness mechanically works; the open work is the tail restructure + then hardening.
-
-1. ~~**Tail restructure — the one open v1 bar (zero undocumented deviations) + turn-cap robustness.**~~
-   **BUILT 2026-06-14** (lexup dev `84a0ea2a`; build record `task-machinery-and-wave-execution.md`
-   §16.5). All five §16.4 items shipped in the generator: change-gate is now UNROLLED bash
-   gate-runs + agent fix turns (the loop's `until_bash` is hardcapped at 120s — too short for the
-   e2e gate — so the loop was infeasible; unrolled slots keep §14's principle); review/self-fix/
-   simplify forked to base-diff `opsx-*` commands emitted by the generator; tail reordered;
-   progress.md logged atomically with each mutator commit; `post-review-comments` added. Verified
-   by `archon validate` + a full stub probe (gate cascade + reviewer gating confirmed). **OPEN: the
-   USER runs the real slice** (`archon workflow run opsx-wave-harness --branch <new>
-   "account-profile-self-service"` from a clean worktree) → expect all four bars green.
-2. **Make the harness OpenSpec-canonical, CLI-installed** (decision 16; task-machinery §16.3).
-   The workflow YAML + generator live in lexup today (the testbed); they belong in OpenSpec,
-   emitted/installed like commands + skills, with project specifics (gate commands, tiers,
-   copyFiles, test-strategy skill) staying in the target. Pairs naturally with the multi-file
-   skill generation track (same emit/install machinery).
-3. **impl-tier rubric + escalation** (task-machinery §13.3) — the cheaper/faster-impl lever:
-   5-dimension complexity classifier → `implTier` ∈ {medium, large}; escalate on thrash;
-   calibration loop. Flip on once plan quality is solid (do after the clean re-run).
-4. **Plan-validation + reconciliation** (`plan-validation-and-recovery.md`, SEED) — the
-   anti-brittleness capability (cross-model wave-map validation + self-fix→replan→resume→human
-   gate). The next major capability after the harness reaches a clean pass.
+1. **Clean validating run — the immediate milestone.** Run the slice end-to-end on cursor from a
+   clean worktree (`archon workflow run opsx-wave-harness --branch <new>
+   "account-profile-self-service"`) → expect all four bars green, incl. zero undocumented
+   deviations. **Needs the archon binary rebuilt** with the landed loop-escalation + env-isolation
+   fixes (else the lean gate's `DATABASE_URL` reappears and `escalate:` is ignored). Don't run it
+   yourself — claude-terminal TUI under Claude Code stalls; hand the command to the user.
+2. **Make the harness OpenSpec-canonical, CLI-installed** (decision 16; §16.3) — workflow YAML +
+   generator move from the lexup testbed into OpenSpec, emitted/installed like commands + skills,
+   project specifics (gate commands, tiers, copyFiles, test-strategy skill) staying in the target.
+   Pairs with the multi-file skill generation track (same emit/install machinery).
+3. **impl-tier rubric** (§13.3) — the cheaper/faster-impl lever: 5-dimension complexity classifier
+   → `implTier` ∈ {medium, large}. The escalation backstop already LANDED + wired (§16.8); flip the
+   rubric on once plan quality is solid.
+4. **Plan-validation + reconciliation** (`plan-validation-and-recovery.md`, SEED) — anti-brittleness
+   (cross-model wave-map validation + self-fix→replan→resume→human gate). The next major capability.
 5. **Multi-file skill generation** (`multi-file-skill-generation.md`) → then the **`design.ts`
    rewrite** (`prompt-adherence-and-design-rewrite.md` §2, after the **bisection** §1).
-6. **`openspec lint` → hook/CI wiring** + **B/C grounding-lint rules**
-   (`prompt-adherence-and-design-rewrite.md` §3); **deterministic command-flow enforcement**.
+6. **`openspec lint` → hook/CI wiring** + **B/C grounding-lint rules** + **deterministic
+   command-flow enforcement** (`prompt-adherence-and-design-rewrite.md` §3).
+7. **Inter-change graph:** `add-change-stacking-awareness` (upstream-authored — check upstream for
+   in-flight work first); then the phase-graph build order (validation gates → right-sizing/split).
+   The orchestration contract. (Task-DAG formalization is absorbed by the wave model.)
 
-Shipped 2026-06-14 (pushed): the lexup harness (generator + `opsx-wave-harness.yaml` + config +
-lexup-testing grounding); archon `claude-terminal` tier-defaults + loop-`model:` doc fix
-(`feat/claude-terminal-provider`); OpenSpec schema hardening rules (atomic-slicing,
-behavior-change-includes-its-test, ground-named-test-paths); notes §13–§16 +
-`plan-validation-and-recovery.md`. Earlier (2026-06-13, suite 1700): wave-map +
-`instructions wave-plan`; Constraints carry-through; Open-Questions triage; ADR registry + drift.
+**Shipped + pushed:** lexup harness (generator + `opsx-wave-harness.yaml` + cursor config +
+guardrails biome rule + lexup-testing grounding); archon (tier-defaults, loop-`model:` doc fix,
+transient-retry, loop-escalation, env-isolation); OpenSpec schema hardening (atomic-slicing,
+behavior-change-includes-its-test, ground-named-test-paths) + notes §13–§16.10 +
+`plan-validation-and-recovery.md`.
 
 ## Implementation-session protocol (tribal knowledge — read before coding)
 
@@ -261,11 +211,15 @@ behavior-change-includes-its-test, ground-named-test-paths); notes §13–§16 +
   Regenerate: `node opsx-wave-harness.gen.mjs [--k N] [--mode real|stub]`. Validate:
   `archon validate workflows opsx-wave-harness`. The run loads config from the **worktree** cwd
   (`executor.ts:383`); `--resume` matches the run's `working_path` exactly, so resume from the
-  worktree dir or via run-id (`archon workflow run opsx-wave-harness --resume`). Wave gates =
-  bash; change-gate + impl = loops. lexup config: `assistant: claude-terminal` (REPO key is
-  `assistant:`, not `defaultAssistant:`), `copyFiles: [.env, apps/web/.env]`,
-  `turnTimeoutMs: 1800000`. Standalone CLI needs `DATABASE_URL` in `~/.archon/.env` to use
-  Postgres (else SQLite). The next build moves all this into OpenSpec as an installable artifact.
+  worktree dir or via run-id (`archon workflow run opsx-wave-harness --resume`). Wave gates +
+  change-gate = unrolled bash gate-runs + agent fix turns (§16.5); impl = loop. lexup config:
+  `assistant: claude-terminal` (REPO key is `assistant:`, not `defaultAssistant:`),
+  `copyFiles: [.env, apps/web/.env]`, `turnTimeoutMs: 900000`. The **workflow** pins
+  `provider: cursor` / `model: composer-2.5` as the default (literal models override tiers);
+  plan + code-review on claude-terminal opus; impl escalates to opus on stall. Standalone CLI needs
+  `DATABASE_URL` in `~/.archon/.env` to use Postgres (else SQLite) — but the gate now relies on
+  archon's env-isolation strip to keep that out of target commands. The next build moves all this
+  into OpenSpec as an installable artifact.
 - **Archon source of truth**: harness execution facts are pinned in task-machinery §10–§11
   (loop-`model:` honored, env model, `event emit`, trigger rules) and the §13–§16 build/run
   findings. Verify capability claims against `~/Developer/ai/archon/packages/workflows/src/`.
