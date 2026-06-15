@@ -1,18 +1,17 @@
 # Task machinery rework + wave execution model (the TDD harness synthesis)
 
-Status: **harness AUTHORED + ran END-TO-END 2026-06-14 — reached a green-gated draft PR
-(PR #114), all 5 waves green, ZERO human turns from wave-map approval.** The §9 build order
-is now done through step 4 (the slice ran). One v1 done-condition bar remains open: *zero
-undocumented deviations* — the tail nodes don't log to progress.md (see **§15**). The
-build + run findings live in **§13** (execution grain, plan/impl separation, impl-tier
-prediction + tier floors), **§14** (change-gate structure bug), **§15** (review/fix/simplify
-tail restructure), and **§16** (the harness build summary + the canonical-source decision:
-the workflow belongs in OpenSpec, not hand-authored per-project). Originally a brainstorm
-(SETTLED 2026-06-12); this note remains the re-priming record for the harness track — read
-§13–§16 first for the current state.
+Status (2026-06-15): **harness BUILT + runs end-to-end.** PR #114 (claude-terminal,
+pre-restructure) hit 3/4 bars with 0 human turns; since then the tail restructure (§14/§15 →
+§16.5), the cursor switch (§16.6), and the reward-hack guardrails (§16.10) all shipped, and the
+supporting archon fixes landed (§16.7–§16.9). **The one bar still unproven: zero undocumented
+deviations on a clean 4/4-green run** — no cursor-era run has yet gone fully green to a PR. The
+build/run trail lives in **§13** (execution grain, plan/impl separation, impl-tier rubric +
+escalation), **§14/§15** (change-gate + tail structure, BUILT in §16.5), and **§16** (the dated
+build chronology + the canonical-source decision: the workflow belongs in OpenSpec, not
+hand-authored per-project). Read §13–§16 first for current state.
 
-Each item below is tagged: **[CONFIRMED]** user-ratified · **[REC]** Claude's
-recommendation, unchallenged — treat as default, re-confirmable · **[OPEN]** undecided.
+Tags: **[CONFIRMED]** user-ratified · **[REC]** Claude's default, re-confirmable · **[OPEN]**
+undecided · **[BUILT §x]** shipped, see cross-ref.
 
 ## V1 target calibration (2026-06-13)
 
@@ -155,22 +154,10 @@ So per-wave detail and the coverage map must use NO checkboxes. Settled encoding
   (tier hints written now are cheap + forward-compatible; v1 doesn't act on them for model
   choice — README #10). `skills:` bullet lists skill SKILL.md paths (incl. the project
   test-strategy skill).
-  - **`implTier` heuristic [UN-PARKED 2026-06-14 — the size/risk confusion below is the FAILURE
-    MODE; §13 gives the multi-dimensional rubric + predict-then-escalate model that supersedes it].**
-    Empirical finding from the step-2 artifact:
-    the planner set Wave 4's `implTier:small` because `risk:low`, conflating two different
-    axes. **`implTier` = implementation difficulty *under a detailed JIT plan* (ambiguity,
-    sharp edges, debugging likelihood) — NOT blast-radius `risk`.** A wave can be `risk:low`
-    (admin-only, reuses settled primitives) yet `implTier`-hard. Rule: **floor `implTier` at
-    `medium` for any wave touching UI/component tests, real-DB integration harnesses, or
-    known-fragile libraries** (lexup: MDXEditor — `ssr:false`/`'use no memo'`, `userEvent`
-    async, render-count Vitest↔prod divergence), regardless of `risk`; only pure-logic /
-    mechanical-wiring waves use `small`. Consistency check that catches the error: two waves of
-    the same difficulty class must share `implTier` (Wave 2 and Wave 4 both reuse `BioEditor` +
-    component tests → both `medium`; the artifact had W2 `medium`, W4 `small` — the tell).
-    Bite in v1: static tiers have **no escalation**, so a too-low `implTier` on a thrash-prone
-    wave runs self-fix ×3 then stop-and-ask → directly threatens the zero-human-turns bar.
-    (Hand-fixed Wave 4 → `implTier:medium` in the lexup artifact 2026-06-13.)
+  - **`implTier` heuristic → SUPERSEDED by §13.3.** A step-2 artifact set Wave 4 `implTier:small`
+    from `risk:low`, conflating implementation difficulty with blast-radius risk. That failure mode
+    motivated the multi-dimensional rubric + predict-then-escalate model in §13.3 (impl ∈ {medium,
+    large}, never small); see there for the current design.
 - **Coverage map = one markdown table** (`| Scenario | Layer | Named test | Wave |`) — pipes,
   no checkboxes. The **layer column is TRANSCRIBED from design's Testing Approach**, never
   decided here (mirrors the MECHANICAL-ONLY guard: an unresolved layer is a design gap →
@@ -539,11 +526,12 @@ against old-format tasks.md would validate machinery already decided obsolete.
    the loop-`model:` honored fact is §11.
 4. ✅ **DONE 2026-06-14 (near-pass).** **Ran the slice end-to-end** → green-gated draft PR
    (PR #114), all 5 waves green, zero human turns. Surfaced + fixed a chain of real defects
-   along the way (claude-terminal config gap, setName cross-wave slicing, e2e path grounding,
-   MDXEditor jsdom test-layer, the one-cycle turn-cap fix, the change-gate turn-cap §14).
-   **One v1 bar still open:** zero undocumented deviations — the tail nodes (change-gate /
-   self-fix / simplify) mutate code without logging to progress.md (§15). Fix the §14/§15 tail
-   restructure, then a clean re-run should clear all four done-condition bars.
+   (claude-terminal config gap, setName cross-wave slicing, e2e path grounding, MDXEditor jsdom
+   test-layer, the one-cycle turn-cap fix, the change-gate turn-cap §14). Left the 4th bar (zero
+   undocumented deviations) open → motivated the §14/§15 tail restructure.
+5. ✅ **BUILT 2026-06-14/15 (§16.5–§16.10).** Tail restructure, cursor-default switch, and
+   reward-hack guardrails shipped; supporting archon fixes landed. **Still open:** a clean
+   4/4-green validating run on cursor (none yet).
 - **Deferred track (post-v1, Archon, user-owned):** the two routing features (§6.3) +
   their open syntax question — no longer blocks v1; pick up when hardening static→dynamic.
 
@@ -723,7 +711,7 @@ Also: **keep impl as a LOOP** (don't make it a single non-loop node) — a non-l
 multi-cycle wave re-imports the turn-cap + rot failures. The loop generalizes (S-wave = loop with
 one iteration ≈ single shot).
 
-### 13.3 impl-tier prediction: a multi-dimensional rubric + predict-then-escalate [CONFIRMED]
+### 13.3 impl-tier prediction: a multi-dimensional rubric + predict-then-escalate [CONFIRMED; escalation half BUILT §16.8, rubric still PENDING]
 
 Supersedes the parked §4.1a heuristic. Goal: run impl on a cheaper/**faster** model where safe.
 The §4.1a failure was the INPUT — `size`/`risk` are bad proxies. But difficulty itself IS
@@ -777,51 +765,36 @@ when to flip it on.
   N impl cycles), so downshifting it buys little and risks much. The dynamic tier lever lives on
   **impl only**, where the volume + speed payoff are. Revisit plan-downshift post-proof at most.
 
-## 14. change-gate structure bug — the agent must NOT run the gate in-turn [CONFIRMED bug 2026-06-14]
+## 14. change-gate structure bug — the agent must NOT run the gate in-turn [BUILT §16.5]
 
-**Symptom:** a live run reached all 5 waves green (assert 5/5) then the change-gate FAILED with
-`claude-terminal turn exceeded 900000ms`. Raising `turnTimeoutMs` to 30 min is a band-aid, not the
-fix — the structure is wrong.
+**Symptom:** a live run reached all 5 waves green then the change-gate FAILED with `claude-terminal
+turn exceeded 900000ms`. Raising `turnTimeoutMs` was a band-aid; the structure was wrong.
 
-**Root cause:** the change-gate loop prompt has the AGENT run the FULL gate
-(`check-types && test && coverage:gate && test:e2e`) as Bash tool calls *inside its own turn*, to
-see failures and fix them. So the slow, deterministic gate (full vitest + coverage + Playwright
-e2e) executes inside the agent turn and blows the per-turn cap. This violates Archon good-practice
-#1 ("use deterministic nodes for deterministic work; never make the AI run a check a computer can
-run"). The `until_bash` completion check re-runs the same gate — so it runs twice, and the
-expensive run is in the worst place (the capped agent turn). The wave gates (`gate-wN`) do NOT have
-this bug — they are bash nodes; only the change-gate (a loop with an AI agent) does.
+**Root cause:** the change-gate loop prompt had the AGENT run the FULL gate
+(`check-types && test && coverage:gate && test:e2e`) as Bash calls *inside its own turn*. So the
+slow deterministic gate (vitest + coverage + Playwright e2e) executed in the agent turn and blew the
+per-turn cap — violating "deterministic work belongs in deterministic nodes." The wave gates
+(`gate-wN`) never had this (they're bash nodes); only the change-gate (an AI loop) did.
 
-**The fix [REC — user's proposal, do immediately after the current run completes]:** separate
-"agent fixes" from "gate runs". The gate execution moves OUT of the agent turn:
-- **`until_bash` (or a preceding bash step) RUNS the gate** — deterministic, NOT subject to the
-  agent turn cap (it has its own/bash timeout, which can be generous). On failure it CAPTURES the
-  failures to a file (e.g. `$ARTIFACTS_DIR/gate-failures.txt`).
-- **The agent loop prompt FIXES ONLY** — it reads `$ARTIFACTS_DIR/gate-failures.txt` and fixes
-  those specific failures; it MUST NOT run the full suite itself. Each agent turn is now bounded
-  (just fixing reported failures) → no turn-cap blowup.
-- **Loop:** agent fixes (reads failure file) → `until_bash` re-runs the gate + re-captures →
-  exit 0 = done, else next iteration with the fresh failure file.
-- **First-iteration nuance:** the gate must run ONCE before the agent has anything to fix — either
-  a bash gate-run node before the loop (writes the initial failure file), or the prompt no-ops on
-  iteration 1 when the file is absent and lets `until_bash` produce it.
-- **Implementation constraint (verified):** the loop does NOT expose `until_bash` output to the
-  next iteration's prompt — only `$LOOP_USER_INPUT` / `$LOOP_PREV_OUTPUT` exist
-  (`dag-executor.ts:1647-1648,2476-2477`). So failures MUST be passed via a file the prompt reads,
-  not an until_bash-output variable.
+**Fix (BUILT — §16.5 has the as-built unrolled-slot shape):** separate "gate runs" from "agent
+fixes". A bash node RUNS the gate (own/generous timeout, not the agent cap) and CAPTURES failures to
+`$ARTIFACTS_DIR/gate-failures.txt`; the agent prompt FIXES ONLY (reads that file, never runs the
+suite) → each turn is bounded. Implementation constraint that shaped the build: the loop does NOT
+expose `until_bash` output to the next prompt (only `$LOOP_USER_INPUT`/`$LOOP_PREV_OUTPUT` —
+`dag-executor.ts:1647-1648,2476-2477`), and `until_bash` is hardcapped at 120s (too short for e2e),
+so the gate became **unrolled bash gate-run + agent fix slots**, not a loop (§16.5).
 
-**Generalizes:** any loop where the agent runs a slow full-suite/e2e command in-turn has this
-trap. The principle — deterministic test runs belong in bash; the agent only fixes — should be the
-default shape for ALL gate/fix loops. (The impl loop is fine: its per-cycle tests are single-file
-scoped + one-cycle-per-iteration, so each turn stays short.)
+**Generalizes:** any loop where the agent runs a slow full-suite/e2e command in-turn has this trap —
+deterministic test runs belong in bash; the agent only fixes. (The impl loop is fine: per-cycle
+tests are single-file scoped, one cycle per iteration, so each turn stays short.)
 
-## 15. Review/fix/simplify tail — structure fixes [CONFIRMED issues 2026-06-14]
+## 15. Review/fix/simplify tail — structure fixes [BUILT §16.5]
 
 The first full end-to-end run reached a draft PR (PR #114, zero human turns) — but the report
-flagged the v1 **failure class**: undocumented deviations. Root cause is the TAIL (change-gate,
+flagged the v1 **failure class**: undocumented deviations. Root cause was the TAIL (change-gate,
 self-fix, simplify): these nodes mutate code but the §4.3/§4.4 logging discipline was only wired
-into the wave impl loop, so their commits are undocumented by construction. Four fixes, all in the
-tail (do together — they're one restructure):
+into the wave impl loop, so their commits were undocumented by construction. Four fixes, all in the
+tail, built together as one restructure (§16.5):
 
 ### 15.1 Tail nodes MUST log to progress.md [CONFIRMED bug]
 Observed post-wave-4-gate commits with NO progress.md entry: `61ed62d3` (change-gate added unit
@@ -842,33 +815,19 @@ a test that passed on the base branch. (Also: if coverage:gate forces adding tes
 plans (`61ed62d3`), that signals the WAVES under-covered — a wave-plan gap to surface, not just a
 silent top-up.)
 
-### 15.3 Gate must verify the FINAL shipped code (gate-after-mutation) [CONFIRMED bug]
-self-fix + simplify mutate code AFTER the change-gate, so the draft PR ships code the gate never
-verified. The gate must run after the last mutation. Friction: review/code-review/self-fix are
-PR-oriented (`gh pr diff`/`.pr-number`/`gh pr comment`) so they need create-pr first; only simplify
-is base-diff. Two options:
-- **(a) re-gate** after simplify: `change-gate → create-pr(draft) → review → self-fix → simplify →
-  change-gate#2 → report`; run succeeds only if gate#2 is green. Reuses the PR-oriented review
-  defaults; costs a second full gate (could run gate#2 lighter, risking missed e2e regressions).
-- **(b) diff-based review, single gate last** (cleaner): adapt review/self-fix to `git diff
-  $BASE_BRANCH...HEAD` (no PR, like simplify), order `waves → review → self-fix → simplify →
-  change-gate → create-pr`. One gate, PR = verified code. Needs moving review off `gh pr`.
-
-**DECIDED 2026-06-14 → (b).** The PR-coupling in the archon review defaults is incidental, not
-essential: the review chain already flows through `$ARTIFACTS_DIR/review/*.md` artifacts (synthesize
-+ self-fix read findings from artifacts, not the PR); the PR is used only as (i) the diff source
-(`gh pr diff` → `git diff $BASE_BRANCH...HEAD`) and (ii) a place to post comments (`gh pr comment` —
-pure publishing, droppable for an autonomous internal review). None of it is in the workflow engine
-— it's the default `.md` prompts (written for human-facing PR review). So fork/adapt review +
-self-fix to base-diff and drop their INLINE comment-posting (they write findings to
-`$ARTIFACTS_DIR/review/*.md` only). **Order (amended 2026-06-14):**
-`waves → simplify → review → self-fix → change-gate → create-pr → post-review-comments → report` —
-simplify FIRST among mutators (§15.4), create-pr LAST (PR = verified code; one gate, no re-gate).
-**PR comments kept but DEFERRED:** a `post-review-comments` node AFTER create-pr batch-posts the
-saved review/self-fix artifacts (`consolidated-review.md`, `fix-report.md`) as PR comments — the
-review logic stays PR-independent (base diff + artifacts); only the publishing waits for the PR.
-A real open PR is needed only for the FUTURE capability of reviewing CI failures / external PR
-comments (codex et al. commenting *on* the PR) — a separate node, not part of the internal chain.
+### 15.3 Gate must verify the FINAL shipped code (gate-after-mutation) [DECIDED → (b)]
+self-fix + simplify mutate code AFTER the change-gate, so the draft PR would ship code the gate
+never verified — the gate must run after the last mutation. Considered (a) re-gate after a draft PR
+(reuses PR-oriented review defaults, costs a second full gate) vs **(b) diff-based review, single
+gate last** — chosen. Key realization: the PR-coupling in archon's review defaults is incidental, not
+essential — the review chain already flows through `$ARTIFACTS_DIR/review/*.md` artifacts, and the PR
+was used only as the diff source (`gh pr diff` → `git diff $BASE_BRANCH...HEAD`) and a comment target
+(`gh pr comment` — pure publishing). So review/self-fix forked to base-diff with inline
+comment-posting dropped; a `post-review-comments` node AFTER create-pr batch-posts the saved
+artifacts. **Order:** `waves → simplify → review → self-fix → change-gate → create-pr →
+post-review-comments → report` — simplify first among mutators (§15.4), create-pr last (PR = verified
+code, one gate). (A real open PR is needed only for the FUTURE capability of reviewing CI failures /
+external PR comments — a separate node, not the internal chain.)
 
 ### 15.4 Simplify placement [CONFIRMED 2026-06-14]
 A **single simplify** suffices (GSD-style per-phase/per-wave is more granular than needed) — but it
@@ -893,7 +852,8 @@ The A′ harness was authored in the **lexup** testbed at
 - `workflows/opsx-wave-harness.stub.yaml` — the wiring probe (regenerable).
 - `config.yaml` — `assistant: claude-terminal` (the REPO key is `assistant:`, NOT
   `defaultAssistant:` — that was a real bug; §see below), `worktree.copyFiles: [.env,
-  apps/web/.env]`, `turnTimeoutMs: 1800000` (30-min band-aid for the change-gate §14).
+  apps/web/.env]`, `turnTimeoutMs: 900000` (the 30-min band-aid for §14 was removed once the
+  gate moved to bash — §16.5).
 - `.agents/skills/lexup-testing/SKILL.md` — grounding added: MDXEditor/Lexical-under-jsdom →
   e2e (in the "What to test where" table AND a fragility note), per-cycle `vitest run` (no
   coverage).
@@ -936,20 +896,11 @@ What this implies for the build:
   runs at install time (K, provider, tiers as install params). The lexup `.gen.mjs` is the
   prototype of the latter.
 
-### 16.4 Tail-restructure punch list (the next build session) [carry-forward]
-The one open v1 bar (zero undocumented deviations) + the turn-cap robustness reduce to a single
-tail restructure (§14 + §15), in this order:
-1. change-gate: tests in bash / `until_bash`, agent only fixes; gate verifies final code (§14, §15.3).
-2. Fork review/self-fix off `gh pr` → base diff (`git diff $BASE_BRANCH...HEAD`); drop inline
-   comment-posting (§15.3).
-3. Reorder tail: `waves → simplify → review → self-fix → change-gate → create-pr →
-   post-review-comments → report` (§15.3/§15.4).
-4. Tail nodes append progress.md deviation entries (§15.1); change-gate flags out-of-scope reds
-   instead of fixing (§15.2).
-5. Add the `post-review-comments` node (batch-posts saved review artifacts to the PR).
-Then a clean re-run should clear all four done-condition bars. (Separately: the impl-tier rubric
-§13.3 and the plan-validation/reconciliation seed `plan-validation-and-recovery.md` are the
-post-clean-run hardening, in that order.)
+### 16.4 Tail-restructure punch list → SUPERSEDED by §16.5
+The five-item punch list (gate-in-bash, fork review/self-fix to base-diff, reorder tail, progress.md
+logging + scope-awareness, post-review-comments node) was BUILT — all five shipped, see §16.5 for the
+as-built detail. (Post-clean-run hardening remains: impl-tier rubric §13.3, then the
+plan-validation/reconciliation seed `plan-validation-and-recovery.md`.)
 
 ### 16.5 Tail restructure — BUILT [2026-06-14, lexup dev `84a0ea2a`]
 All five §16.4 items are implemented in the lexup generator (`opsx-wave-harness.gen.mjs`,
@@ -1011,10 +962,9 @@ idiom (§13.1) — the "preceding bash step" the note also sanctioned:
 bash blocks; findings-filename contract checked across producers/consumers; the **stub probe ran
 end-to-end** and confirmed the live dependency graph — gate cascade (run-0 red→fix-0 fires;
 run-1 green→fix-1 skips; run-2 cascade-skips; create-pr fires via all_done) and reviewer
-when-gating (comment-quality + docs-impact skip). **Not done (handed to the user):** the real
-slice — `archon workflow run opsx-wave-harness --branch <new> "account-profile-self-service"`
-from a clean worktree — expecting all four done-condition bars green incl. zero undocumented
-deviations.
+when-gating (comment-quality + docs-impact skip). The real slice was then run by the user on
+cursor (§16.6+); those runs surfaced the §16.7–§16.9 fixes but **no run has yet reached a clean
+4/4-green PR** — that validating run remains the open milestone.
 
 ### 16.6 Cursor as default provider — the economic lever [2026-06-15, lexup dev `c1cb2175`]
 Introduced the **cursor** provider as the workflow default to cut cost/latency, keeping only the
@@ -1083,24 +1033,14 @@ Empirically verified with a forced-abort stub probe: create-pr + downstream skip
 `all_done` on a SHIPPING/terminal node is a foot-gun — it fires on abort cascades; use `one_success`
 (or `none_failed_min_one_success`) for "run iff the upstream actually produced something."
 
-**(2) OPEN — a single transient `cursor_error` killed the impl loop on iteration 1.** `impl-w4`
-failed not from thrash but from one provider-side SDK error on its first iteration; the loop has no
-retry for transient provider errors, so one blip aborts a whole wave (and, pre-fix, the run). This is
-distinct from the §13.3 escalate-on-thrash discussion (that's about capability, this is about
-flakiness). Mitigation options for the next build: (a) retry transient provider errors within the
-loop (N attempts before failing the node); (b) the impl escalation-on-thrash backstop (re-run the
-wave on opus) would ALSO catch a transient cursor failure as a side effect; (c) both. Given cursor is
-now the default execution provider, transient-error resilience moves up the priority list — likely
-the real "most important next step", ahead of or alongside the impl escalation backstop.
-**Ready-to-implement archon patch spec written 2026-06-15:** `archon repo docs/plans/loop-transient-
-error-retry.md` — root cause is CLASSIFICATION (loops already go through the 2× retry wrapper, but an
-opaque `cursor_error`/"run error" classifies UNKNOWN → not retried; `classifyError` patterns don't
-match it). Fix (A): make opaque cursor errors retryable with FATAL precedence preserved (structural
-`errorSubtype` signal preferred; adding `cursor_error` to `TRANSIENT_PATTERNS` is the 1-line stopgap).
-(B) per-iteration loop retry is an optional follow-up. Hand the spec to a focused archon-patch agent.
-**UPDATE 2026-06-15: the archon patch landed (A1 + B).** Loops now own per-iteration retry inside
-`executeLoopNode` (`dag-executor.ts:2126`), with structural `errorSubtype` retryability + FATAL
-precedence. The resumed run progressed past the wave-4 blip.
+**(2) FIXED — a single transient `cursor_error` killed the impl loop on iteration 1.** `impl-w4`
+failed not from thrash but from one provider-side SDK error on its first iteration. Root cause was
+CLASSIFICATION: loops already go through the 2× retry wrapper, but an opaque `cursor_error`/"run
+error" classified UNKNOWN → not retried (distinct from §13.3 escalate-on-thrash, which is about
+capability, not flakiness). **Archon patch landed (A1 + B)** (`docs/plans/loop-transient-error-
+retry.md`): loops now own per-iteration retry inside `executeLoopNode` (`dag-executor.ts:2126`) with
+structural `errorSubtype` retryability + FATAL precedence preserved. The resumed run progressed past
+the blip.
 
 ### 16.8 impl escalation (b) + max_iterations calibration [2026-06-15]
 **max_iterations counts EVERY iteration (one TDD cycle each), not retries/failures.** Calibration
