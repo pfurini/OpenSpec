@@ -34,6 +34,7 @@ import {
 import type { CommandContent } from '../command-generation/index.js';
 import {
   flattenSkillBody,
+  renderFullInstructions,
   type GeneratedSkillFile,
   type SkillBundleCapability,
 } from './skill-bundle.js';
@@ -194,10 +195,14 @@ export function buildSkillArtifacts(
   }
 
   const applyTransform = transformInstructions ?? ((content: string) => content);
+  const fullTemplate: SkillTemplate = {
+    ...template,
+    instructions: renderFullInstructions(template.instructions, bundle),
+  };
   const files: GeneratedSkillFile[] = [
     {
       relPath: 'SKILL.md',
-      content: generateSkillContent(template, generatedByVersion, transformInstructions),
+      content: generateSkillContent(fullTemplate, generatedByVersion, transformInstructions),
     },
   ];
   for (const ref of bundle?.references ?? []) {

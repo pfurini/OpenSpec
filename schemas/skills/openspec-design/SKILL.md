@@ -75,9 +75,7 @@ A unit you can't describe by purpose + interface + dependencies isn't bounded ye
 
 ---
 
-## The Flow
-
-The end-to-end procedure — prime, approaches, interview, decompose, present, write the note, record ADRs, self-review, handoff — is in **`references/flow.md`**. Follow it in order.
+<!--reference:references/flow.md-->
 
 ---
 

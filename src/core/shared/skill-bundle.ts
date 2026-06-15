@@ -73,13 +73,57 @@ export function loadSkillSource(dirName: string, seams: Record<string, string> =
   return { instructions, bundle };
 }
 
+/** The in-body placeholder marking where a reference belongs: `<!--reference:references/foo.md-->`. */
+function referenceMarker(relPath: string): string {
+  return `<!--reference:${relPath}-->`;
+}
+
+/** First markdown heading text in `content`, used to title a reference pointer. */
+function firstHeadingText(content: string): string | undefined {
+  return content.match(/^#{1,6}\s+(.+?)\s*$/m)?.[1];
+}
+
 /**
  * Concatenates a skill's instructions with its reference files into a single
  * self-contained body. Used for `flatten` tools and for slash commands (which
  * are single-file by design). Scripts are not inlined.
+ *
+ * A reference is inlined **in place** wherever its `<!--reference:relPath-->`
+ * marker appears (preserving authored order); references with no marker are
+ * appended at the end. Markers never leak into output.
  */
 export function flattenSkillBody(instructions: string, bundle: SkillBundle | undefined): string {
   const references = bundle?.references ?? [];
   if (references.length === 0) return instructions;
-  return [instructions, ...references.map((ref) => ref.content)].join('\n\n');
+
+  let body = instructions;
+  const appended: string[] = [];
+  for (const ref of references) {
+    const marker = referenceMarker(ref.relPath);
+    if (body.includes(marker)) {
+      body = body.split(marker).join(ref.content);
+    } else {
+      appended.push(ref.content);
+    }
+  }
+  return appended.length > 0 ? [body, ...appended].join('\n\n') : body;
+}
+
+/**
+ * Renders a skill's instructions for a `full` (multi-file) tool: each reference
+ * marker becomes a short pointer to the on-demand file (titled from the
+ * reference's first heading). References are emitted as separate files by the caller.
+ */
+export function renderFullInstructions(instructions: string, bundle: SkillBundle | undefined): string {
+  const references = bundle?.references ?? [];
+  let body = instructions;
+  for (const ref of references) {
+    const marker = referenceMarker(ref.relPath);
+    if (!body.includes(marker)) continue;
+    const title = firstHeadingText(ref.content);
+    const heading = title ? `## ${title}` : '## Reference';
+    const pointer = `${heading}\n\nThe full detail for this section is in **\`${ref.relPath}\`** — load it on demand.`;
+    body = body.split(marker).join(pointer);
+  }
+  return body;
 }

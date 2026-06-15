@@ -1,4 +1,4 @@
-# The Flow
+## The Flow
 
 The end-to-end design procedure. Follow it in order.
 

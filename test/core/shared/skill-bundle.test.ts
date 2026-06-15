@@ -5,7 +5,7 @@ import {
   flattenSkillBody,
 } from '../../../src/core/shared/skill-bundle.js';
 import { buildSkillArtifacts, generateSkillContent } from '../../../src/core/shared/skill-generation.js';
-import { getOpsxDesignSkillTemplate } from '../../../src/core/templates/skill-templates.js';
+import { getOpsxDesignSkillTemplate, getOpsxDesignCommandTemplate } from '../../../src/core/templates/skill-templates.js';
 import { getSkillBundleCapability } from '../../../src/core/config.js';
 import type { SkillTemplate } from '../../../src/core/templates/types.js';
 
@@ -62,10 +62,33 @@ describe('flattenSkillBody', () => {
     expect(flattenSkillBody(BASE.instructions, undefined)).toBe(BASE.instructions);
   });
 
-  it('appends reference content after the instructions', () => {
+  it('appends reference content after the instructions when there is no marker', () => {
     const out = flattenSkillBody(BASE.instructions, WITH_BUNDLE.bundle);
     expect(out.startsWith(BASE.instructions)).toBe(true);
     expect(out).toContain('The detailed flow.');
+  });
+
+  it('inlines reference content at its marker, in place (no append, no dangling marker)', () => {
+    const instructions = 'Intro.\n\n## Flow\n\n<!--reference:references/flow.md-->\n\n## Guardrails\n\nRules.';
+    const out = flattenSkillBody(instructions, WITH_BUNDLE.bundle);
+    expect(out).not.toContain('<!--reference:');
+    // Reference content sits between Flow and Guardrails — original order preserved.
+    expect(out.indexOf('The detailed flow.')).toBeGreaterThan(out.indexOf('## Flow'));
+    expect(out.indexOf('The detailed flow.')).toBeLessThan(out.indexOf('## Guardrails'));
+  });
+});
+
+describe('design command coherence (single-file, always flattened)', () => {
+  it('inlines the flow in order with no dangling reference pointer or marker', () => {
+    const content = getOpsxDesignCommandTemplate().content;
+    expect(content).not.toContain('<!--reference:');
+    expect(content).not.toContain('references/flow.md');
+    // The flow body (step 0) must appear BEFORE Guardrails — original document order.
+    const iFlow = content.indexOf('### 0 · Prime');
+    const iGuardrails = content.indexOf('## Guardrails');
+    expect(iFlow).toBeGreaterThan(-1);
+    expect(iGuardrails).toBeGreaterThan(-1);
+    expect(iFlow).toBeLessThan(iGuardrails);
   });
 });
 

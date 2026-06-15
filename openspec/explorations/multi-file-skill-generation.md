@@ -212,10 +212,18 @@ migration:
    loops. Verified end-to-end: Claude → `SKILL.md`+`references/flow.md`; cursor → one flattened
    `SKILL.md`, no `references/`. Parity re-harvested (only the 3 design hashes moved; 24 others
    byte-identical). Suite 1707 green (+7).
-1. **flatten-seam refinement** (the one wave-0 debt): flatten currently *appends* references after
-   Guardrails, reordering the command/flatten body vs the original (Flow now trails Guardrails). Fix
-   = marker-based inline (replace the `## The Flow` pointer in-place) so flatten is order-lossless.
-   Plus: surface dropped scripts; broaden the `full` capability set beyond Claude where supported.
+1. **flatten-seam refinement — DONE 2026-06-15.** The wave-0 append-at-end flatten shipped a real
+   defect in the design **command** (always single-file → always flattened): a dangling
+   `references/flow.md` pointer + Flow reordered *after* Guardrails. Caught by reading the rendered
+   artifact (presence-smoke missed it; parity hashes whatever's produced). Fix = **marker inline**:
+   `<!--reference:relPath-->` in `SKILL.md` marks the position; `flattenSkillBody` replaces the marker
+   with the reference content in place (markerless refs still append); `renderFullInstructions`
+   replaces the marker with a short on-demand pointer (titled from the reference's first heading) so
+   `full` SKILL.md stays short and never leaks the raw marker. flow.md heading demoted `#`→`##` to
+   match. Coherence test added (command: flow-before-Guardrails, no marker/pointer leak). All design
+   hashes re-harvested. Suite 1712 green. *Deferred:* surface dropped scripts (no scripts ship yet);
+   opencode/pi remain `full` (verify-candidates — flatten is now clean, so marking them is low-cost if
+   ever confirmed non-Agent-Skills).
 2. **Tree-based parity — DONE 2026-06-15.** `EXPECTED_BUNDLE_TREE_HASHES` in the parity test hashes
    the full emitted file set (SKILL.md + references/* [+ scripts/*]) per `full`/`flatten` capability
    for bundled skills — so `references/` content is guarded, not just the single SKILL.md. Re-harvest
