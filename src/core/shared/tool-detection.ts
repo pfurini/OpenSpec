@@ -28,25 +28,6 @@ export const SKILL_NAMES = [
 export type SkillName = (typeof SKILL_NAMES)[number];
 
 /**
- * IDs of command templates created by openspec init.
- */
-export const COMMAND_IDS = [
-  'explore',
-  'new',
-  'continue',
-  'apply',
-  'ff',
-  'sync',
-  'archive',
-  'bulk-archive',
-  'verify',
-  'onboard',
-  'propose',
-] as const;
-
-export type CommandId = (typeof COMMAND_IDS)[number];
-
-/**
  * Status of skill configuration for a tool.
  */
 export interface ToolSkillStatus {

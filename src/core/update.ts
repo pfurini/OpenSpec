@@ -24,6 +24,7 @@ import {
   generateSkillContent,
   buildSkillArtifacts,
   getToolsWithSkillsDir,
+  getConfiguredTools,
   type ToolVersionStatus,
 } from './shared/index.js';
 import {
@@ -40,8 +41,6 @@ import { getProfileWorkflows, ALL_WORKFLOWS } from './profiles.js';
 import { getAvailableTools } from './available-tools.js';
 import {
   WORKFLOW_TO_SKILL_DIR,
-  getCommandConfiguredTools,
-  getConfiguredToolsForProfileSync,
   getToolsNeedingProfileSync,
 } from './profile-sync-drift.js';
 import {
@@ -103,8 +102,8 @@ export class UpdateCommand {
     const desiredWorkflows = profileWorkflows.filter((workflow): workflow is (typeof ALL_WORKFLOWS)[number] =>
       (ALL_WORKFLOWS as readonly string[]).includes(workflow)
     );
-    const shouldGenerateSkills = delivery !== 'commands';
-    const shouldGenerateCommands = delivery !== 'skills';
+    const shouldGenerateSkills = true;
+    const shouldGenerateCommands = false; // commands retired — skills are the sole artifact
 
     // 4. Detect and handle legacy artifacts + upgrade legacy tools using effective config
     const newlyConfiguredTools = await this.handleLegacyCleanup(
@@ -114,7 +113,7 @@ export class UpdateCommand {
     );
 
     // 5. Find configured tools
-    const configuredTools = getConfiguredToolsForProfileSync(resolvedProjectPath);
+    const configuredTools = getConfiguredTools(resolvedProjectPath);
 
     if (configuredTools.length === 0 && newlyConfiguredTools.length === 0) {
       console.log(chalk.yellow('No configured tools found.'));
@@ -123,15 +122,9 @@ export class UpdateCommand {
     }
 
     // 6. Check version status for all configured tools
-    const commandConfiguredTools = getCommandConfiguredTools(resolvedProjectPath);
-    const commandConfiguredSet = new Set(commandConfiguredTools);
-    const toolStatuses = configuredTools.map((toolId) => {
-      const status = getToolVersionStatus(resolvedProjectPath, toolId, OPENSPEC_VERSION);
-      if (!status.configured && commandConfiguredSet.has(toolId)) {
-        return { ...status, configured: true };
-      }
-      return status;
-    });
+    const toolStatuses = configuredTools.map((toolId) =>
+      getToolVersionStatus(resolvedProjectPath, toolId, OPENSPEC_VERSION)
+    );
     const statusByTool = new Map(toolStatuses.map((status) => [status.toolId, status] as const));
 
     // 7. Smart update detection
@@ -141,7 +134,6 @@ export class UpdateCommand {
     const toolsNeedingConfigSync = getToolsNeedingProfileSync(
       resolvedProjectPath,
       desiredWorkflows,
-      delivery,
       configuredTools
     );
     const toolsToUpdateSet = new Set<string>([
@@ -613,7 +605,7 @@ export class UpdateCommand {
     }
 
     // Get currently configured tools
-    const configuredTools = getConfiguredToolsForProfileSync(projectPath);
+    const configuredTools = getConfiguredTools(projectPath);
     const configuredSet = new Set(configuredTools);
 
     // Filter to tools that aren't already configured
@@ -675,8 +667,8 @@ export class UpdateCommand {
 
     // Create skills/commands for selected tools using effective profile+delivery.
     const newlyConfigured: string[] = [];
-    const shouldGenerateSkills = delivery !== 'commands';
-    const shouldGenerateCommands = delivery !== 'skills';
+    const shouldGenerateSkills = true;
+    const shouldGenerateCommands = false; // commands retired — skills are the sole artifact
     const skillTemplates = shouldGenerateSkills ? getSkillTemplates(desiredWorkflows) : [];
     const commandContents = shouldGenerateCommands ? getCommandContents(desiredWorkflows) : [];
 
