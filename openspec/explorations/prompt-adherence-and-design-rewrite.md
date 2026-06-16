@@ -44,7 +44,9 @@ claudekit, PRP interview) → table of *present / thin / missing / bloated*.
 adherence (don't just add content — see §1). **Dependency:** **multi-file skill generation**
 (`multi-file-skill-generation.md`) is a prerequisite/enabler — with `references/`, the borrowed
 depth lands as reference files instead of a flattened sentence. **Sequence: multi-file gen →
-design.ts rewrite.**
+design.ts rewrite.** ✅ **multi-file gen mechanism BUILT 2026-06-15** — the prereq is satisfied
+(`references/` available). The rewrite is now reframed as the **design→tasks pipeline collapse**
+(follow-up note, 2026-06-16): the lever is structure, not restored content.
 
 ## 3. Parked items [PARKED]
 

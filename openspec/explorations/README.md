@@ -19,6 +19,7 @@ Two families of files:
 | `executable-plans-and-feedback-loop.md` | Content spec for the rich task-builder (self-sufficiency standard, ralph `prd.json` convergence) + implementation report / feedback loop. *§1 now lands in the wave-plan instruction; "fatten tasks.md" item resolved — see task-machinery note* | Partially absorbed into task-machinery note |
 | `change-records-and-thinking-layer.md` | Amendment model, shadow-layer caveat, ADR/glossary layer (§4 LANDED), small parked items (§5) | Mixed: §4 shipped, rest deferred |
 | `multi-file-skill-generation.md` | **Kill single-file flattening.** OpenSpec's skill/command emitter produces single-file `SKILL.md` only, which flattened rich multi-file source skills into a sentence. Scope (ratified): opsx skills become multi-file (SKILL.md + references/ + scripts/), per-tool capability-gated degradation; NOT a user-facing skill generator. Prerequisite for the `design.ts` quality rewrite. | Captured 2026-06-13; **build after step-2** |
+| `design-tasks-pipeline-collapse.md` | **The thinker owns the formalization.** The design→tasks conversion is the fidelity bottleneck: wave-slicing is a judgment call made in a `tasks` step labelled "mechanical". Fix (grounded 2026-06-16): `/opsx:design` decides the wave skeleton with the user + writes `design.md` directly (eliminate `design-notes.md`); `tasks` becomes genuine transcription + path-grounding. Same pattern later applies to explore→specs (deferred, feedback-bridged). Subsumes the `design.ts` rewrite. | Decisions LOCKED 2026-06-16; **HOW-side build is the active track** |
 | `prompt-adherence-and-design-rewrite.md` | **Open threads from the 2026-06-13 session.** The under-read prime diagnosis (3 discipline failures = adherence not missing-instructions; fix = enforcement/observability, not more prose; bisection still owed); the user-requested `design.ts` rewrite (pending: name-the-borrows vs gap-analysis; depends on multi-file gen); parked: lint→hook/CI wiring, deterministic command-flow enforcement, B/C lint rules, implTier heuristic. | Captured 2026-06-13; not started |
 | `specialized-review-steps.md` | WHAT-review vs HOW-review panels, dimensions distilled from gstack/PRP/claudekit/furiai. Full panel deferred; v1 harness still includes classification-gated verify/review. | Deferred except v1 harness gates |
 | `plan-validation-and-recovery.md` | **Anti-brittleness: plan validation + failure recovery.** Cross-model wave-map validation (slicing/grounding/test-layer) + reconciliation (self-fix→replan→resume→human gate). Captured from 3 live design-defect failures (the "tied to a perfect plan" treadmill). Frames the brainstorm; mostly OPEN. | Brainstorm SEED 2026-06-14; not started |
@@ -175,8 +176,10 @@ workflow authored → ran end-to-end to PR #114; tail restructure + cursor switc
    rubric on once plan quality is solid.
 4. **Plan-validation + reconciliation** (`plan-validation-and-recovery.md`, SEED) — anti-brittleness
    (cross-model wave-map validation + self-fix→replan→resume→human gate). The next major capability.
-5. **Multi-file skill generation** (`multi-file-skill-generation.md`) → then the **`design.ts`
-   rewrite** (`prompt-adherence-and-design-rewrite.md` §2, after the **bisection** §1).
+5. ✅ **Multi-file skill generation — mechanism DONE** 2026-06-15 (`multi-file-skill-generation.md`
+   §8: waves 0–2 + seam fix; design skill is multi-file, `full`/`flatten` per tool). The **`design.ts`
+   rewrite** is reframed/expanded into the **design→tasks pipeline collapse**
+   (`design-tasks-pipeline-collapse.md` — decisions LOCKED 2026-06-16, HOW-side build is next).
 6. **`openspec lint` → hook/CI wiring** + **B/C grounding-lint rules** + **deterministic
    command-flow enforcement** (`prompt-adherence-and-design-rewrite.md` §3).
 7. **Inter-change graph:** `add-change-stacking-awareness` (upstream-authored — check upstream for

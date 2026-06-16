@@ -1,7 +1,8 @@
 # Multi-file skill/command generation (kill the single-file flattening)
 
-Status: **brainstorm captured 2026-06-13, design pass NOT started.** Scope ratified by the
-user; this note is the durable problem + design-space record for the implementing session.
+Status: **brainstorm captured 2026-06-13; mechanism BUILT 2026-06-15 (§8 — waves 0–2 + seam fix).**
+design.ts content rewrite pending → folded into the design→tasks pipeline collapse (follow-up note).
+Scope ratified by the user; this note is the durable problem + design-space record.
 Tags: **[CONFIRMED]** user-ratified · **[REC]** Claude's default, re-confirmable · **[OPEN]** undecided.
 
 ## 1. The trigger
