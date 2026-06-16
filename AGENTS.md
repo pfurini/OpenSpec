@@ -48,9 +48,16 @@ Run `pnpm run build` before focused CLI/integration tests when implementation ch
 
 ## Editing skills & templates
 
-Skills are authored as Markdown under `schemas/skills/<name>/`, not embedded in TS. The bundle
+Every skill is authored as a directory under `schemas/skills/<name>/` — `SKILL.md` (YAML
+frontmatter + body) [+ `references/*.md`, optional `scripts/`] — not embedded in TS. The bundle
 mechanism uses HTML markers:
 
+- **Frontmatter + thin factory.** `SKILL.md`'s YAML frontmatter is the source of truth for `name`
+  (MUST equal the directory name — Cursor requires it), `description`, and optional `license` /
+  `compatibility` / `metadata`. The matching factory in `src/core/templates/workflows/` is a thin
+  `loadSkillSource('<name>', { …seams })` wrapper that reads those fields and the body — no skill
+  body, description, or metadata lives in a `.ts` string literal. `openspec-design`/`design.ts` is the
+  reference pair.
 - `<!--bundle:start-->` … `<!--bundle:end-->` wrap a block that references a bundled file
   (`references/*.md`, `scripts/*`). On flatten, the block is replaced inline by that file's content.
 - Outside a bundle block, never write a raw `references/…` path — for the always-flattened skills it
