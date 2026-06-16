@@ -11,7 +11,6 @@ import ora from 'ora';
 import * as fs from 'fs';
 import { createRequire } from 'module';
 import { FileSystemUtils } from '../utils/file-system.js';
-import { transformToHyphenCommands } from '../utils/command-references.js';
 import { AI_TOOLS, OPENSPEC_DIR_NAME, getSkillBundleCapability } from './config.js';
 import {
   getToolVersionStatus,
@@ -172,10 +171,9 @@ export class UpdateCommand {
 
         // Degrade multi-file bundles to the tool's capability.
         const capability = getSkillBundleCapability(tool.value);
-        const transformer = (tool.value === 'opencode' || tool.value === 'pi') ? transformToHyphenCommands : undefined;
         for (const { template, dirName } of skillTemplates) {
           const skillDir = path.join(skillsDir, dirName);
-          const artifacts = buildSkillArtifacts(template, OPENSPEC_VERSION, capability, transformer);
+          const artifacts = buildSkillArtifacts(template, OPENSPEC_VERSION, capability);
           for (const artifact of artifacts) {
             const filePath = path.join(skillDir, artifact.relPath);
             await FileSystemUtils.writeFile(filePath, artifact.content);
@@ -536,8 +534,7 @@ export class UpdateCommand {
           const skillDir = path.join(skillsDir, dirName);
           const skillFile = path.join(skillDir, 'SKILL.md');
 
-          const transformer = (tool.value === 'opencode' || tool.value === 'pi') ? transformToHyphenCommands : undefined;
-          const skillContent = generateSkillContent(template, OPENSPEC_VERSION, transformer);
+          const skillContent = generateSkillContent(template, OPENSPEC_VERSION);
           await FileSystemUtils.writeFile(skillFile, skillContent);
         }
 

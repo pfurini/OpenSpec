@@ -1,7 +1,7 @@
 /**
  * Init Command
  *
- * Sets up OpenSpec with Agent Skills and /opsx:* slash commands.
+ * Sets up OpenSpec with Agent Skills.
  * This is the unified setup command that replaces both the old init and experimental commands.
  */
 
@@ -11,7 +11,6 @@ import ora from 'ora';
 import * as fs from 'fs';
 import { createRequire } from 'module';
 import { FileSystemUtils } from '../utils/file-system.js';
-import { transformToHyphenCommands } from '../utils/command-references.js';
 import {
   AI_TOOLS,
   OPENSPEC_DIR_NAME,
@@ -498,10 +497,9 @@ export class InitCommand {
 
         // Create skill directories, degrading multi-file bundles to the tool's capability.
         const capability = getSkillBundleCapability(tool.value);
-        const transformer = (tool.value === 'opencode' || tool.value === 'pi') ? transformToHyphenCommands : undefined;
         for (const { template, dirName } of skillTemplates) {
           const skillDir = path.join(skillsDir, dirName);
-          const artifacts = buildSkillArtifacts(template, OPENSPEC_VERSION, capability, transformer);
+          const artifacts = buildSkillArtifacts(template, OPENSPEC_VERSION, capability);
           for (const artifact of artifacts) {
             const filePath = path.join(skillDir, artifact.relPath);
             await FileSystemUtils.writeFile(filePath, artifact.content);
