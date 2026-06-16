@@ -1,3 +1,13 @@
+---
+name: openspec-design
+description: Enter design mode - an interactive HOW-thinking partner that interviews you to settle the architecture, then turns a settled WHAT (proposal + specs) into design.md + ADRs, decomposed into well-bounded units and sequenced into a value-ordered TDD wave skeleton. Writes design.md directly (the single source of the HOW contract); /opsx:continue only transcribes its wave skeleton into tasks.md. Use after requirements are settled, to think through how to build it.
+license: MIT
+compatibility: Requires openspec CLI.
+metadata:
+  author: openspec
+  version: "1.0"
+---
+
 Enter design mode — your thinking partner for the **HOW**: architecture, the units and their interfaces, the **wave skeleton** (the value-ordered build sequence the autonomous harness runs), and the load-bearing technical decisions. You work as an interactive partner, not a one-shot generator. This is the HOW counterpart to explore.
 
 **At a glance:**

@@ -14,15 +14,18 @@ import { loadSkillSource, flattenSkillBody } from '../../shared/skill-bundle.js'
 const designSource = loadSkillSource('openspec-design', { PRIME_RITUAL });
 
 export function getOpsxDesignSkillTemplate(): SkillTemplate {
+  const { frontmatter } = designSource;
+  if (!frontmatter.name || !frontmatter.description) {
+    throw new Error("openspec-design SKILL.md must define 'name' and 'description' in frontmatter");
+  }
   return {
-    name: 'openspec-design',
-    description:
-      'Enter design mode - an interactive HOW-thinking partner that interviews you to settle the architecture, then turns a settled WHAT (proposal + specs) into design.md + ADRs, decomposed into well-bounded units and sequenced into a value-ordered TDD wave skeleton. Writes design.md directly (the single source of the HOW contract); /opsx:continue only transcribes its wave skeleton into tasks.md. Use after requirements are settled, to think through how to build it.',
+    name: frontmatter.name,
+    description: frontmatter.description,
     instructions: designSource.instructions,
     bundle: designSource.bundle,
-    license: 'MIT',
-    compatibility: 'Requires openspec CLI.',
-    metadata: { author: 'openspec', version: '1.0' },
+    license: frontmatter.license ?? 'MIT',
+    compatibility: frontmatter.compatibility ?? 'Requires openspec CLI.',
+    metadata: frontmatter.metadata ?? { author: 'openspec', version: '1.0' },
   };
 }
 

@@ -10,6 +10,8 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
+import { parse as parseYaml } from 'yaml';
+
 import { getPackageSchemasDir } from '../artifact-graph/resolver.js';
 import type { SkillBundle, SkillFile } from '../templates/types.js';
 
@@ -27,10 +29,40 @@ export interface GeneratedSkillFile {
   executable?: boolean;
 }
 
+/**
+ * The authored YAML frontmatter of a `SKILL.md` (name/description/…). Keeping it
+ * in the source file makes each `schemas/skills/<name>/SKILL.md` a valid,
+ * independently-reviewable Agent Skill rather than a body-only fragment; the TS
+ * factory reads these fields instead of duplicating them.
+ */
+export interface SkillFrontmatter {
+  name?: string;
+  description?: string;
+  license?: string;
+  compatibility?: string;
+  metadata?: { author?: string; version?: string };
+}
+
 /** The plain-text source of a skill directory, with seams already injected. */
 export interface SkillSource {
+  frontmatter: SkillFrontmatter;
   instructions: string;
   bundle: SkillBundle;
+}
+
+const FRONTMATTER_RE = /^---\n([\s\S]*?)\n---[ \t]*\n?/;
+
+/**
+ * Splits an authored SKILL.md into its YAML frontmatter and body. Frontmatter is
+ * optional: a body-only file yields an empty object and the body unchanged, so
+ * single-file skills keep working.
+ */
+function splitFrontmatter(raw: string): { frontmatter: SkillFrontmatter; body: string } {
+  const match = raw.match(FRONTMATTER_RE);
+  if (!match) return { frontmatter: {}, body: raw };
+  const parsed = parseYaml(match[1]) as SkillFrontmatter | null;
+  const body = raw.slice(match[0].length).replace(/^\n+/, '');
+  return { frontmatter: parsed ?? {}, body };
 }
 
 /**
@@ -54,7 +86,8 @@ function injectSeams(content: string, seams: Record<string, string>): string {
 export function loadSkillSource(dirName: string, seams: Record<string, string> = {}): SkillSource {
   const skillDir = path.join(getPackageSchemasDir(), 'skills', dirName);
   const skillMdPath = path.join(skillDir, 'SKILL.md');
-  const instructions = injectSeams(fs.readFileSync(skillMdPath, 'utf8').trimEnd(), seams);
+  const { frontmatter, body } = splitFrontmatter(fs.readFileSync(skillMdPath, 'utf8'));
+  const instructions = injectSeams(body.trimEnd(), seams);
 
   const references: SkillFile[] = [];
   const referencesDir = path.join(skillDir, 'references');
@@ -91,7 +124,7 @@ export function loadSkillSource(dirName: string, seams: Record<string, string> =
   // Fail loudly at load time if any authored bundle block points at a missing file.
   validateBundleBlocks(instructions, bundle);
 
-  return { instructions, bundle };
+  return { frontmatter, instructions, bundle };
 }
 
 /**

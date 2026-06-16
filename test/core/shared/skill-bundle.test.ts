@@ -212,6 +212,17 @@ describe('loadSkillSource (real design skill directory)', () => {
     // The real design skill must be internally consistent: every block path resolves.
     expect(() => loadSkillSource('openspec-design')).not.toThrow();
   });
+
+  it('parses authored frontmatter and keeps it out of the instructions body', () => {
+    const source = loadSkillSource('openspec-design');
+    // Frontmatter is the source of truth for name/description — the file is a valid skill.
+    expect(source.frontmatter.name).toBe('openspec-design');
+    expect(source.frontmatter.description).toContain('interactive HOW-thinking partner');
+    // The frontmatter block must NOT leak into the body the generator wraps.
+    expect(source.instructions.startsWith('---')).toBe(false);
+    expect(source.instructions).not.toContain('\ndescription:');
+    expect(source.instructions.startsWith('Enter design mode')).toBe(true);
+  });
 });
 
 describe('getSkillBundleCapability (Agent Skills standard: full by default)', () => {
