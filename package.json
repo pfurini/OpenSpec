@@ -48,6 +48,7 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "test:postinstall": "node scripts/postinstall.js",
+    "rebaseline:skills": "pnpm build && node scripts/rebaseline-skill-hashes.mjs",
     "prepare": "pnpm run build",
     "prepublishOnly": "pnpm run build",
     "postinstall": "node scripts/postinstall.js",
