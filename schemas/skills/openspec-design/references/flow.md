@@ -13,10 +13,23 @@ For design specifically: the **proposal + specs** are the WHAT you build against
 Propose 2-3 real architectural approaches. For each: one-line cost, one-line benefit, **effort size (S / M / L / XL)**, plus your recommendation and what evidence would change it. **Present and wait for the user's pick** — this is the first and biggest fork. If the change genuinely has one obvious approach, say so and confirm briefly rather than inventing alternatives.
 
 ### 2 · Interview the load-bearing decisions
-Walk the decision tree (above) — one question at a time, recommendation, wait — for the forks that matter. Auto-decide the trivia. Settle everything; defer nothing to tasks.
+Walk the decision tree (above) — one question at a time, recommendation, wait — for the forks that matter. Auto-decide the trivia.
+
+**Settle everything; defer nothing to tasks.** `tasks` is mechanical execution of a fully-settled design — design makes the decisions, tasks makes none.
+- **Resolve every design-level decision** — including the small ones with an obvious default (an API/procedure name, a clear-value semantic like `''` vs `null`). Pick the recommended default and record it; don't write it into "Open Questions" and ship it downstream.
+- **"Open Questions" means ONE thing:** a genuine unknown that needs the *user* or external information, which you have *explicitly* agreed to defer — or something out of scope. It is never a decision you dodged, and never "decide this in tasks."
+- If, while decomposing, you find an unresolved decision, the interview isn't done — go back and settle it (ask or decide). Don't pass it forward.
+
+Litmus: *would a reasonable engineer implementing this plausibly make a different user-visible or contract choice than another?* → it's a decision, settle it now. *Is it an internal name only the implementer sees?* → not an open question; just leave it to coding.
 
 ### 3 · Decompose, then sequence into waves
-First turn the chosen approach into components + interfaces + dependencies + the slice-composition map (see the spine above). Then sequence those units into the **wave skeleton** — the value-ordered vertical slices the harness runs (see "Sequence the build — the wave skeleton" above: wave 0 tracer, value ordering, TDD-first, atomic breaking-change slicing, no scope reduction). The wave skeleton is a HOW decision you make *with* the user; it does not get deferred to tasks.
+**Decompose** the chosen approach into **well-bounded units, each with one clear purpose, a defined interface, and named dependencies** — the precondition for the wave map:
+- **Components** — each unit: purpose (one line), interface (inputs/outputs), depends-on (other units / existing modules).
+- **Slice composition** — the dependency edges between units, and for each capability: *independently valuable* (a split signal — surface it; genuinely separable, separately-valuable work wants to be a **sibling change**, not a unit here) vs *simply unordered* (ordering freedom). Do **not** frame units as "parallelizable": code-writing inside one change is single-worktree and serialized. This map seeds the wave ordering.
+
+A unit you can't describe by purpose + interface + dependencies isn't bounded yet — keep shaping it. Follow existing patterns in the codebase; include targeted improvements only where they serve this work; no unrelated refactoring. YAGNI — cut scope the spec doesn't need.
+
+Then **sequence** those units into the **wave skeleton** — the value-ordered vertical slices the harness runs (wave 0 tracer, value ordering, TDD-first, atomic breaking-change slicing, no scope reduction; the full rules live in SKILL.md's "Sequence the build — the wave skeleton" section). The wave skeleton is a HOW decision you make *with* the user; it does not get deferred to tasks.
 
 ### 4 · Present the design shape — get approval
 Before writing anything, present the shape back to the user, scaled to complexity — a few sentences for a simple change; the approach + decomposition + **the wave skeleton (waves, their value goals, ordering, the wave-0 tracer)** + the load-bearing decisions for a complex one. Ask "does this look right?" and fold in corrections. **This is the gate: don't write `design.md` until the user has confirmed the shape — including the wave map.**
