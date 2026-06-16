@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { FileSystemUtils } from '../../utils/file-system.js';
 import { transformToHyphenCommands } from '../../utils/command-references.js';
 import { AI_TOOLS, type AIToolOption } from '../config.js';
-import { getGlobalConfig, type Delivery, type Profile } from '../global-config.js';
+import { getGlobalConfig, type Profile } from '../global-config.js';
 import { getProfileWorkflows } from '../profiles.js';
 import {
   generateSkillContent,
@@ -45,11 +45,8 @@ export interface WorkspaceSkillFailedResult {
 
 export interface WorkspaceSkillInstallationReport {
   profile: Profile;
-  delivery: Delivery;
   workflow_ids: string[];
   selected_agents: string[];
-  skills_only: true;
-  delivery_notice: string | null;
   generated: WorkspaceSkillAgentResult[];
   added: WorkspaceSkillAgentResult[];
   refreshed: WorkspaceSkillAgentResult[];
@@ -60,9 +57,7 @@ export interface WorkspaceSkillInstallationReport {
 
 interface WorkspaceSkillProfileContext {
   profile: Profile;
-  delivery: Delivery;
   workflowIds: string[];
-  deliveryNotice: string | null;
 }
 
 type WorkspaceSkillCapableTool = AIToolOption & { skillsDir: string };
@@ -70,30 +65,21 @@ type WorkspaceSkillCapableTool = AIToolOption & { skillsDir: string };
 function resolveWorkspaceSkillProfileContext(): WorkspaceSkillProfileContext {
   const globalConfig = getGlobalConfig();
   const profile = globalConfig.profile ?? 'core';
-  const delivery = globalConfig.delivery ?? 'both';
   const workflowIds = [...getProfileWorkflows(profile, globalConfig.workflows)];
-  const deliveryNotice =
-    delivery === 'skills'
-      ? null
-      : 'Workspace setup installs skills only; workspace command generation is not part of this slice.';
 
   return {
     profile,
-    delivery,
     workflowIds,
-    deliveryNotice,
   };
 }
 
 export function getCurrentWorkspaceSkillProfileSelection(): {
   profile: Profile;
-  delivery: Delivery;
   workflow_ids: string[];
 } {
   const profileContext = resolveWorkspaceSkillProfileContext();
   return {
     profile: profileContext.profile,
-    delivery: profileContext.delivery,
     workflow_ids: profileContext.workflowIds,
   };
 }
@@ -127,7 +113,6 @@ export function hasWorkspaceSkillProfileDrift(
 
   return (
     workspaceSkills.last_applied_profile !== current.profile ||
-    workspaceSkills.last_applied_delivery !== current.delivery ||
     !arraysEqual(workspaceSkills.last_applied_workflow_ids, current.workflow_ids)
   );
 }
@@ -138,11 +123,8 @@ function makeBaseWorkspaceSkillReport(
 ): WorkspaceSkillInstallationReport {
   return {
     profile: profileContext.profile,
-    delivery: profileContext.delivery,
     workflow_ids: profileContext.workflowIds,
     selected_agents: selectedAgentIds,
-    skills_only: true,
-    delivery_notice: profileContext.deliveryNotice,
     generated: [],
     added: [],
     refreshed: [],

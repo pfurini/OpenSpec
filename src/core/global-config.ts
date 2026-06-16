@@ -9,20 +9,17 @@ export const GLOBAL_DATA_DIR_NAME = 'openspec';
 
 // TypeScript types
 export type Profile = 'core' | 'custom';
-export type Delivery = 'both' | 'skills' | 'commands';
 
 // TypeScript interfaces
 export interface GlobalConfig {
   featureFlags?: Record<string, boolean>;
   profile?: Profile;
-  delivery?: Delivery;
   workflows?: string[];
 }
 
 const DEFAULT_CONFIG: GlobalConfig = {
   featureFlags: {},
   profile: 'core',
-  delivery: 'both',
 };
 
 /**
@@ -138,9 +135,6 @@ export function getGlobalConfig(): GlobalConfig {
     // Schema evolution: apply defaults for new fields if not present in loaded config
     if (parsed.profile === undefined) {
       merged.profile = DEFAULT_CONFIG.profile;
-    }
-    if (parsed.delivery === undefined) {
-      merged.delivery = DEFAULT_CONFIG.delivery;
     }
 
     return merged;

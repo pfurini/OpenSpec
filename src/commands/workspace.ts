@@ -356,10 +356,6 @@ function printWorkspaceSkillReportHuman(report: WorkspaceSkillInstallationReport
       )
     );
   }
-
-  if (report.delivery_notice) {
-    console.log(chalk.dim(`  ${report.delivery_notice}`));
-  }
 }
 
 function hasWorkspaceSkillFailures(report: WorkspaceSkillInstallationReport): boolean {
@@ -384,7 +380,6 @@ async function writeWorkspaceSkillState(
     workspace_skills: {
       selected_agents: selectedAgentIds,
       last_applied_profile: report.profile,
-      last_applied_delivery: report.delivery,
       last_applied_workflow_ids: report.workflow_ids,
       last_applied_at: new Date().toISOString(),
     },
