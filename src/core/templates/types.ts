@@ -33,11 +33,3 @@ export interface SkillTemplate {
   /** Optional multi-file bundle (references/, scripts/). Absent for single-file skills. */
   bundle?: SkillBundle;
 }
-
-export interface CommandTemplate {
-  name: string;
-  description: string;
-  category: string;
-  tags: string[];
-  content: string;
-}

@@ -20,10 +20,7 @@ export {
 
 export {
   type SkillTemplateEntry,
-  type CommandTemplateEntry,
   getSkillTemplates,
-  getCommandTemplates,
-  getCommandContents,
   generateSkillContent,
   buildSkillArtifacts,
 } from './skill-generation.js';
