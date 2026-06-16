@@ -144,7 +144,7 @@ Run this if you just want to migrate and refresh your existing tools to the late
 openspec update
 ```
 
-The update command also detects and cleans up legacy artifacts, then refreshes generated skills/commands to match your current profile and delivery settings.
+The update command also detects and cleans up legacy artifacts, then refreshes generated skills to match your current profile.
 
 ### Non-Interactive / CI Environments
 

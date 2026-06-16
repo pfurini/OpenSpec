@@ -85,7 +85,7 @@ These options work with all commands:
 
 Initialize OpenSpec in your project. Creates the folder structure and configures AI tool integrations.
 
-Default behavior uses global config defaults: profile `core`, delivery `both`, workflows `propose, explore, apply, sync, archive`.
+Default behavior uses global config defaults: profile `core`, workflows `propose, explore, apply, sync, archive`.
 
 ```
 openspec init [path] [options]
@@ -141,7 +141,6 @@ openspec/
 
 .claude/skills/         # Claude Code skills (if claude selected)
 .cursor/skills/         # Cursor skills (if cursor selected)
-.cursor/commands/       # Cursor OPSX commands (if delivery includes commands)
 ... (other tool configs)
 ```
 
@@ -149,7 +148,7 @@ openspec/
 
 ### `openspec update`
 
-Update OpenSpec instruction files after upgrading the CLI. Re-generates AI tool configuration files using your current global profile, selected workflows, and delivery mode.
+Update OpenSpec instruction files after upgrading the CLI. Re-generates AI tool configuration files using your current global profile and selected workflows.
 
 ```
 openspec update [path] [options]
@@ -215,7 +214,7 @@ openspec workspace setup --no-interactive --json --name checkout --link /repos/p
 
 Interactive setup asks for a preferred opener and can install workspace-local OpenSpec skills for selected agents. Non-interactive setup stores a preferred opener only when `--opener` is provided; otherwise `workspace open` prompts later in interactive terminals when a supported opener is available, or asks scripts to pass `--agent <tool>` or `--editor`.
 
-Workspace skill installation is skills-only in this beta slice: even if global delivery is `commands` or `both`, workspace setup writes agent skill folders in the workspace root and does not create slash command files. The active global profile chooses which workflow skills are installed; `--tools` chooses which agents receive them. If `--tools` is omitted in non-interactive setup, no skills are installed and `workspace update --tools <ids>` can add them later.
+Workspace setup writes agent skill folders in the workspace root. The active global profile chooses which workflow skills are installed; `--tools` chooses which agents receive them. If `--tools` is omitted in non-interactive setup, no skills are installed and `workspace update --tools <ids>` can add them later.
 
 ### `openspec workspace list`
 
@@ -1184,35 +1183,25 @@ openspec config reset --all --yes
 # Edit config in your editor
 openspec config edit
 
-# Configure profile with action-based wizard
+# Configure which workflows are available
 openspec config profile
 
-# Fast preset: switch workflows to core (keeps delivery mode)
+# Fast preset: switch workflows to core
 openspec config profile core
 ```
 
-`openspec config profile` starts with a current-state summary, then lets you choose:
-- Change delivery + workflows
-- Change delivery only
-- Change workflows only
-- Keep current settings (exit)
+`openspec config profile` shows a current-state summary, then lets you select which workflows are available from a checklist.
 
-If you keep current settings, no changes are written and no update prompt is shown.
-If there are no config changes but the current project or workspace files are out of sync with your global profile/delivery, OpenSpec will show a warning and suggest `openspec update` for repo-local projects or `openspec workspace update` for workspace-local guidance and skills.
+If your selection matches the current config, no changes are written and no update prompt is shown.
+If there are no config changes but the current project or workspace files are out of sync with your global profile, OpenSpec will show a warning and suggest `openspec update` for repo-local projects or `openspec workspace update` for workspace-local guidance and skills.
 Pressing `Ctrl+C` also cancels the flow cleanly (no stack trace) and exits with code `130`.
-In the workflow checklist, `[x]` means the workflow is selected in global config. To apply those selections to project files, run `openspec update` (or choose `Apply changes to this project now?` when prompted inside a project). From inside a workspace, use `openspec workspace update` to refresh workspace-local guidance and skills; this remains skills-only for generated agent workflow files and does not generate workspace slash commands.
+In the workflow checklist, `[x]` means the workflow is selected in global config. To apply those selections to project files, run `openspec update` (or choose `Apply changes to this project now?` when prompted inside a project). From inside a workspace, use `openspec workspace update` to refresh workspace-local guidance and skills.
 
-**Interactive examples:**
+**Interactive example:**
 
 ```bash
-# Delivery-only update
+# Choose which workflows are available
 openspec config profile
-# choose: Change delivery only
-# choose delivery: Skills only
-
-# Workflows-only update
-openspec config profile
-# choose: Change workflows only
 # toggle workflows in the checklist, then confirm
 ```
 

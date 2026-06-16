@@ -179,7 +179,7 @@ openspec workspace open --initiative billing-launch --store-path /repos/platform
 
 `workspace setup` always creates the workspace in the standard workspace location, records it in the local registry, shows the workspace location, and requires at least one linked repo or folder. Interactive setup asks for a preferred opener and can install OpenSpec skills for selected agents. Non-interactive setup stores one only when `--opener codex-cli`, `--opener claude`, `--opener github-copilot`, or `--opener editor` is provided.
 
-Workspace skills are installed only in the workspace root. The active global profile selects which workflow skills are generated; `--tools` selects which agents receive them. Workspace setup and update do not create slash command files even when global delivery includes commands. Run `openspec workspace update` to refresh workspace-local guidance and add, refresh, or remove managed workspace-local skill directories without editing linked repos or folders.
+Workspace skills are installed only in the workspace root. The active global profile selects which workflow skills are generated; `--tools` selects which agents receive them. Run `openspec workspace update` to refresh workspace-local guidance and add, refresh, or remove managed workspace-local skill directories without editing linked repos or folders.
 
 OpenSpec also maintains root workspace open files: an OpenSpec-managed guidance block in `AGENTS.md` and a machine-local `<workspace-name>.code-workspace` file for VS Code and GitHub Copilot-in-VS-Code opens. A managed workspace is not a repo, so OpenSpec does not create a default workspace `.gitignore` or a default workspace-level `changes/` directory.
 

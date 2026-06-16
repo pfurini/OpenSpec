@@ -107,7 +107,7 @@ If you want the expanded workflow (`/opsx:new`, `/opsx:continue`, `/opsx:ff`, `/
 
 → **[Getting Started](docs/getting-started.md)**: first steps<br>
 → **[Workflows](docs/workflows.md)**: combos and patterns<br>
-→ **[Commands](docs/commands.md)**: slash commands & skills<br>
+→ **[Commands](docs/commands.md)**: workflow skills reference<br>
 → **[CLI](docs/cli.md)**: terminal reference<br>
 → **[Supported Tools](docs/supported-tools.md)**: tool integrations & install paths<br>
 → **[Concepts](docs/concepts.md)**: how it all fits<br>
@@ -129,7 +129,7 @@ AI coding assistants are powerful but unpredictable when requirements live only 
 - **Agree before you build** — human and AI align on specs before code gets written
 - **Stay organized** — each change gets its own folder with proposal, specs, design, and tasks
 - **Work fluidly** — update any artifact anytime, no rigid phase gates
-- **Use your tools** — works with 20+ AI assistants via slash commands
+- **Use your tools** — works with 20+ AI assistants via Agent Skills
 
 ### How we compare
 
@@ -149,7 +149,7 @@ npm install -g @fission-ai/openspec@latest
 
 **Refresh agent instructions**
 
-Run this inside each project to regenerate AI guidance and ensure the latest slash commands are active:
+Run this inside each project to regenerate AI guidance and ensure the latest skills are active:
 
 ```bash
 openspec update

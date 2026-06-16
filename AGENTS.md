@@ -1,8 +1,8 @@
 # OpenSpec — Agent Guidance
 
 OpenSpec (`@fission-ai/openspec`) is a TypeScript CLI for spec-driven development: it scaffolds
-change proposals, specs, designs, and tasks, and generates per-tool slash commands and skills for
-coding agents. ESM package, built with `tsc`, distributed via npm.
+change proposals, specs, designs, and tasks, and generates per-tool Agent Skills for coding agents.
+ESM package, built with `tsc`, distributed via npm.
 
 This file is the shared source of truth for agents working in this repo. Nested `AGENTS.md` files
 (e.g. `test/AGENTS.md`) add directory-scoped rules — read them when working in those areas.
@@ -30,8 +30,8 @@ Run `pnpm run build` before focused CLI/integration tests when implementation ch
   - `artifact-graph/` — the change model. A change advances through ordered artifacts:
     `proposal → specs → design → tasks` (see `DEFAULT_ARTIFACTS` in `src/commands/schema.ts`).
     `resolver.ts` locates package/project/user schema dirs; `graph.ts` models artifact status.
-  - `templates/` — `SkillTemplate` / `CommandTemplate` factories (`skill-templates.ts`) that emit the
-    skills and slash commands deployed into a user's project.
+  - `templates/` — `SkillTemplate` factories (`skill-templates.ts`) that emit the skills deployed
+    into a user's project.
   - `shared/skill-bundle.ts` — loads a skill from `schemas/skills/<name>/` (`loadSkillSource`),
     handles the multi-file bundle markers, and flattens to a single file for tools that need it
     (`flattenSkillBody`, `renderFullInstructions`).
