@@ -2,11 +2,12 @@ name: deep-planning
 version: 1
 description: >
   Deep-planning workflow - thinking-record driven. /opsx:explore reasons about the
-  WHAT and /opsx:design reasons about the HOW; both produce durable thinking records
-  (exploration note, design note, ADRs). The generic writer (e.g. /opsx:continue)
-  then transcribes proposal -> specs -> design -> tasks from those records, with the
-  design decomposed into well-bounded units that compose into a TDD wave map for
-  autonomous, harness-driven execution.
+  WHAT (exploration note); /opsx:design reasons about the HOW and writes design.md
+  directly - including the wave skeleton (value-ordered vertical slices) - plus ADRs.
+  The generic writer (e.g. /opsx:continue) transcribes proposal -> specs from the
+  exploration note, gates on design.md (authored by /opsx:design), then mechanically
+  transcribes design.md's wave skeleton into the tasks.md TDD wave map for autonomous,
+  harness-driven execution.
 
 # Draft consecutive mechanical artifacts (proposal -> specs) in one /opsx:continue,
 # stopping at the design gate (which needs a /opsx:design thinking note first).
@@ -75,48 +76,30 @@ artifacts:
 
   - id: design
     generates: design.md
-    description: Technical design (the HOW), transcribed from the design note
+    description: Technical design + wave skeleton (the HOW), authored directly by /opsx:design
     template: design.md
     instruction: |
-      Create the design document (the HOW) for this change.
+      GATE - design.md is authored by the interactive HOW thinker (/opsx:design), NOT by this
+      generic writer.
 
-      ORDERING GUARD - read this first:
-      The deep HOW thinking happens in /opsx:design, which writes a design note
-      (`design-notes.md`) into this change's directory. Look for that note now.
-      - **If `design-notes.md` does NOT exist in this change directory, STOP.** Do not
-        write a mechanical design.md. Tell the user exactly this:
-        "No design note found. Run /opsx:design <change> first to think through the HOW
-        (approaches, decomposition, ADRs), then re-run this step to materialize design.md."
-      - **If it exists**, it is your PRIMARY input. Transcribe it faithfully - the
-        thinking is already done; you are writing it up, not re-deciding it.
+      The deep HOW thinking - approaches, decomposition, the load-bearing decisions, the ADRs,
+      AND the **wave skeleton** (the value-ordered vertical slices the autonomous harness runs) -
+      happens in /opsx:design, which interviews the user, gates them on the wave-map shape, and
+      writes design.md directly into this change's directory. design.md is the single source of
+      the HOW contract; only /opsx:design authors it.
 
-      Sections (fill from the design note):
-      - **Context**: current state cited by path:line; constraints; relevant ADRs (reference, don't re-argue).
-      - **Goals / Non-Goals**.
-      - **Decisions**: key technical choices + rationale + alternatives considered; reference ADRs for the load-bearing ones.
-      - **Components & Dependencies**: the decomposition from the design note - each unit with
-        its purpose (one line), interface (inputs/outputs), depends-on (other units / existing
-        modules), and the **project skills** that govern it (by SKILL.md path - transcribe these
-        from the design note; the wave map and JIT plans cite them as Mandatory Reading, so they
-        must survive into design.md, not stay only in the note); plus a **slice composition** map - the dependency edges between units and which
-        capabilities are independently valuable (a split signal, surfaced in design) vs simply
-        unordered (ordering freedom). Do NOT frame units as "parallelizable": code-writing inside
-        one change is single-worktree and serialized; genuinely independent, separately-valuable
-        work is a sibling change, not a parallel unit here.
-        THIS SECTION IS THE CONTRACT the downstream wave map consumes - do not omit or hand-wave it.
-      - **Data model / API shapes**: concrete enough that an implementer makes no design decisions.
-      - **Data flow & error handling**: happy path + failure per step.
-      - **Testing approach**: this is where the **test layer per spec scenario is DECIDED** (not
-        deferred to tasks). For each spec scenario, choose the cheapest layer that genuinely
-        *proves* it - *proves* dominates *cheap*. State the layer (unit / integration / component /
-        e2e) per scenario. If the project provides a "test-strategy" skill (see the skills step),
-        apply its scenario-class -> layer table; otherwise reason from first principles and record
-        the choice. Multi-page / gate / redirect flows prove at e2e, not unit piles. This decision
-        is transcribed verbatim into the tasks coverage map - leave none of it open.
-      - **Risks / Trade-offs**, **Migration / Rollback**, **Open Questions**.
+      You are only ever reading this instruction because design.md does NOT exist yet - once it
+      exists this artifact is already complete (status is file-presence based) and this step is
+      skipped. So: **STOP. Do not write, transcribe, summarize, or stub a mechanical design.md
+      from the proposal/specs.** Tell the user exactly this:
+        "No design found. Run /opsx:design <change> first to think through the HOW - approaches,
+        decomposition, ADRs, and the wave skeleton - with you, and write design.md. Then re-run
+        continue to transcribe the wave map into tasks.md."
 
-      Scale each section to its weight; skip what doesn't apply. Reference the proposal for
-      motivation and specs for requirements. Do not duplicate ADR rationale - link to it.
+      (The completeness of design.md - every scenario has a test layer, every wave has an
+      acceptance command, no decision dodged into Open Questions - is enforced by /opsx:design's
+      own self-review and re-checked by the mechanical `tasks` transcription, which STOPs on a
+      design gap. It is not this step's job: this step never runs once design.md is present.)
     requires:
       - proposal
       - specs
@@ -126,17 +109,18 @@ artifacts:
     description: The TDD wave map - value-ordered vertical slices the harness executes autonomously
     template: tasks.md
     instruction: |
-      Create the **wave map**: the change-level work queue the autonomous harness executes.
-      It is NOT a flat checklist. It is a sequence of **TDD-ordered, value-ordered vertical
-      slices** ("waves"), derived from the design's **Components & Dependencies** and
-      **Testing Approach** sections and the spec scenarios.
+      Create the **wave map** (`tasks.md`): the change-level work queue the autonomous harness
+      executes. This is a **mechanical transcription** of design.md's **Wave Skeleton / Build
+      Sequence** section into the tasks.md format, plus the one legitimately repo-coupled job:
+      grounding the named-test paths against the actual repo layout. You author no judgment.
 
-      MECHANICAL ONLY - tasks makes NO design decisions. The design (design.md +
-      design-notes.md) has already settled everything, INCLUDING the test layer for each
-      scenario (design's Testing Approach). If you find an unresolved decision - an unsettled
-      choice, a deferred "?", OR a spec scenario whose test layer the design did not settle -
-      STOP: that is a design gap. Do not decide it here; send the user back to /opsx:design to
-      settle it, then resume.
+      MECHANICAL ONLY - tasks makes NO design decisions. design.md has already settled
+      everything: the waves, their value ordering, the wave-0 tracer, the component->wave mapping,
+      the dependencies, the acceptance commands, AND the test layer for each scenario (design's
+      Testing Approach). You TRANSCRIBE; you do not re-slice, re-order, or re-decide. If you find a
+      decision is missing - an unsettled choice, a deferred "?", a wave with no acceptance command,
+      OR a spec scenario whose test layer the design did not settle - STOP: that is a design gap.
+      Do not fill it here; send the user back to /opsx:design to settle it, then resume.
 
       **Triage design's Open Questions before building anything.** Read design.md's
       "Open Questions" section and classify EVERY item - the section conflates three cases
@@ -157,34 +141,26 @@ artifacts:
       write nothing extra. Mechanical wiring (config, glue, imports) is NOT an open question -
       it is just a standard step with a verify command.
 
-      **Wave model (read before writing):**
-      - A **wave** is a vertical slice that delivers one observable unit of value end to end,
-        proven by tests. NOT a horizontal layer ("all the models", "all the tests"). Each wave
-        is one fresh harness session; within it the implementer runs red-green-refactor cycles.
-      - **Order waves by value, respecting dependencies** - earliest waves deliver the most
-        load-bearing user/system value that later waves build on.
-      - **Wave 0 is the tracer bullet**: a single failing end-to-end happy-path test that
-        exercises the whole skeleton, PLUS scaffolding for any missing test infrastructure
-        (Nyquist rule: every later wave must have an automated way to verify it; wave 0 creates
-        what's missing). Wave 0 proves the pipes connect; it is committed RED.
+      **What was already decided in design (do NOT re-derive it here).** design.md's Wave Skeleton
+      settled the wave model for you: each wave is a value-delivering vertical slice (not a
+      horizontal layer); waves are value-ordered respecting dependencies; wave 0 is the tracer
+      bullet (committed RED); behavior is proven test-first; breaking reshapes of existing APIs are
+      sliced atomically with their caller+test migrations; and no scenario was scope-reduced. Your
+      job is to TRANSCRIBE that skeleton faithfully - if any of these properties is missing from
+      design.md (e.g. a tests-last ordering, an un-sliced breaking change, a "v1 / MVP / for now"
+      trim), that is a **design gap -> STOP** and send the user back to /opsx:design. Never repair
+      it by re-slicing here.
 
-      **TDD ordering is mandatory.** Within every wave, behavior is proven test-first
-      (write test -> watch it fail for the right reason -> minimal code -> refactor). A
-      tests-last or tests-as-a-final-wave layout is a DEFECT - reject it. Do not bulk-write
-      tests against imagined behavior either (that is the horizontal-slice anti-pattern);
-      each wave's tests target that wave's behavior only.
-
-      **Scope-reduction language is BANNED.** Never shrink a scenario with "v1 / for now /
-      simplified / MVP / just / basic / we'll handle X later". If a scenario is too big for
-      one change, that is a re-scoping decision for the human at design time, not a silent
-      trim here. Write the full scenario.
-
-      **Breaking changes are sliced atomically.** Every wave must leave the WHOLE suite green.
-      A breaking reshape of an EXISTING API (one with current callers) goes in the SAME wave as
-      the migration of all those callers AND their existing tests - never reshape in one wave and
-      migrate a caller (or its test) in a later wave, which leaves an intermediate red the gate
-      rejects. If a caller's full rework is a later wave, put the reshape in that wave (or keep
-      the API backward-compatible until then).
+      **Transcribe the Wave Skeleton into the template.** Each `## Wave N` block maps 1:1 from the
+      matching wave in design.md's Wave Skeleton:
+      - `- [ ]` value goal, `components:`, `depends-on:`, `acceptance:`, `stamps:`, `skills:` <-
+        copied straight from that wave's Wave Skeleton entry.
+      - `interfaces:` <- a mechanical lookup: each component in `components:` has an interface in
+        design.md's Components & Dependencies table; copy it. (Interfaces are not re-listed in the
+        Wave Skeleton, so this is the one cross-reference, not a decision.)
+      - The coverage map table <- a join: design.md's Testing Approach gives Scenario -> Layer; the
+        Wave Skeleton's "proves scenarios" gives Scenario -> Wave. TRANSCRIBE the Layer; never
+        choose it. The Named test column is the ONLY new content you author.
 
       **IMPORTANT: Follow the template format exactly** (the parser counts checkboxes as
       progress units, so checkboxes appear at WAVE grain ONLY):
@@ -208,7 +184,7 @@ artifacts:
         not `playwright/`). Never invent a path the repo's layout doesn't support, and never name
         an existing file that does not exist.
 
-      Reference specs for what each wave must prove and design for how to build it.
+      Reference specs for what each wave must prove and design.md's Wave Skeleton for the slices.
     requires:
       - specs
       - design

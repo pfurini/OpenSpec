@@ -17,7 +17,7 @@ export function getOpsxDesignSkillTemplate(): SkillTemplate {
   return {
     name: 'openspec-design',
     description:
-      'Enter design mode - an interactive HOW-thinking partner that interviews you to settle the architecture, then turns a settled WHAT (proposal + specs) into a design note + ADRs, decomposed into well-bounded units that compose into a TDD wave map. A pure thinker: /opsx:continue transcribes design.md from its note. Use after requirements are settled, to think through how to build it.',
+      'Enter design mode - an interactive HOW-thinking partner that interviews you to settle the architecture, then turns a settled WHAT (proposal + specs) into design.md + ADRs, decomposed into well-bounded units and sequenced into a value-ordered TDD wave skeleton. Writes design.md directly (the single source of the HOW contract); /opsx:continue only transcribes its wave skeleton into tasks.md. Use after requirements are settled, to think through how to build it.',
     instructions: designSource.instructions,
     bundle: designSource.bundle,
     license: 'MIT',
@@ -31,7 +31,7 @@ export function getOpsxDesignCommandTemplate(): CommandTemplate {
   return {
     name: 'OPSX: Design',
     description:
-      'Enter design mode - interview to settle the HOW, then write a design note + ADRs decomposed into well-bounded units for a TDD wave map (continue transcribes design.md)',
+      'Enter design mode - interview to settle the HOW, then write design.md + ADRs: well-bounded units sequenced into a value-ordered TDD wave skeleton (continue transcribes the wave skeleton into tasks.md)',
     category: 'Workflow',
     tags: ['workflow', 'design', 'experimental', 'thinking'],
     content: `${body}

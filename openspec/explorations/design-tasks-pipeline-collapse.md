@@ -1,6 +1,6 @@
 # Pipeline collapse — the thinker owns the formalization (design→tasks first, explore→specs next)
 
-Status: **decisions grounded 2026-06-16 (brainstorm, this session); HOW-side build NOT started.**
+Status: **decisions grounded 2026-06-16; HOW-side build DONE 2026-06-16 (this session) — suite green (1725). Conversion-fidelity validation on lexup still owed (manual run, §8).**
 This is the guiding build contract for collapsing the planning pipeline so the fragile
 design→tasks conversion stops leaking fidelity. **Do the HOW side first** (design + tasks),
 **collect feedback during the build**, then a later agent applies the same pattern to the WHAT
@@ -136,7 +136,92 @@ collapse avoids the same mistakes:
    gate teeth, representation choices, parity churn, prompt-adherence regressions — captured as it
    happens.
 
-_(empty — fill during the build)_
+### 8.1 Build-time learnings (HOW side — 2026-06-16) [carry into explore→specs]
+
+**Files touched** (TDD; suite 1712→1725, +13 contract tests; build clean; `dist/` untracked):
+`schemas/deep-planning/schema.yaml` (design artifact → gate; tasks → mechanical; top description),
+`schemas/deep-planning/templates/design.md` (+ Wave Skeleton section), `schemas/skills/openspec-design/`
+(`SKILL.md` + `references/flow.md` — writes design.md directly, wave-skeleton concept+procedure,
+self-review teeth, parked-seeds), `design.ts` (descriptions), `continue-change.ts` (gate wording ×2),
+`shared-prime.ts` (thinking-records line), new `test/core/templates/design-tasks-collapse.test.ts`,
+re-harvested all three parity maps.
+
+1. **Q2 graph mechanics — RESOLVED, no engine change.** Artifact done-ness is **pure file presence**
+   (`state.ts:detectCompleted` → `outputs.ts:artifactOutputExists` over the artifact's `generates`
+   glob). So `/opsx:design` writing `design.md` directly makes the `design` artifact `done`; continue's
+   flow-to-gate sees `done` (not `ready`) and skips straight to `tasks`. When `design.md` is **absent**,
+   `design` is `ready`, continue reads its instruction = the STOP gate. The "pure thinker" rule is
+   **prompt-level only** — the engine doesn't care who writes design.md. design.md stays an ordinary
+   graph artifact. **WHAT-side parallel:** the same is true for `specs` (`generates: specs/**/*.md`) — if
+   explore authors specs directly, presence = done, and the `specs` step becomes a gate, not a writer.
+   **Engine-proven** (scratch deep-planning change, real `openspec` CLI, not the harness): proposal+specs
+   and **no** `design.md` → `design=ready`, `tasks=blocked`, `instructions design` returns the GATE text;
+   drop in a `design.md` → `design=done`, `tasks=ready`, `instructions tasks` returns the
+   mechanical-transcription text. The flow-to-gate stop is proven, not inferred.
+
+2. **Q4 keystone — completeness CANNOT be gated at the artifact-instruction layer.** Because presence =
+   done, once `design.md` exists the `design` artifact instruction is **never read** by continue. So the
+   note's wish ("this artifact validates presence + completeness") is mechanically impossible there. Teeth
+   relocated to **two** places: (a) `/opsx:design` step-8 self-review = **primary** (it owns the artifact);
+   (b) the mechanical `tasks` transcription = **secondary** gap-detector (transcribing surfaces any missing
+   layer/acceptance/dodged-OQ → STOP → back to design). The `design` instruction collapsed to an
+   **unconditional** gate message (deleted the "if exists, transcribe" branch — it had no reader).
+   **WHAT-side parallel:** put the specs-completeness teeth in explore's self-review + a downstream
+   gap-detector, NOT in the `specs` artifact instruction.
+
+3. **Judgment must RELOCATE, not vanish (the actual fidelity work).** Cut the old `tasks` instruction
+   along the **judgment/format** line. *Moved UP into the design skill* (SKILL.md "Sequence the build" +
+   flow.md step 3): wave model definition, value-ordering, wave-0 tracer, TDD-first, **atomic
+   breaking-change slicing**, **scope-reduction ban** — all *which-scenario-in-which-wave* HOW decisions.
+   *Kept in `tasks`* (legitimate transcription format): one-checkbox-per-wave, coverage-map columns,
+   named-test-path grounding, Open-Questions gap-detector. Litmus applied after: nothing left in `tasks`
+   makes a reasonable engineer choose a user-visible outcome. **WHAT-side parallel:** the `specs` step's
+   real judgment (falsifiability, SHALL/MUST, *authoring* Requirement/Scenario blocks) must move into
+   explore; `specs` keeps only the delta-format + one-spec-per-capability transcription.
+
+4. **One home for the artifact's shape, or you add drift instead of removing it.** design.md's section
+   spec was **triplicated**: `templates/design.md` + the `design` artifact instruction + the skill. Resolved:
+   the **skill (flow.md step 5)** is the author's home (it lists sections incl. Wave Skeleton); the **schema
+   instruction stopped enumerating sections** (gate only); the **template stays a synced skeleton** (added
+   Wave Skeleton). Rule: when the thinker authors the artifact, the schema artifact instruction MUST drop
+   its section list or it silently drifts from the skill.
+
+5. **Mechanism limit — nested reference markers leak in `full` mode.** `<!--reference:relPath-->` is only
+   resolved when it appears in **SKILL.md**: `renderFullInstructions` (full mode) rewrites SKILL.md markers
+   to pointers and writes each reference file **raw**, so a marker placed *inside* a reference (e.g. flow.md)
+   leaks verbatim into the emitted file. (`flatten` happens to resolve it, order-dependently, because refs
+   inline sequentially.) ⇒ **all markers live in SKILL.md.** This forced the relocated wave-model teaching
+   into **SKILL.md (concept) + flow.md (procedure)** rather than a third `references/` file. Smoke-verified:
+   full → `SKILL.md`+`references/flow.md`, flatten → one `SKILL.md`, no marker leak, Wave Skeleton present
+   in both, zero `design-notes.md`. **WHAT-side caveat:** if explore→specs wants multiple references, add
+   each marker in SKILL.md, not nested — or build real nested-marker support first.
+
+6. **Q1 representation + Q3 (wavePlan) — lossless, format unchanged.** design.md gets a `## Wave Skeleton /
+   Build Sequence` section, one sub-block per wave: value goal · components (component→wave map) · **proves
+   scenarios** · depends-on · acceptance command · stamps · skills · wave-0 tracer flag. **Interfaces stay
+   in the Components table; layers stay in Testing Approach** (no duplication). `tasks` reconstructs the
+   coverage map by **joining** proves-scenarios × Testing-Approach-layer and looks up interfaces from the
+   Components table. Verified every `tasks.md` per-wave field has a single design.md source ⇒ transcription
+   is lossless ⇒ **`tasks.md` format is unchanged ⇒ `wavePlan` (Q3) is untouched.** The losslessness check
+   *is* the Q3 guarantee.
+
+7. **Parity churn map (for the re-harvest).** `shared-prime.ts` is injected into **explore + design** only
+   (not new/onboard/propose) → editing it moved `getExploreSkillTemplate` + `getOpsxExploreCommandTemplate`
+   + `openspec-explore` generated, plus both design entries. design edits moved the design fn/command/
+   generated/bundle(full+flatten). The continue gate-wording moved `getContinueChangeSkillTemplate` +
+   `getOpsxContinueCommandTemplate` + `openspec-continue-change` generated. All re-harvested via a one-off
+   `tsx` script (stableStringify+sha256 over the factories / `buildSkillArtifacts`). Batch all template
+   edits, harvest once, then `vitest run` — don't chase moving hashes.
+
+### 8.2 Conversion fidelity (item 1) — OWED, manual run
+
+Could **not** run here: the lexup harness uses the claude-terminal TUI, which stalls under Claude Code
+(README protocol). **Hand to the user:** on lexup `account-profile-self-service`, run `/opsx:design`
+(should now interview the wave skeleton + write `design.md` directly, no `design-notes.md`) then
+`/opsx:continue` (should mechanically transcribe the Wave Skeleton → `tasks.md`, grounding test paths,
+deciding nothing). Judge: is the wave map faithful, executable, and free of silent decisions vs. the
+pre-collapse output? Record win/loss here before the explore→specs (§9) refactor starts — that refactor
+depends on this fidelity read.
 
 ## 9. [DEFERRED] The WHAT-side application — for the next agent
 

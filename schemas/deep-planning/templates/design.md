@@ -50,6 +50,36 @@
 |---------------|-----------|----------------|
 | `<scenario>`  | unit/integration/component/e2e | <what it proves> |
 
+## Wave Skeleton / Build Sequence
+
+<!-- THE SOURCE OF THE TDD WAVE MAP. /opsx:design decides this WITH the user; tasks.md
+     transcribes it verbatim (adding only grounded test paths). Value-ordered vertical
+     slices that respect dependencies; wave 0 is the tracer bullet (one failing end-to-end
+     happy-path test + scaffolds for missing test infra, committed RED). Each wave is one
+     fresh harness session proving one observable unit of value, test-first. Breaking
+     reshapes of an existing API are sliced atomically with their caller+test migrations so
+     every wave leaves the suite green. NO scope reduction ("v1 / for now / MVP / just").
+     Do NOT restate interfaces (they live in Components & Dependencies) or test layers (they
+     live in Testing Approach) - reference scenarios by name so tasks can join them. -->
+
+### Wave 0 - <observable value> · TRACER
+- value: <one observable end-to-end outcome proven by a test>
+- components: <unit names from Components & Dependencies this wave builds>
+- proves scenarios: <spec scenario names this wave covers — joins to Testing Approach for layer>
+- depends-on: —
+- acceptance: <command(s) that prove the wave green>
+- stamps: `size:S` `risk:low` `implTier:medium`
+- skills: <SKILL.md paths, incl. the project test-strategy skill>
+
+### Wave 1 - <observable value>
+- value: <...>
+- components: <...>
+- proves scenarios: <...>
+- depends-on: Wave 0
+- acceptance: <...>
+- stamps: `size:M` `risk:med` `implTier:medium`
+- skills: <...>
+
 ## Risks / Trade-offs
 
 <!-- Known risks and trade-offs. [Risk] -> Mitigation -->

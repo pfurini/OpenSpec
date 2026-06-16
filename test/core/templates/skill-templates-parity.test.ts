@@ -32,18 +32,18 @@ import {
 import { generateSkillContent, buildSkillArtifacts } from '../../../src/core/shared/skill-generation.js';
 
 const EXPECTED_FUNCTION_HASHES: Record<string, string> = {
-  getExploreSkillTemplate: '64df102d2739077150be9790d50d9cca06c762cfebcff87273b2decdb832621e',
-  getOpsxDesignSkillTemplate: 'dd89ca8eac867653fb4f99c40dd8ccc9c504dd49f3f03eee4147b18700d826f9',
-  getOpsxDesignCommandTemplate: '843c4b62f40afcb07c8bcce586fd24488141402154d39ff3c989955390d96be5',
+  getExploreSkillTemplate: '2ae925bac22575d7af8f24fe6c94d1ebcbd0f7897ea60f9873823299affa15ce',
+  getOpsxDesignSkillTemplate: '9367a7009f29b0fa2fed3514db4eb69f671225061596a369e5ab2623a64c19a7',
+  getOpsxDesignCommandTemplate: 'a83a16d6ecb3fddd49cf7bb94ae0a4da4dc0d34a75cdf941909b7b69763c83f2',
   getNewChangeSkillTemplate: '8dd042e33d5db66fb3bacc0bba806c669c1c02802abf4bc7e0fbe74c189c2d87',
-  getContinueChangeSkillTemplate: '902e702dfd32300b9075e121b081bcb289c428fc198b8f9b300066a77917527c',
+  getContinueChangeSkillTemplate: '54dda3115192748419ca9771893665a19c39745910f525bcb817f72fe48ceea8',
   getApplyChangeSkillTemplate: 'e746f230c2513a5fd40842bde494bb3cdb3c5f7c1bcece101f92090983d4ff55',
   getFfChangeSkillTemplate: '50e68fbb49b76d2690b614bffa9e6210e45539fb74419fc2e4311158b6d38485',
   getSyncSpecsSkillTemplate: '9f02b41227db70875b89eefeb275c769142607dc5b2593f4e606794aed2fdbad',
   getOnboardSkillTemplate: '4f4b60fea6e3fc7d2185815b2808fad51535fdd00cd4401b32d1536f32fa2b6d',
-  getOpsxExploreCommandTemplate: '98f1b771a8e25d5917f7b673daec37074272f66cd9d8208ba447a54037c9b387',
+  getOpsxExploreCommandTemplate: 'e0b872e4ced11a2b226c202e5199b8763c4093ef04ead16269ffcf590bfc85ef',
   getOpsxNewCommandTemplate: '4f45b76ac9bcf23768962fa21d1323c7e0d10a1508bbdc02ba37ccf275214ace',
-  getOpsxContinueCommandTemplate: 'c1a4706215955200f390d4480e4d08f02fce6c9b92e0b8a30db91a18c221c0ff',
+  getOpsxContinueCommandTemplate: '0d5169eecd13d948c211bf10926bccb237399b4208e42290b873fd6fcd5e32c0',
   getOpsxApplyCommandTemplate: '812feefd32a4d9d468e03e456d06e3d2d08d1118d29cce4911f0be59cdd30bfc',
   getOpsxFfCommandTemplate: 'f775b242bcfd56594c431c7f31a0129208a1bacfdb2427074d412543072ef7ca',
   getArchiveChangeSkillTemplate: 'bd5d4b0a66e832cba11279b7d60a71ae501f742f2fcf359fcd8471fe2e17e9ba',
@@ -60,10 +60,10 @@ const EXPECTED_FUNCTION_HASHES: Record<string, string> = {
 };
 
 const EXPECTED_GENERATED_SKILL_CONTENT_HASHES: Record<string, string> = {
-  'openspec-explore': '77464713d816c1b6af978ea70a5ecae32c2bb673e53fc615f330c1f663052ee4',
-  'openspec-design': '056d296e6b4a076fbd1beaed2e203907e558c138c0ef2530f7195cab851b9353',
+  'openspec-explore': '1d9a292e1cfdfe0af5b81be2a8b0b042cf518ca48987890ee31a9201b8e535bb',
+  'openspec-design': 'ac1846d7bf305dc5057e190f4a3496451dd5d67e28127ce0eac44f0dcf375254',
   'openspec-new-change': '56d91ad2d746f35ab87990e0875985f1421a07ad965e40fee4f46a96fd5c6bcb',
-  'openspec-continue-change': 'a186bc8f703e4c809ad059191c1eb834bc969e2cc2dde18b9e592da3eb4b6e4e',
+  'openspec-continue-change': '92779c8f0b18ad74cf27d551603957ea976c6dfa5f36ea032bfec624e5fe218e',
   'openspec-apply-change': 'd849442efd925b9247651e254a5cd696945321610cca5a9432ad420430554548',
   'openspec-ff-change': '9d9b1995b6f4adb3da570676f7d11fee4cd1cf6c5df8ec83c033e02783a544df',
   'openspec-sync-specs': '2e0f67ec6fadffc6107b4b1a28eef23a99a6649e5fae706897ea1dd9deb852a8',
@@ -75,8 +75,8 @@ const EXPECTED_GENERATED_SKILL_CONTENT_HASHES: Record<string, string> = {
 };
 
 const EXPECTED_BUNDLE_TREE_HASHES: Record<string, string> = {
-  'openspec-design:full': '691d27da90196cc781fa2baf73cbb43c886b2755dea8c1b23ec24cc96ca8495a',
-  'openspec-design:flatten': 'd8641864cfb3c1fc53ab2cf85f4859531fe9c6acfa21f679d5ba0c1ac009b787',
+  'openspec-design:full': '9c73f86fb34ba017d916e6b8011585bfa6bbbc2ae82493c78daafc3bd7f7332a',
+  'openspec-design:flatten': '3f6b7c52655b9b09061029fd441d8c3e8a56fb0b20e64106ccb815c79c2774a8',
 };
 
 function stableStringify(value: unknown): string {

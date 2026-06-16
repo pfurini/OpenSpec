@@ -1,6 +1,6 @@
 Enter design mode. Think deeply about HOW to build it — as an interactive partner, not a one-shot generator. This is the HOW counterpart to explore.
 
-Design is your thinking partner for the **HOW** — architecture, units, interfaces, build sequence, and the load-bearing technical decisions. It runs on an existing change whose WHAT is already settled (proposal + specs). Like explore, it is a **pure thinker**: it produces durable thinking records — a **design note** (the crystallized HOW) and **ADRs** for the load-bearing decisions. It does NOT write `design.md`; `/opsx:continue` transcribes that from your note afterward.
+Design is your thinking partner for the **HOW** — architecture, units, interfaces, the **wave skeleton** (the value-ordered build sequence the autonomous harness runs), and the load-bearing technical decisions. It runs on an existing change whose WHAT is already settled (proposal + specs). Like explore, it is a **pure thinker** — it decides nothing the user wouldn't want a say in — but the durable record it crystallizes IS `design.md` itself (plus **ADRs** for the load-bearing decisions). There is no shadow note: you settle the HOW with the user, then write `design.md` directly. `design.md` is the single source of the HOW contract; `/opsx:continue` only mechanically transcribes its wave skeleton into `tasks.md` afterward.
 
 **This is a collaborative interview, not autonomous generation.** Your job is to reach a *shared model* of the HOW with the user and settle every load-bearing decision *together* — before writing anything. You carry the recommendations; the user confirms, overrides, or redirects. Do not silently decide the architecture and hand back finished artifacts.
 
@@ -14,11 +14,11 @@ Don't manufacture questions to look thorough; don't skip the ones that matter to
 
 ## Where Design Sits
 
-Design runs on an **existing change** that already has proposal + specs (the WHAT). It is the deep HOW thinker. Its output is a **design note** (`design-notes.md`) in the change directory, plus ADRs. It does **not** write `design.md` — afterward, `/opsx:continue` reads the note and transcribes `design.md` from it (and is built to stop if the note is missing).
+Design runs on an **existing change** that already has proposal + specs (the WHAT). It is the deep HOW thinker. Its output is **`design.md`** (written directly into the change directory) plus ADRs. `/opsx:continue` does not author `design.md` — it gates on it: until `design.md` exists, continue stops and sends the user here; once it exists, continue mechanically transcribes its wave skeleton into `tasks.md`.
 
 **Prereq:** proposal + specs must exist. If they don't, stop and tell the user to settle the WHAT first (`/opsx:explore` to think it through, then create proposal + specs — e.g. via `/opsx:continue`) — you can't design against requirements that aren't written.
 
-**If no change is named:** run `openspec list --json` and find the changes whose `design` artifact isn't `done` yet (confirm via `openspec status --change "<name>" --json`) — those are the ones ready for the HOW. If a change already has a `design-notes.md`, design is mid-flight there — offer to resume it. Let the user pick which change to design.
+**If no change is named:** run `openspec list --json` and find the changes whose `design` artifact isn't `done` yet (confirm via `openspec status --change "<name>" --json` — `done` means `design.md` already exists). Those are the ones ready for the HOW. If a change already has a `design.md`, design is complete (or resumable) there — offer to revise it. Let the user pick which change to design.
 
 ---
 
@@ -75,6 +75,22 @@ A unit you can't describe by purpose + interface + dependencies isn't bounded ye
 
 ---
 
+## Sequence the build — the wave skeleton
+
+The components map work into *units*; the wave skeleton sequences them into the **value-ordered vertical slices** the autonomous harness executes. **This is a load-bearing HOW decision you make WITH the user** (it used to leak into a "mechanical" tasks step with no thinker — that is the bug this command fixes). Decide it here so `tasks` only transcribes it.
+
+A **wave** is a vertical slice that delivers one observable unit of value end to end, proven by tests — **NOT** a horizontal layer ("all the models", then "all the tests"). Each wave is one fresh harness session; within it the implementer runs red-green-refactor cycles. Build the skeleton against these rules:
+
+- **Order waves by value, respecting dependencies.** Earliest waves deliver the most load-bearing user/system value that later waves build on.
+- **Wave 0 is the tracer bullet:** a single failing end-to-end happy-path test that exercises the whole skeleton, PLUS scaffolding for any missing test infrastructure (Nyquist: every later wave needs an automated way to verify it; wave 0 creates what's missing). It proves the pipes connect; it is committed RED.
+- **TDD ordering is mandatory.** Within every wave, behavior is proven test-first. A tests-last or tests-as-a-final-wave layout is a DEFECT.
+- **Breaking changes are sliced atomically.** Every wave must leave the WHOLE suite green. A breaking reshape of an EXISTING API (one with current callers) goes in the SAME wave as the migration of all those callers AND their existing tests — never reshape in one wave and migrate a caller (or its test) in a later wave (that leaves an intermediate red the gate rejects).
+- **No scope reduction.** Never shrink a scenario with "v1 / for now / simplified / MVP / just / basic / we'll handle X later". If a scenario is too big for one change, that is a **re-scoping decision to make with the user now** (split into a sibling change) — never a silent trim.
+
+Capture the result in design.md's **Wave Skeleton / Build Sequence** section — per wave: the observable-value goal, the components it builds (the component→wave map), the spec scenarios it proves (so tasks can join them to their test layer), depends-on, the acceptance command that proves it green, stamps (`size` / `risk` / optional tier hints, planner ≥ implementer), and the governing skills. Don't restate interfaces (they live in Components) or test layers (they live in Testing Approach) — reference, so tasks transcribes losslessly without duplication.
+
+---
+
 <!--reference:references/flow.md-->
 
 ---
@@ -83,11 +99,12 @@ A unit you can't describe by purpose + interface + dependencies isn't bounded ye
 
 - **Interview, don't generate** - Reach a shared model with the user; settle load-bearing decisions together. Don't silently decide architecture the user would want a say in.
 - **One question at a time, then wait** - Never batch questions; never proceed on a "probably."
-- **Settle everything; defer nothing to tasks** - tasks is mechanical. Open Questions are genuine, explicitly-deferred user-facing unknowns — never dodged decisions.
+- **Settle everything (incl. the wave skeleton); defer nothing to tasks** - tasks only transcribes. Open Questions are genuine, explicitly-deferred user-facing unknowns — never dodged decisions.
+- **The wave skeleton is yours** - decide the waves, their value ordering, the wave-0 tracer, and the component→wave map WITH the user. tasks transcribes; it never re-slices.
 - **Adaptive** - Scale interaction to complexity; don't manufacture questions for a simple design, don't skip them for a complex one.
 - **Stay in the HOW lane** - The WHAT is fixed. If designing the HOW reveals the WHAT is wrong or infeasible, flag it and send the user back to revise specs — don't silently redefine requirements.
 - **Design for isolation** - Small, well-bounded units with clear interfaces and explicit dependencies. Follow existing patterns; YAGNI.
-- **Don't write design.md, code, or tasks** - your output is the design note + ADRs; `/opsx:continue` writes `design.md` from the note.
+- **Write design.md directly; no code, no tasks** - your output IS `design.md` (incl. the Wave Skeleton) + ADRs, written after the shape-approval gate. `/opsx:continue` only transcribes the wave skeleton into `tasks.md`; it does not author `design.md`.
 - **ADRs ship `proposed`, tagged `change:`** - don't self-promote; `/opsx:archive` accepts them when the change ships. They live in the project's ADR directory (commonly `docs/adr/`), outside the change directory — durable architectural memory.
 - **Keep the glossary canonical** - reuse the project glossary's terms (a root `GLOSSARY.md`); offer to append genuinely new shared ones; never coin a synonym for a concept it already names.
 - **Reference, don't duplicate** - point to ADRs and specs; don't re-argue or re-state them.
