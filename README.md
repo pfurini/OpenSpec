@@ -177,6 +177,7 @@ When writing proposals, keep the OpenSpec philosophy in mind: we serve a wide va
 - Build: `pnpm run build`
 - Test: `pnpm test`
 - Develop CLI locally: `pnpm run dev` or `pnpm run dev:cli`
+- Re-freeze skill-template hashes: `pnpm run rebaseline:skills` — run after intentionally editing any skill under `schemas/skills/**`; the parity test (`skill-templates-parity.test.ts`) guards generated artifacts against drift with frozen hashes, so a deliberate skill change fails it by design until rebaselined. Commit the updated test file with the skill change.
 - Conventional commits (one-line): `type(scope): subject`
 
 ## Other
