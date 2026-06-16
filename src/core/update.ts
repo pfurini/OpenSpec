@@ -210,9 +210,9 @@ export class UpdateCommand {
     if (newlyConfiguredTools.length > 0) {
       console.log();
       console.log(chalk.bold('Getting started:'));
-      console.log('  openspec-new-change       Start a new change');
-      console.log('  openspec-continue-change  Create the next artifact');
-      console.log('  openspec-apply-change     Implement tasks');
+      console.log('  /openspec-new-change       Start a new change');
+      console.log('  /openspec-continue-change  Create the next artifact');
+      console.log('  /openspec-apply-change     Implement tasks');
       console.log();
       console.log(`Learn more: ${chalk.cyan('https://github.com/Fission-AI/OpenSpec')}`);
     }

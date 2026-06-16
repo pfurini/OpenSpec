@@ -619,10 +619,10 @@ export class InitCommand {
     console.log();
     if (activeWorkflows.includes('propose')) {
       console.log(chalk.bold('Getting started:'));
-      console.log('  Start your first change with the openspec-propose skill: "your idea"');
+      console.log('  Start your first change with /openspec-propose: "your idea"');
     } else if (activeWorkflows.includes('new')) {
       console.log(chalk.bold('Getting started:'));
-      console.log('  Start your first change with the openspec-new-change skill: "your idea"');
+      console.log('  Start your first change with /openspec-new-change: "your idea"');
     } else {
       console.log("Done. Run 'openspec config profile' to configure your workflows.");
     }

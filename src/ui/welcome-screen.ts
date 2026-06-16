@@ -24,9 +24,9 @@ function getWelcomeText(): string[] {
     chalk.dim('  • Agent Skills for AI tools'),
     '',
     chalk.white('Quick start after setup:'),
-    `  ${chalk.yellow('openspec-new-change')}      ${chalk.dim('Create a change')}`,
-    `  ${chalk.yellow('openspec-continue-change')} ${chalk.dim('Next artifact')}`,
-    `  ${chalk.yellow('openspec-apply-change')}    ${chalk.dim('Implement tasks')}`,
+    `  ${chalk.yellow('/openspec-new-change')}      ${chalk.dim('Create a change')}`,
+    `  ${chalk.yellow('/openspec-continue-change')} ${chalk.dim('Next artifact')}`,
+    `  ${chalk.yellow('/openspec-apply-change')}    ${chalk.dim('Implement tasks')}`,
     '',
     chalk.cyan('Press Enter to select tools...'),
   ];
