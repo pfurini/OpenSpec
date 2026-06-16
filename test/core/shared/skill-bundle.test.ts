@@ -7,7 +7,7 @@ import {
   validateBundleBlocks,
 } from '../../../src/core/shared/skill-bundle.js';
 import { buildSkillArtifacts, generateSkillContent } from '../../../src/core/shared/skill-generation.js';
-import { getOpsxDesignSkillTemplate, getOpsxDesignCommandTemplate } from '../../../src/core/templates/skill-templates.js';
+import { getOpsxDesignSkillTemplate } from '../../../src/core/templates/skill-templates.js';
 import { getSkillBundleCapability } from '../../../src/core/config.js';
 import type { SkillTemplate } from '../../../src/core/templates/types.js';
 
@@ -177,20 +177,6 @@ describe('validateBundleBlocks', () => {
   it('throws naming the offending path when a block path is missing', () => {
     const bad = BLOCK_BODY.replace('references/flow.md', 'scripts/nope.sh');
     expect(() => validateBundleBlocks(bad, WITH_BUNDLE.bundle)).toThrow(/scripts\/nope\.sh/);
-  });
-});
-
-describe('design command coherence (single-file, always flattened)', () => {
-  it('inlines the flow in order with no dangling bundle marker or raw path mention', () => {
-    const content = getOpsxDesignCommandTemplate().content;
-    expect(content).not.toContain('<!--bundle:');
-    expect(content).not.toContain('references/flow.md');
-    // The flow body (step 0) must appear BEFORE Guardrails — original document order.
-    const iFlow = content.indexOf('### 0 · Prime');
-    const iGuardrails = content.indexOf('## Guardrails');
-    expect(iFlow).toBeGreaterThan(-1);
-    expect(iGuardrails).toBeGreaterThan(-1);
-    expect(iFlow).toBeLessThan(iGuardrails);
   });
 });
 

@@ -59,7 +59,6 @@ describe('workspace skill helpers', () => {
           workspace_skills: {
             selected_agents: ['codex'],
             last_applied_profile: 'core',
-            last_applied_delivery: 'both',
             last_applied_workflow_ids: [...CORE_WORKFLOWS].reverse(),
           },
         })

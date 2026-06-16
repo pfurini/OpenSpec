@@ -1,16 +1,16 @@
 name: deep-planning
 version: 1
 description: >
-  Deep-planning workflow - thinking-record driven. /opsx:explore reasons about the
-  WHAT (exploration note); /opsx:design reasons about the HOW and writes design.md
+  Deep-planning workflow - thinking-record driven. openspec-explore reasons about the
+  WHAT (exploration note); openspec-design reasons about the HOW and writes design.md
   directly - including the wave skeleton (value-ordered vertical slices) - plus ADRs.
-  The generic writer (e.g. /opsx:continue) transcribes proposal -> specs from the
-  exploration note, gates on design.md (authored by /opsx:design), then mechanically
+  The generic writer (e.g. openspec-continue-change) transcribes proposal -> specs from the
+  exploration note, gates on design.md (authored by openspec-design), then mechanically
   transcribes design.md's wave skeleton into the tasks.md TDD wave map for autonomous,
   harness-driven execution.
 
-# Draft consecutive mechanical artifacts (proposal -> specs) in one /opsx:continue,
-# stopping at the design gate (which needs a /opsx:design thinking note first).
+# Draft consecutive mechanical artifacts (proposal -> specs) in one openspec-continue-change,
+# stopping at the design gate (which needs a openspec-design thinking note first).
 continueMode: flow-to-gate
 
 artifacts:
@@ -23,7 +23,7 @@ artifacts:
 
       INCORPORATE THE EXPLORATION NOTE (if present): before writing, look for an
       exploration note at `openspec/explorations/<change-name>.md` (written by
-      /opsx:explore). If it exists, it is your PRIMARY input - the WHAT is already
+      openspec-explore). If it exists, it is your PRIMARY input - the WHAT is already
       crystallized. Transcribe it, don't re-derive it:
       - Problem / Why -> the Why section
       - Scope & Non-Goals -> What Changes
@@ -76,28 +76,28 @@ artifacts:
 
   - id: design
     generates: design.md
-    description: Technical design + wave skeleton (the HOW), authored directly by /opsx:design
+    description: Technical design + wave skeleton (the HOW), authored directly by openspec-design
     template: design.md
     instruction: |
-      GATE - design.md is authored by the interactive HOW thinker (/opsx:design), NOT by this
+      GATE - design.md is authored by the interactive HOW thinker (openspec-design), NOT by this
       generic writer.
 
       The deep HOW thinking - approaches, decomposition, the load-bearing decisions, the ADRs,
       AND the **wave skeleton** (the value-ordered vertical slices the autonomous harness runs) -
-      happens in /opsx:design, which interviews the user, gates them on the wave-map shape, and
+      happens in openspec-design, which interviews the user, gates them on the wave-map shape, and
       writes design.md directly into this change's directory. design.md is the single source of
-      the HOW contract; only /opsx:design authors it.
+      the HOW contract; only openspec-design authors it.
 
       You are only ever reading this instruction because design.md does NOT exist yet - once it
       exists this artifact is already complete (status is file-presence based) and this step is
       skipped. So: **STOP. Do not write, transcribe, summarize, or stub a mechanical design.md
       from the proposal/specs.** Tell the user exactly this:
-        "No design found. Run /opsx:design <change> first to think through the HOW - approaches,
+        "No design found. Run openspec-design <change> first to think through the HOW - approaches,
         decomposition, ADRs, and the wave skeleton - with you, and write design.md. Then re-run
         continue to transcribe the wave map into tasks.md."
 
       (The completeness of design.md - every scenario has a test layer, every wave has an
-      acceptance command, no decision dodged into Open Questions - is enforced by /opsx:design's
+      acceptance command, no decision dodged into Open Questions - is enforced by openspec-design's
       own self-review and re-checked by the mechanical `tasks` transcription, which STOPs on a
       design gap. It is not this step's job: this step never runs once design.md is present.)
     requires:
@@ -120,14 +120,14 @@ artifacts:
       Testing Approach). You TRANSCRIBE; you do not re-slice, re-order, or re-decide. If you find a
       decision is missing - an unsettled choice, a deferred "?", a wave with no acceptance command,
       OR a spec scenario whose test layer the design did not settle - STOP: that is a design gap.
-      Do not fill it here; send the user back to /opsx:design to settle it, then resume.
+      Do not fill it here; send the user back to openspec-design to settle it, then resume.
 
       **Triage design's Open Questions before building anything.** Read design.md's
       "Open Questions" section and classify EVERY item - the section conflates three cases
       with different consequences:
       - **A dodged HOW decision** (design should have settled it - a reasonable engineer could
         implement it two materially different user-visible ways) -> STOP. Design gap; send the
-        user back to /opsx:design. Never paper over it by picking one here.
+        user back to openspec-design. Never paper over it by picking one here.
       - **A genuine in-scope unknown** (needs the user or external information to resolve, and a
         wave in THIS change depends on it) -> STOP. An autonomous run cannot obtain that
         information, so it must be settled before the wave map is approved. Surface it to the
@@ -148,7 +148,7 @@ artifacts:
       sliced atomically with their caller+test migrations; and no scenario was scope-reduced. Your
       job is to TRANSCRIBE that skeleton faithfully - if any of these properties is missing from
       design.md (e.g. a tests-last ordering, an un-sliced breaking change, a "v1 / MVP / for now"
-      trim), that is a **design gap -> STOP** and send the user back to /opsx:design. Never repair
+      trim), that is a **design gap -> STOP** and send the user back to openspec-design. Never repair
       it by re-slicing here.
 
       **Transcribe the Wave Skeleton into the template.** Each `## Wave N` block maps 1:1 from the

@@ -1013,10 +1013,9 @@ artifacts:
       const stat = await fs.stat(skillFile);
       expect(stat.isFile()).toBe(true);
 
-      // Verify commands were created with Cursor format
+      // Commands are retired — no command files are generated
       const commandFile = path.join(tempDir, '.cursor', 'commands', 'opsx-explore.md');
-      const content = await fs.readFile(commandFile, 'utf-8');
-      expect(content).toContain('name: /opsx-explore');
+      await expect(fs.stat(commandFile)).rejects.toThrow();
     });
 
     it('creates skills for Windsurf tool', async () => {

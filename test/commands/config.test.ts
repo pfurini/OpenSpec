@@ -178,11 +178,6 @@ describe('config key validation', () => {
     expect(validateConfigKeyPath('profile').valid).toBe(true);
   });
 
-  it('allows delivery key', async () => {
-    const { validateConfigKeyPath } = await import('../../src/core/config-schema.js');
-    expect(validateConfigKeyPath('delivery').valid).toBe(true);
-  });
-
   it('allows workflows key', async () => {
     const { validateConfigKeyPath } = await import('../../src/core/config-schema.js');
     expect(validateConfigKeyPath('workflows').valid).toBe(true);
@@ -206,23 +201,20 @@ describe('config profile command', () => {
     vi.resetModules();
   });
 
-  it('core preset should set profile to core and preserve delivery', async () => {
+  it('core preset should set profile to core with the core workflows', async () => {
     const { getGlobalConfig, saveGlobalConfig } = await import('../../src/core/global-config.js');
 
-    // Set initial config with custom delivery
-    saveGlobalConfig({ featureFlags: {}, profile: 'custom', delivery: 'skills', workflows: ['explore'] });
+    saveGlobalConfig({ featureFlags: {}, profile: 'custom', workflows: ['explore'] });
 
     // Simulate the core preset logic
     const config = getGlobalConfig();
     const { CORE_WORKFLOWS } = await import('../../src/core/profiles.js');
     config.profile = 'core';
     config.workflows = [...CORE_WORKFLOWS];
-    // Delivery should be preserved
     saveGlobalConfig(config);
 
     const result = getGlobalConfig();
     expect(result.profile).toBe('core');
-    expect(result.delivery).toBe('skills'); // preserved
     expect(result.workflows).toEqual(['propose', 'explore', 'apply', 'sync', 'archive']);
   });
 
@@ -241,7 +233,6 @@ describe('config profile command', () => {
     saveGlobalConfig({
       featureFlags: {},
       profile: isCoreMatch ? 'core' : 'custom',
-      delivery: 'both',
       workflows: selectedWorkflows,
     });
 
@@ -261,25 +252,17 @@ describe('config profile command', () => {
     expect(isCoreMatch).toBe(true);
   });
 
-  it('config schema should validate profile and delivery values', async () => {
+  it('config schema should validate profile values', async () => {
     const { validateConfig } = await import('../../src/core/config-schema.js');
 
-    expect(validateConfig({ featureFlags: {}, profile: 'core', delivery: 'both' }).success).toBe(true);
-    expect(validateConfig({ featureFlags: {}, profile: 'custom', delivery: 'skills' }).success).toBe(true);
-    expect(validateConfig({ featureFlags: {}, profile: 'custom', delivery: 'commands', workflows: ['explore'] }).success).toBe(true);
+    expect(validateConfig({ featureFlags: {}, profile: 'core' }).success).toBe(true);
+    expect(validateConfig({ featureFlags: {}, profile: 'custom', workflows: ['explore'] }).success).toBe(true);
   });
 
   it('config schema should reject invalid profile values', async () => {
     const { validateConfig } = await import('../../src/core/config-schema.js');
 
     const result = validateConfig({ featureFlags: {}, profile: 'invalid' });
-    expect(result.success).toBe(false);
-  });
-
-  it('config schema should reject invalid delivery values', async () => {
-    const { validateConfig } = await import('../../src/core/config-schema.js');
-
-    const result = validateConfig({ featureFlags: {}, delivery: 'invalid' });
     expect(result.success).toBe(false);
   });
 });

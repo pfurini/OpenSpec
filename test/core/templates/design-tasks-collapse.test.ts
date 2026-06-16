@@ -4,7 +4,6 @@ import { resolveSchema } from '../../../src/core/artifact-graph/resolver.js';
 import { loadTemplate } from '../../../src/core/artifact-graph/instruction-loader.js';
 import {
   getOpsxDesignSkillTemplate,
-  getOpsxDesignCommandTemplate,
 } from '../../../src/core/templates/skill-templates.js';
 import { flattenSkillBody } from '../../../src/core/shared/skill-bundle.js';
 
@@ -43,10 +42,10 @@ describe('design→tasks pipeline collapse', () => {
       expect(instruction().toLowerCase()).not.toMatch(/transcribe it faithfully/);
     });
 
-    it('is a STOP gate pointing the user at /opsx:design', () => {
+    it('is a STOP gate pointing the user at the openspec-design skill', () => {
       const text = instruction();
       expect(text).toMatch(/STOP/);
-      expect(text).toMatch(/\/opsx:design/);
+      expect(text).toMatch(/openspec-design/);
     });
 
     it('no longer enumerates the design.md section spec (that home is the design skill)', () => {
@@ -112,8 +111,5 @@ describe('design→tasks pipeline collapse', () => {
       expect(designBody().toLowerCase()).toMatch(/scope[- ]reduction|mvp|for now/);
     });
 
-    it('design command (flattened, single-file) also carries the wave skeleton', () => {
-      expect(getOpsxDesignCommandTemplate().content).toMatch(/Wave Skeleton|wave skeleton/);
-    });
   });
 });

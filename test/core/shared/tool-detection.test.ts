@@ -27,7 +27,7 @@ describe('tool-detection', () => {
   });
 
   describe('SKILL_NAMES', () => {
-    it('should contain all skill names matching COMMAND_IDS', () => {
+    it('should contain all skill names', () => {
       expect(SKILL_NAMES).toHaveLength(11);
       expect(SKILL_NAMES).toContain('openspec-explore');
       expect(SKILL_NAMES).toContain('openspec-new-change');

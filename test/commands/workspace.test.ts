@@ -254,7 +254,6 @@ describe('workspace command', () => {
     const codexHome = path.join(tempDir, 'codex-home');
     writeGlobalConfig({
       profile: 'custom',
-      delivery: 'commands',
       workflows: ['apply', 'archive'],
     });
 
@@ -288,11 +287,8 @@ describe('workspace command', () => {
     expect(payload.workspace_skills).toEqual(
       expect.objectContaining({
         profile: 'custom',
-        delivery: 'commands',
         workflow_ids: ['apply', 'archive'],
         selected_agents: ['codex'],
-        skills_only: true,
-        delivery_notice: expect.stringContaining('skills only'),
         generated: [
           expect.objectContaining({
             tool_id: 'codex',
@@ -315,7 +311,6 @@ describe('workspace command', () => {
       expect.objectContaining({
         selected_agents: ['codex'],
         last_applied_profile: 'custom',
-        last_applied_delivery: 'commands',
         last_applied_workflow_ids: ['apply', 'archive'],
         last_applied_at: expect.any(String),
       })
@@ -352,7 +347,6 @@ describe('workspace command', () => {
     const linkedEntriesBefore = fs.readdirSync(api).sort();
     writeGlobalConfig({
       profile: 'custom',
-      delivery: 'commands',
       workflows: ['apply', 'verify'],
     });
     const setup = await setupWorkspace('profile-sync', [`api=${api}`], ['--tools', 'codex']);
@@ -366,7 +360,6 @@ describe('workspace command', () => {
 
     writeGlobalConfig({
       profile: 'core',
-      delivery: 'commands',
     });
 
     const drift = await runCLI(
@@ -392,11 +385,8 @@ describe('workspace command', () => {
     expect(payload.workspace_skills).toEqual(
       expect.objectContaining({
         profile: 'core',
-        delivery: 'commands',
         workflow_ids: ['propose', 'explore', 'apply', 'sync', 'archive'],
         selected_agents: ['codex'],
-        skills_only: true,
-        delivery_notice: expect.stringContaining('skills only'),
         refreshed: [
           expect.objectContaining({
             tool_id: 'codex',
@@ -426,7 +416,6 @@ describe('workspace command', () => {
       expect.objectContaining({
         selected_agents: ['codex'],
         last_applied_profile: 'core',
-        last_applied_delivery: 'commands',
         last_applied_workflow_ids: ['propose', 'explore', 'apply', 'sync', 'archive'],
       })
     );
@@ -448,7 +437,6 @@ describe('workspace command', () => {
     const linkedEntriesBefore = fs.readdirSync(api).sort();
     writeGlobalConfig({
       profile: 'custom',
-      delivery: 'commands',
       workflows: ['apply'],
     });
     const setup = await setupWorkspace('update-redirect', [`api=${api}`], ['--tools', 'codex']);
@@ -459,7 +447,6 @@ describe('workspace command', () => {
 
     writeGlobalConfig({
       profile: 'core',
-      delivery: 'commands',
     });
 
     const update = await runCLI(['update'], {
@@ -481,7 +468,6 @@ describe('workspace command', () => {
     const api = mkdir('repos/api');
     writeGlobalConfig({
       profile: 'custom',
-      delivery: 'commands',
       workflows: ['apply'],
     });
     const setup = await setupWorkspace('nested-update-target', [`api=${api}`], ['--tools', 'codex']);
@@ -494,7 +480,6 @@ describe('workspace command', () => {
 
     writeGlobalConfig({
       profile: 'core',
-      delivery: 'commands',
     });
 
     const update = await runCLI(['update', nestedRepo], {
@@ -514,7 +499,6 @@ describe('workspace command', () => {
     const existingApi = mkdir('repos/existing-api');
     writeGlobalConfig({
       profile: 'custom',
-      delivery: 'commands',
       workflows: ['apply'],
     });
     const existingWorkspace = await setupWorkspace('known-workspace', [`api=${existingApi}`], ['--tools', 'codex']);
@@ -528,7 +512,6 @@ describe('workspace command', () => {
 
     writeGlobalConfig({
       profile: 'core',
-      delivery: 'commands',
     });
 
     const repoRoot = mkdir('repos/foreign-tool');
@@ -567,7 +550,6 @@ describe('workspace command', () => {
     const secondApi = mkdir('repos/second-api');
     writeGlobalConfig({
       profile: 'custom',
-      delivery: 'commands',
       workflows: ['apply'],
     });
     const first = await setupWorkspace('target-first', [`api=${firstApi}`], ['--tools', 'codex']);
@@ -577,7 +559,6 @@ describe('workspace command', () => {
 
     writeGlobalConfig({
       profile: 'core',
-      delivery: 'commands',
     });
 
     const update = await runCLI(
@@ -603,7 +584,6 @@ describe('workspace command', () => {
     const api = mkdir('repos/api');
     writeGlobalConfig({
       profile: 'custom',
-      delivery: 'skills',
       workflows: ['apply'],
     });
     const setup = await setupWorkspace('agent-change', [`api=${api}`], ['--tools', 'codex']);
@@ -652,7 +632,6 @@ describe('workspace command', () => {
     const api = mkdir('repos/api');
     writeGlobalConfig({
       profile: 'custom',
-      delivery: 'skills',
       workflows: ['verify'],
     });
     const setup = await setupWorkspace('unmanaged-collision', [`api=${api}`], ['--tools', 'codex']);
@@ -675,7 +654,6 @@ describe('workspace command', () => {
     const api = mkdir('repos/api');
     writeGlobalConfig({
       profile: 'custom',
-      delivery: 'skills',
       workflows: ['apply'],
     });
     const setup = await setupWorkspace('failed-update-state', [`api=${api}`], ['--tools', 'codex']);
@@ -685,7 +663,6 @@ describe('workspace command', () => {
 
     writeGlobalConfig({
       profile: 'core',
-      delivery: 'skills',
     });
 
     const update = await runCLI(
@@ -1784,9 +1761,6 @@ preferred_opener:
     expect(update?.description).toContain('guidance and agent skills');
     expect(update?.flags?.find((flag) => flag.name === 'tools')?.description).toContain(
       'global profile selects workflows'
-    );
-    expect(update?.flags?.find((flag) => flag.name === 'tools')?.description).toContain(
-      'skills-only'
     );
     expect(open?.positionals).toEqual([
       { name: 'name', optional: true },

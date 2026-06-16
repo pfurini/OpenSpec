@@ -52,7 +52,7 @@
 
 ## Wave Skeleton / Build Sequence
 
-<!-- THE SOURCE OF THE TDD WAVE MAP. /opsx:design decides this WITH the user; tasks.md
+<!-- THE SOURCE OF THE TDD WAVE MAP. openspec-design decides this WITH the user; tasks.md
      transcribes it verbatim (adding only grounded test paths). Value-ordered vertical
      slices that respect dependencies; wave 0 is the tracer bullet (one failing end-to-end
      happy-path test + scaffolds for missing test infra, committed RED). Each wave is one
