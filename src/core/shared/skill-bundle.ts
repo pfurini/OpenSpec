@@ -69,61 +69,132 @@ export function loadSkillSource(dirName: string, seams: Record<string, string> =
     }
   }
 
-  const bundle: SkillBundle = references.length > 0 ? { references } : {};
+  const scripts: SkillFile[] = [];
+  const scriptsDir = path.join(skillDir, 'scripts');
+  if (fs.existsSync(scriptsDir)) {
+    const entries = fs
+      .readdirSync(scriptsDir)
+      .filter((name) => !name.startsWith('.'))
+      .sort();
+    for (const name of entries) {
+      const filePath = path.join(scriptsDir, name);
+      if (!fs.statSync(filePath).isFile()) continue;
+      const content = injectSeams(fs.readFileSync(filePath, 'utf8').trimEnd(), seams);
+      scripts.push({ relPath: `scripts/${name}`, content, executable: true });
+    }
+  }
+
+  const bundle: SkillBundle = {};
+  if (references.length > 0) bundle.references = references;
+  if (scripts.length > 0) bundle.scripts = scripts;
+
+  // Fail loudly at load time if any authored bundle block points at a missing file.
+  validateBundleBlocks(instructions, bundle);
+
   return { instructions, bundle };
 }
 
-/** The in-body placeholder marking where a reference belongs: `<!--reference:references/foo.md-->`. */
-function referenceMarker(relPath: string): string {
-  return `<!--reference:${relPath}-->`;
+/**
+ * A bundle block is authored prose fenced by `<!--bundle:start-->` /
+ * `<!--bundle:end-->`. The prose is written by the skill author and is what a
+ * multi-file (`full`) tool reads verbatim; the file paths it mentions are
+ * resolved (inlined) only when the bundle is degraded to a single file (`flatten`).
+ */
+const BUNDLE_BLOCK_RE = /<!--bundle:start-->([\s\S]*?)<!--bundle:end-->/g;
+
+/**
+ * A bundle-include path: a token rooted at one of the bundle directories
+ * (`references/` or `scripts/`), to any depth. Anchoring to these roots keeps
+ * incidental prose paths (e.g. `docs/adr/README.md`, `path:line` citations)
+ * from being mistaken for includes, while still catching a typo'd bundle path.
+ */
+const BUNDLE_PATH_RE = /(?:references|scripts)\/[A-Za-z0-9_./-]+\.[A-Za-z0-9]+/g;
+
+/** Indexes every bundle file by its relPath, tagging whether it is a script. */
+function indexBundle(bundle: SkillBundle | undefined): Map<string, { file: SkillFile; isScript: boolean }> {
+  const map = new Map<string, { file: SkillFile; isScript: boolean }>();
+  for (const ref of bundle?.references ?? []) map.set(ref.relPath, { file: ref, isScript: false });
+  for (const script of bundle?.scripts ?? []) map.set(script.relPath, { file: script, isScript: true });
+  return map;
 }
 
-/** First markdown heading text in `content`, used to title a reference pointer. */
-function firstHeadingText(content: string): string | undefined {
-  return content.match(/^#{1,6}\s+(.+?)\s*$/m)?.[1];
+/** Extracts bundle-include paths from a chunk of text, in order, de-duplicated. */
+function extractBundlePaths(text: string): string[] {
+  const out: string[] = [];
+  for (const match of text.matchAll(BUNDLE_PATH_RE)) {
+    if (!out.includes(match[0])) out.push(match[0]);
+  }
+  return out;
+}
+
+/** Renders one bundle file for inline (`flatten`) use: references raw; scripts in a fenced, path-headed code block. */
+function renderInlineFile(relPath: string, entry: { file: SkillFile; isScript: boolean }): string {
+  if (!entry.isScript) return entry.file.content;
+  const ext = relPath.match(/\.([A-Za-z0-9]+)$/)?.[1] ?? '';
+  return `**\`${relPath}\`**\n\n\`\`\`${ext}\n${entry.file.content}\n\`\`\``;
 }
 
 /**
- * Concatenates a skill's instructions with its reference files into a single
+ * Validates every path mentioned inside a `<!--bundle:start-->…<!--bundle:end-->`
+ * block against the bundle. Throws (naming the path) if a block points at a file
+ * that does not exist — a typo or stale rename fails loudly at load time rather
+ * than silently dropping content downstream.
+ */
+export function validateBundleBlocks(instructions: string, bundle: SkillBundle | undefined): void {
+  const known = indexBundle(bundle);
+  for (const block of instructions.matchAll(BUNDLE_BLOCK_RE)) {
+    for (const relPath of extractBundlePaths(block[1])) {
+      if (!known.has(relPath)) {
+        throw new Error(
+          `Bundle block references "${relPath}" but no such file exists in the skill bundle.`,
+        );
+      }
+    }
+  }
+}
+
+/**
+ * Concatenates a skill's instructions with its bundle files into a single
  * self-contained body. Used for `flatten` tools and for slash commands (which
- * are single-file by design). Scripts are not inlined.
+ * are single-file by design).
  *
- * A reference is inlined **in place** wherever its `<!--reference:relPath-->`
- * marker appears (preserving authored order); references with no marker are
- * appended at the end. Markers never leak into output.
+ * Each `<!--bundle:start-->…<!--bundle:end-->` block is replaced **in place** by
+ * the in-order concatenation of the files its prose names (references inlined
+ * raw; scripts inlined as fenced code). The authored pointer prose — useful only
+ * when the files live separately — is discarded. References not named by any
+ * block are appended at the end (no silent loss); unreferenced scripts are dropped.
  */
 export function flattenSkillBody(instructions: string, bundle: SkillBundle | undefined): string {
   const references = bundle?.references ?? [];
-  if (references.length === 0) return instructions;
+  const scripts = bundle?.scripts ?? [];
+  if (references.length === 0 && scripts.length === 0) return instructions;
 
-  let body = instructions;
-  const appended: string[] = [];
-  for (const ref of references) {
-    const marker = referenceMarker(ref.relPath);
-    if (body.includes(marker)) {
-      body = body.split(marker).join(ref.content);
-    } else {
-      appended.push(ref.content);
+  validateBundleBlocks(instructions, bundle);
+  const known = indexBundle(bundle);
+  const consumed = new Set<string>();
+
+  const body = instructions.replace(BUNDLE_BLOCK_RE, (_full, inner: string) => {
+    const parts: string[] = [];
+    for (const relPath of extractBundlePaths(inner)) {
+      const entry = known.get(relPath)!; // validated above
+      consumed.add(relPath);
+      parts.push(renderInlineFile(relPath, entry));
     }
-  }
+    return parts.join('\n\n');
+  });
+
+  // Any reference never named by a block still ships (appended) so flatten loses nothing.
+  const appended = references.filter((ref) => !consumed.has(ref.relPath)).map((ref) => ref.content);
   return appended.length > 0 ? [body, ...appended].join('\n\n') : body;
 }
 
 /**
- * Renders a skill's instructions for a `full` (multi-file) tool: each reference
- * marker becomes a short pointer to the on-demand file (titled from the
- * reference's first heading). References are emitted as separate files by the caller.
+ * Renders a skill's instructions for a `full` (multi-file) tool: each
+ * `<!--bundle:start-->…<!--bundle:end-->` block has only its fence comments
+ * stripped, leaving the author's prose verbatim (path mentions and all). The
+ * referenced files are emitted separately by the caller for on-demand loading.
  */
 export function renderFullInstructions(instructions: string, bundle: SkillBundle | undefined): string {
-  const references = bundle?.references ?? [];
-  let body = instructions;
-  for (const ref of references) {
-    const marker = referenceMarker(ref.relPath);
-    if (!body.includes(marker)) continue;
-    const title = firstHeadingText(ref.content);
-    const heading = title ? `## ${title}` : '## Reference';
-    const pointer = `${heading}\n\nThe full detail for this section is in **\`${ref.relPath}\`** — load it on demand.`;
-    body = body.split(marker).join(pointer);
-  }
-  return body;
+  validateBundleBlocks(instructions, bundle);
+  return instructions.replace(BUNDLE_BLOCK_RE, (_full, inner: string) => inner.trim());
 }

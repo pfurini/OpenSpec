@@ -91,7 +91,11 @@ Capture the result in design.md's **Wave Skeleton / Build Sequence** section —
 
 ---
 
-<!--reference:references/flow.md-->
+<!--bundle:start-->
+## The Flow — read before you design
+
+The end-to-end design procedure — prime → approaches → interview → decompose → sequence into waves → write `design.md` → record ADRs → self-review → handoff — is in **references/flow.md**. Load it and follow it in order; it is the operational backbone of this command.
+<!--bundle:end-->
 
 ---
 
@@ -105,7 +109,23 @@ Capture the result in design.md's **Wave Skeleton / Build Sequence** section —
 - **Stay in the HOW lane** - The WHAT is fixed. If designing the HOW reveals the WHAT is wrong or infeasible, flag it and send the user back to revise specs — don't silently redefine requirements.
 - **Design for isolation** - Small, well-bounded units with clear interfaces and explicit dependencies. Follow existing patterns; YAGNI.
 - **Write design.md directly; no code, no tasks** - your output IS `design.md` (incl. the Wave Skeleton) + ADRs, written after the shape-approval gate. `/opsx:continue` only transcribes the wave skeleton into `tasks.md`; it does not author `design.md`.
-- **ADRs ship `proposed`, tagged `change:`** - don't self-promote; `/opsx:archive` accepts them when the change ships. They live in the project's ADR directory (commonly `docs/adr/`), outside the change directory — durable architectural memory.
-- **Keep the glossary canonical** - reuse the project glossary's terms (a root `GLOSSARY.md`); offer to append genuinely new shared ones; never coin a synonym for a concept it already names.
+- **ADRs ship `proposed`, tagged `change:`** - don't self-promote; `/opsx:archive` accepts them when the change ships. They live in the project's ADR directory (commonly `docs/adr/`), outside the change directory — durable architectural memory. **Format, numbering, and the full "what qualifies" criteria: the ADR Format reference below.**
+- **Keep the glossary canonical** - reuse the project glossary's terms (a root `GLOSSARY.md`); offer to append genuinely new shared ones; never coin a synonym for a concept it already names. **Structure and the `_Avoid_` synonym-killing convention: the Glossary Format reference below.**
 - **Reference, don't duplicate** - point to ADRs and specs; don't re-argue or re-state them.
 - **Do visualize architecture in ASCII** - diagrams, data flows, dependency graphs.
+
+---
+
+<!--bundle:start-->
+## ADR Format
+
+When you record an ADR (step 6 of the flow), follow the frontmatter, status lifecycle, registry-based numbering, and the full "what qualifies" criteria in **references/ADR-FORMAT.md** exactly.
+<!--bundle:end-->
+
+---
+
+<!--bundle:start-->
+## Glossary Format
+
+When you write or extend the project glossary, follow the structure, the tight-definition rules, and the `_Avoid_` synonym-killing convention in **references/GLOSSARY-FORMAT.md**.
+<!--bundle:end-->

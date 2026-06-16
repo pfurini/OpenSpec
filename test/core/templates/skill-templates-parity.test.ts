@@ -33,8 +33,8 @@ import { generateSkillContent, buildSkillArtifacts } from '../../../src/core/sha
 
 const EXPECTED_FUNCTION_HASHES: Record<string, string> = {
   getExploreSkillTemplate: '2ae925bac22575d7af8f24fe6c94d1ebcbd0f7897ea60f9873823299affa15ce',
-  getOpsxDesignSkillTemplate: '9367a7009f29b0fa2fed3514db4eb69f671225061596a369e5ab2623a64c19a7',
-  getOpsxDesignCommandTemplate: 'a83a16d6ecb3fddd49cf7bb94ae0a4da4dc0d34a75cdf941909b7b69763c83f2',
+  getOpsxDesignSkillTemplate: '495229b93743d7ec1ff31d9b120fc9a2d720a538341134a0eb21cea6affeee4f',
+  getOpsxDesignCommandTemplate: '1aad7a3ed3675bbb3ea4c048ae0a832a8b05aa3e396817889d74945e66506c5d',
   getNewChangeSkillTemplate: '8dd042e33d5db66fb3bacc0bba806c669c1c02802abf4bc7e0fbe74c189c2d87',
   getContinueChangeSkillTemplate: '54dda3115192748419ca9771893665a19c39745910f525bcb817f72fe48ceea8',
   getApplyChangeSkillTemplate: 'e746f230c2513a5fd40842bde494bb3cdb3c5f7c1bcece101f92090983d4ff55',
@@ -61,7 +61,7 @@ const EXPECTED_FUNCTION_HASHES: Record<string, string> = {
 
 const EXPECTED_GENERATED_SKILL_CONTENT_HASHES: Record<string, string> = {
   'openspec-explore': '1d9a292e1cfdfe0af5b81be2a8b0b042cf518ca48987890ee31a9201b8e535bb',
-  'openspec-design': 'ac1846d7bf305dc5057e190f4a3496451dd5d67e28127ce0eac44f0dcf375254',
+  'openspec-design': 'f870e52645ad8130f1c72af39911a81718d72b1f9901f0d0839eeb1f601a804f',
   'openspec-new-change': '56d91ad2d746f35ab87990e0875985f1421a07ad965e40fee4f46a96fd5c6bcb',
   'openspec-continue-change': '92779c8f0b18ad74cf27d551603957ea976c6dfa5f36ea032bfec624e5fe218e',
   'openspec-apply-change': 'd849442efd925b9247651e254a5cd696945321610cca5a9432ad420430554548',
@@ -75,8 +75,8 @@ const EXPECTED_GENERATED_SKILL_CONTENT_HASHES: Record<string, string> = {
 };
 
 const EXPECTED_BUNDLE_TREE_HASHES: Record<string, string> = {
-  'openspec-design:full': '9c73f86fb34ba017d916e6b8011585bfa6bbbc2ae82493c78daafc3bd7f7332a',
-  'openspec-design:flatten': '3f6b7c52655b9b09061029fd441d8c3e8a56fb0b20e64106ccb815c79c2774a8',
+  'openspec-design:full': '2d6208a486e6a639921ad8b1bb43aa736457ade932e2122c5e9d3c55602d910f',
+  'openspec-design:flatten': '4a4dc3441168092f2bd337d74d41d21d7cfd26659053b6c9aa527ff9352cb952',
 };
 
 function stableStringify(value: unknown): string {
