@@ -140,11 +140,12 @@ describe('openspec CLI e2e basics', () => {
       expect(result.exitCode).toBe(0);
       expect(result.stdout).toContain('OpenSpec Setup Complete');
 
-      // Check that skills were created for multiple tools
+      // Skills land once in the canonical store; Claude additionally gets a
+      // symlink (which fileExists resolves through).
+      const canonicalSkillPath = path.join(emptyProjectDir, '.agents/skills/openspec-explore/SKILL.md');
       const claudeSkillPath = path.join(emptyProjectDir, '.claude/skills/openspec-explore/SKILL.md');
-      const cursorSkillPath = path.join(emptyProjectDir, '.cursor/skills/openspec-explore/SKILL.md');
+      expect(await fileExists(canonicalSkillPath)).toBe(true);
       expect(await fileExists(claudeSkillPath)).toBe(true);
-      expect(await fileExists(cursorSkillPath)).toBe(true);
     }, 25000);
 
     it('initializes with --tools list option', async () => {

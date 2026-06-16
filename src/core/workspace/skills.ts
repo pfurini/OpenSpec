@@ -4,14 +4,18 @@ import { createRequire } from 'node:module';
 import { FileSystemUtils } from '../../utils/file-system.js';
 import { AI_TOOLS, type AIToolOption } from '../config.js';
 import { getGlobalConfig, type Profile } from '../global-config.js';
-import { getProfileWorkflows } from '../profiles.js';
+import { getProfileWorkflows, ALL_WORKFLOWS } from '../profiles.js';
 import {
-  generateSkillContent,
   getSkillTemplates,
   getToolSkillStatus,
   getToolsWithSkillsDir,
   extractGeneratedByVersion,
+  getCanonicalSkillsDir,
+  installSkills,
+  removeSkill,
+  SYMLINK_TOOL_IDS,
 } from '../shared/index.js';
+import { WORKFLOW_TO_SKILL_DIR } from '../profile-sync-drift.js';
 import type { WorkspaceSkillState } from './foundation.js';
 
 const require = createRequire(import.meta.url);
@@ -237,7 +241,9 @@ function makeAgentResult(
   return {
     tool_id: tool.value,
     name: tool.name,
-    skills_path: getWorkspaceSkillDirectoryForTool(workspaceRoot, tool),
+    // Skills live in the canonical store every agent reads; symlink tools also
+    // get a per-tool link, but the store is the source of truth.
+    skills_path: getCanonicalSkillsDir(workspaceRoot),
     workflow_ids: workflowIds,
   };
 }
@@ -246,56 +252,78 @@ function getManagedWorkspaceSkillEntries(): Array<{ workflowId: string; dirName:
   return getSkillTemplates().map(({ workflowId, dirName }) => ({ workflowId, dirName }));
 }
 
-async function pathExists(targetPath: string): Promise<boolean> {
-  try {
-    await fs.access(targetPath);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 function isOpenSpecManagedSkillDir(skillDir: string): boolean {
   const skillFile = FileSystemUtils.joinPath(skillDir, 'SKILL.md');
   return extractGeneratedByVersion(skillFile) !== null;
 }
 
-async function removeManagedWorkflowSkillDirs(
+function isSymlinkTool(toolId: string): boolean {
+  return SYMLINK_TOOL_IDS.includes(toolId);
+}
+
+/**
+ * Workflow IDs whose OpenSpec-managed skill is present in the canonical store.
+ * (User-owned directories that merely collide with a workflow name are ignored.)
+ */
+function getManagedCanonicalWorkflowIds(workspaceRoot: string): string[] {
+  const canonicalDir = getCanonicalSkillsDir(workspaceRoot);
+  const present: string[] = [];
+  for (const workflow of ALL_WORKFLOWS) {
+    const dirName = WORKFLOW_TO_SKILL_DIR[workflow];
+    if (!dirName) continue;
+    if (isOpenSpecManagedSkillDir(FileSystemUtils.joinPath(canonicalDir, dirName))) {
+      present.push(workflow);
+    }
+  }
+  return present;
+}
+
+/**
+ * Remove an unselected agent's symlinks into the canonical store (symlink tools
+ * only — other agents read the shared store and leave nothing per-tool behind).
+ */
+async function removeAgentSymlinks(
   workspaceRoot: string,
-  tool: WorkspaceSkillCapableTool,
-  desiredWorkflowIds: readonly string[],
-  reason: WorkspaceSkillRemovedResult['reason']
-): Promise<WorkspaceSkillRemovedResult | null> {
-  const desiredSet = new Set(desiredWorkflowIds);
+  tool: WorkspaceSkillCapableTool
+): Promise<void> {
+  if (!isSymlinkTool(tool.value)) return;
   const skillsDir = getWorkspaceSkillDirectoryForTool(workspaceRoot, tool);
+  for (const { dirName } of getManagedWorkspaceSkillEntries()) {
+    const linkPath = FileSystemUtils.joinPath(skillsDir, dirName);
+    try {
+      const stats = await fs.lstat(linkPath);
+      if (stats.isSymbolicLink()) {
+        await fs.unlink(linkPath);
+      }
+    } catch {
+      // nothing to remove
+    }
+  }
+}
+
+/**
+ * Remove deselected-workflow skills from the canonical store and the selected
+ * symlink tools. Returns the workflow IDs actually removed (managed only).
+ */
+async function removeDeselectedCanonicalWorkflows(
+  workspaceRoot: string,
+  selectedAgentIds: readonly string[],
+  desiredWorkflowIds: readonly string[]
+): Promise<string[]> {
+  const desiredSet = new Set(desiredWorkflowIds);
+  const canonicalDir = getCanonicalSkillsDir(workspaceRoot);
   const removedWorkflowIds: string[] = [];
 
   for (const { workflowId, dirName } of getManagedWorkspaceSkillEntries()) {
-    if (desiredSet.has(workflowId)) {
-      continue;
+    if (desiredSet.has(workflowId)) continue;
+    if (!isOpenSpecManagedSkillDir(FileSystemUtils.joinPath(canonicalDir, dirName))) {
+      continue; // absent or user-owned — never touch
     }
-
-    const skillDir = FileSystemUtils.joinPath(skillsDir, dirName);
-    if (!(await pathExists(skillDir))) {
-      continue;
-    }
-
-    if (!isOpenSpecManagedSkillDir(skillDir)) {
-      continue;
-    }
-
-    await fs.rm(skillDir, { recursive: true, force: true });
+    await removeSkill(workspaceRoot, dirName, { symlinkTools: selectedAgentIds });
     removedWorkflowIds.push(workflowId);
   }
 
-  if (removedWorkflowIds.length === 0) {
-    return null;
-  }
-
-  return {
-    ...makeAgentResult(workspaceRoot, tool, removedWorkflowIds),
-    reason,
-  };
+  return removedWorkflowIds;
 }
 
 export async function generateWorkspaceAgentSkills(
@@ -328,31 +356,35 @@ export async function generateWorkspaceAgentSkills(
     return report;
   }
 
-  for (const toolId of selectedAgentIds) {
-    const tool = getWorkspaceSkillTool(toolId);
-    const wasConfigured = getToolSkillStatus(workspaceRoot, tool.value).configured;
+  // Capture prior per-agent configured state before writing the canonical store.
+  const wasConfigured = new Map(
+    selectedAgentIds.map((toolId) => [toolId, getToolSkillStatus(workspaceRoot, toolId).configured])
+  );
 
-    try {
-      const skillsDir = getWorkspaceSkillDirectoryForTool(workspaceRoot, tool);
-
-      for (const { template, dirName } of skillTemplates) {
-        const skillFile = FileSystemUtils.joinPath(skillsDir, dirName, 'SKILL.md');
-        const skillContent = generateSkillContent(template, OPENSPEC_VERSION);
-        await FileSystemUtils.writeFile(skillFile, skillContent);
-      }
-
-      const result = makeAgentResult(workspaceRoot, tool, profileContext.workflowIds);
-      if (wasConfigured) {
-        report.refreshed.push(result);
-      } else {
-        report.generated.push(result);
-      }
-    } catch (error) {
+  try {
+    await installSkills(workspaceRoot, skillTemplates, {
+      symlinkTools: selectedAgentIds,
+      version: OPENSPEC_VERSION,
+    });
+  } catch (error) {
+    for (const toolId of selectedAgentIds) {
+      const tool = getWorkspaceSkillTool(toolId);
       report.failed.push({
         tool_id: tool.value,
         name: tool.name,
         error: error instanceof Error ? error.message : String(error),
       });
+    }
+    return report;
+  }
+
+  for (const toolId of selectedAgentIds) {
+    const tool = getWorkspaceSkillTool(toolId);
+    const result = makeAgentResult(workspaceRoot, tool, profileContext.workflowIds);
+    if (wasConfigured.get(toolId)) {
+      report.refreshed.push(result);
+    } else {
+      report.generated.push(result);
     }
   }
 
@@ -371,6 +403,12 @@ export async function updateWorkspaceAgentSkills(
   const selectedSet = new Set(selectedAgentIds);
   const skillTemplates = getSkillTemplates(profileContext.workflowIds);
 
+  // Workflows the canonical store is currently serving (managed skills only).
+  // Captured before any removal so unselected agents can report what they had.
+  const presentWorkflowIds = getManagedCanonicalWorkflowIds(workspaceRoot);
+
+  // 1. Unselected agents: drop their symlinks (symlink tools); the shared
+  //    canonical store stays for the agents that remain.
   for (const toolId of previousSelectedAgentIds) {
     if (selectedSet.has(toolId)) {
       continue;
@@ -379,14 +417,12 @@ export async function updateWorkspaceAgentSkills(
     const tool = getWorkspaceSkillTool(toolId);
 
     try {
-      const removed = await removeManagedWorkflowSkillDirs(
-        workspaceRoot,
-        tool,
-        [],
-        'agent_unselected'
-      );
-      if (removed) {
-        report.removed.push(removed);
+      await removeAgentSymlinks(workspaceRoot, tool);
+      if (presentWorkflowIds.length > 0) {
+        report.removed.push({
+          ...makeAgentResult(workspaceRoot, tool, presentWorkflowIds),
+          reason: 'agent_unselected',
+        });
       }
     } catch (error) {
       report.failed.push({
@@ -398,6 +434,14 @@ export async function updateWorkspaceAgentSkills(
   }
 
   if (selectedAgentIds.length === 0) {
+    // No agent reads the store anymore — tear down the managed canonical skills.
+    for (const workflowId of presentWorkflowIds) {
+      const dirName = WORKFLOW_TO_SKILL_DIR[workflowId as (typeof ALL_WORKFLOWS)[number]];
+      if (dirName) {
+        await removeSkill(workspaceRoot, dirName, { symlinkTools: [] });
+      }
+    }
+
     if (report.removed.length === 0) {
       report.skipped.push({
         reason: previousSkillState ? 'no_agents_selected' : 'no_stored_agent_selection',
@@ -410,23 +454,17 @@ export async function updateWorkspaceAgentSkills(
   }
 
   if (skillTemplates.length === 0) {
+    const removedWorkflowIds = await removeDeselectedCanonicalWorkflows(
+      workspaceRoot,
+      selectedAgentIds,
+      []
+    );
     for (const toolId of selectedAgentIds) {
       const tool = getWorkspaceSkillTool(toolId);
-      try {
-        const removed = await removeManagedWorkflowSkillDirs(
-          workspaceRoot,
-          tool,
-          [],
-          'workflow_unselected'
-        );
-        if (removed) {
-          report.removed.push(removed);
-        }
-      } catch (error) {
-        report.failed.push({
-          tool_id: tool.value,
-          name: tool.name,
-          error: error instanceof Error ? error.message : String(error),
+      if (removedWorkflowIds.length > 0) {
+        report.removed.push({
+          ...makeAgentResult(workspaceRoot, tool, removedWorkflowIds),
+          reason: 'workflow_unselected',
         });
       }
       report.skipped.push({
@@ -439,40 +477,46 @@ export async function updateWorkspaceAgentSkills(
     return report;
   }
 
-  for (const toolId of selectedAgentIds) {
-    const tool = getWorkspaceSkillTool(toolId);
-
-    try {
-      const skillsDir = getWorkspaceSkillDirectoryForTool(workspaceRoot, tool);
-
-      for (const { template, dirName } of skillTemplates) {
-        const skillFile = FileSystemUtils.joinPath(skillsDir, dirName, 'SKILL.md');
-        const skillContent = generateSkillContent(template, OPENSPEC_VERSION);
-        await FileSystemUtils.writeFile(skillFile, skillContent);
-      }
-
-      const removed = await removeManagedWorkflowSkillDirs(
-        workspaceRoot,
-        tool,
-        profileContext.workflowIds,
-        'workflow_unselected'
-      );
-      if (removed) {
-        report.removed.push(removed);
-      }
-
-      const result = makeAgentResult(workspaceRoot, tool, profileContext.workflowIds);
-      if (previousSelectedSet.has(toolId)) {
-        report.refreshed.push(result);
-      } else {
-        report.added.push(result);
-      }
-    } catch (error) {
+  // 2. Write the canonical store once + symlink the selected symlink tools.
+  try {
+    await installSkills(workspaceRoot, skillTemplates, {
+      symlinkTools: selectedAgentIds,
+      version: OPENSPEC_VERSION,
+    });
+  } catch (error) {
+    for (const toolId of selectedAgentIds) {
+      const tool = getWorkspaceSkillTool(toolId);
       report.failed.push({
         tool_id: tool.value,
         name: tool.name,
         error: error instanceof Error ? error.message : String(error),
       });
+    }
+    return report;
+  }
+
+  // 3. Drop skills for workflows no longer in the profile (canonical + symlinks).
+  const removedWorkflowIds = await removeDeselectedCanonicalWorkflows(
+    workspaceRoot,
+    selectedAgentIds,
+    profileContext.workflowIds
+  );
+
+  // 4. Per-agent report.
+  for (const toolId of selectedAgentIds) {
+    const tool = getWorkspaceSkillTool(toolId);
+    if (removedWorkflowIds.length > 0) {
+      report.removed.push({
+        ...makeAgentResult(workspaceRoot, tool, removedWorkflowIds),
+        reason: 'workflow_unselected',
+      });
+    }
+
+    const result = makeAgentResult(workspaceRoot, tool, profileContext.workflowIds);
+    if (previousSelectedSet.has(toolId)) {
+      report.refreshed.push(result);
+    } else {
+      report.added.push(result);
     }
   }
 

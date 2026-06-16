@@ -1006,10 +1006,10 @@ artifacts:
       expect(result.exitCode).toBe(0);
       const output = normalizePaths(getOutput(result));
       expect(output).toContain('Cursor');
-      expect(output).toContain('.cursor/');
+      expect(output).toContain('.agents/skills/');
 
-      // Verify skill files were created
-      const skillFile = path.join(tempDir, '.cursor', 'skills', 'openspec-explore', 'SKILL.md');
+      // Skills land in the canonical store (Cursor reads .agents/skills natively).
+      const skillFile = path.join(tempDir, '.agents', 'skills', 'openspec-explore', 'SKILL.md');
       const stat = await fs.stat(skillFile);
       expect(stat.isFile()).toBe(true);
 
@@ -1025,10 +1025,10 @@ artifacts:
       expect(result.exitCode).toBe(0);
       const output = normalizePaths(getOutput(result));
       expect(output).toContain('Windsurf');
-      expect(output).toContain('.windsurf/');
+      expect(output).toContain('.agents/skills/');
 
-      // Verify skill files were created
-      const skillFile = path.join(tempDir, '.windsurf', 'skills', 'openspec-explore', 'SKILL.md');
+      // Skills land in the canonical store (Windsurf reads .agents/skills natively).
+      const skillFile = path.join(tempDir, '.agents', 'skills', 'openspec-explore', 'SKILL.md');
       const stat = await fs.stat(skillFile);
       expect(stat.isFile()).toBe(true);
     });

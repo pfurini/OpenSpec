@@ -15,7 +15,6 @@ import {
   AI_TOOLS,
   OPENSPEC_DIR_NAME,
   AIToolOption,
-  getSkillBundleCapability,
 } from './config.js';
 import { PALETTE } from './styles/palette.js';
 import { isInteractive } from '../utils/interactive.js';
@@ -31,9 +30,9 @@ import {
   getToolsWithSkillsDir,
   getToolStates,
   getSkillTemplates,
-  buildSkillArtifacts,
   type ToolSkillStatus,
 } from './shared/index.js';
+import { installSkills, SYMLINK_TOOL_IDS } from './shared/skill-install.js';
 import { getGlobalConfig, type Profile } from './global-config.js';
 import { getProfileWorkflows } from './profiles.js';
 import { getAvailableTools } from './available-tools.js';
@@ -488,34 +487,37 @@ export class InitCommand {
     const workflows = getProfileWorkflows(profile, globalConfig.workflows);
     const skillTemplates = getSkillTemplates(workflows);
 
-    // Process each tool
-    for (const tool of tools) {
-      const spinner = ora(`Setting up ${tool.name}...`).start();
+    if (tools.length === 0) {
+      return { createdTools, refreshedTools, failedTools };
+    }
 
-      try {
-        const skillsDir = path.join(projectPath, tool.skillsDir, 'skills');
+    // Skills are written once to the canonical `.agents/skills` store, then
+    // symlinked into the conventional location of any selected symlink-capable
+    // tool (just Claude for now). One write, no per-tool copies.
+    const spinner = ora('Installing OpenSpec skills...').start();
+    const warnings: string[] = [];
+    try {
+      await installSkills(projectPath, skillTemplates, {
+        symlinkTools: tools.map((tool) => tool.value),
+        version: OPENSPEC_VERSION,
+        onWarn: (message) => warnings.push(message),
+      });
 
-        // Create skill directories, degrading multi-file bundles to the tool's capability.
-        const capability = getSkillBundleCapability(tool.value);
-        for (const { template, dirName } of skillTemplates) {
-          const skillDir = path.join(skillsDir, dirName);
-          const artifacts = buildSkillArtifacts(template, OPENSPEC_VERSION, capability);
-          for (const artifact of artifacts) {
-            const filePath = path.join(skillDir, artifact.relPath);
-            await FileSystemUtils.writeFile(filePath, artifact.content);
-            if (artifact.executable) await fs.promises.chmod(filePath, 0o755);
-          }
-        }
+      spinner.succeed('OpenSpec skills installed');
+      for (const warning of warnings) {
+        console.log(chalk.yellow(`⚠ ${warning}`));
+      }
 
-        spinner.succeed(`Setup complete for ${tool.name}`);
-
+      for (const tool of tools) {
         if (tool.wasConfigured) {
           refreshedTools.push(tool);
         } else {
           createdTools.push(tool);
         }
-      } catch (error) {
-        spinner.fail(`Failed for ${tool.name}`);
+      }
+    } catch (error) {
+      spinner.fail('Failed to install OpenSpec skills');
+      for (const tool of tools) {
         failedTools.push({ name: tool.name, error: error as Error });
       }
     }
@@ -587,10 +589,19 @@ export class InitCommand {
       const globalConfig = getGlobalConfig();
       const profile: Profile = (this.profileOverride as Profile) ?? globalConfig.profile ?? 'core';
       const workflows = getProfileWorkflows(profile, globalConfig.workflows);
-      const toolDirs = [...new Set(successfulTools.map((t) => t.skillsDir))].join(', ');
       const skillCount = getSkillTemplates(workflows).length;
       if (skillCount > 0) {
-        console.log(`${skillCount} skills in ${toolDirs}/`);
+        // Skills live once in the canonical store; symlink-capable tools (Claude)
+        // also get a per-tool link the user can find them under.
+        const symlinkedDirs = [
+          ...new Set(
+            successfulTools
+              .filter((t) => SYMLINK_TOOL_IDS.includes(t.value))
+              .map((t) => `${t.skillsDir}/skills/`)
+          ),
+        ];
+        const linkNote = symlinkedDirs.length > 0 ? ` (linked into ${symlinkedDirs.join(', ')})` : '';
+        console.log(`${skillCount} skills in .agents/skills/${linkNote}`);
       }
     }
 

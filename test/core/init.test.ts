@@ -116,46 +116,60 @@ describe('InitCommand', () => {
       }
     });
 
-    it('should create skills in Cursor skills directory', async () => {
+    it('should write skills to the canonical store for a non-symlink tool (Cursor)', async () => {
       const initCommand = new InitCommand({ tools: 'cursor', force: true });
 
       await initCommand.execute(testDir);
 
-      const skillFile = path.join(testDir, '.cursor', 'skills', 'openspec-explore', 'SKILL.md');
-      expect(await fileExists(skillFile)).toBe(true);
+      // Skills land once in the canonical store; Cursor reads it natively.
+      const canonical = path.join(testDir, '.agents', 'skills', 'openspec-explore', 'SKILL.md');
+      expect(await fileExists(canonical)).toBe(true);
+
+      // No per-tool copy is created for non-symlink tools.
+      const cursorSkill = path.join(testDir, '.cursor', 'skills', 'openspec-explore');
+      expect(await pathExists(cursorSkill)).toBe(false);
     });
 
-    it('should create skills in Windsurf skills directory', async () => {
+    it('should write skills to the canonical store for a non-symlink tool (Windsurf)', async () => {
       const initCommand = new InitCommand({ tools: 'windsurf', force: true });
 
       await initCommand.execute(testDir);
 
-      const skillFile = path.join(testDir, '.windsurf', 'skills', 'openspec-explore', 'SKILL.md');
-      expect(await fileExists(skillFile)).toBe(true);
+      const canonical = path.join(testDir, '.agents', 'skills', 'openspec-explore', 'SKILL.md');
+      expect(await fileExists(canonical)).toBe(true);
+
+      const windsurfSkill = path.join(testDir, '.windsurf', 'skills', 'openspec-explore');
+      expect(await pathExists(windsurfSkill)).toBe(false);
     });
 
     it('should install skills for Kimi CLI (skills-only, no commands)', async () => {
       const initCommand = new InitCommand({ tools: 'kimi', force: true });
       await initCommand.execute(testDir);
 
-      const skillFile = path.join(testDir, '.kimi', 'skills', 'openspec-explore', 'SKILL.md');
-      expect(await fileExists(skillFile)).toBe(true);
+      const canonical = path.join(testDir, '.agents', 'skills', 'openspec-explore', 'SKILL.md');
+      expect(await fileExists(canonical)).toBe(true);
 
       // Commands are retired — no command directory is ever created.
       const commandsDir = path.join(testDir, '.kimi', 'commands');
       expect(await directoryExists(commandsDir)).toBe(false);
     });
 
-    it('should create skills for multiple tools at once', async () => {
+    it('should create one canonical store and a Claude symlink for multiple tools at once', async () => {
       const initCommand = new InitCommand({ tools: 'claude,cursor', force: true });
 
       await initCommand.execute(testDir);
 
-      const claudeSkill = path.join(testDir, '.claude', 'skills', 'openspec-explore', 'SKILL.md');
-      const cursorSkill = path.join(testDir, '.cursor', 'skills', 'openspec-explore', 'SKILL.md');
+      // Single canonical copy.
+      const canonical = path.join(testDir, '.agents', 'skills', 'openspec-explore', 'SKILL.md');
+      expect(await fileExists(canonical)).toBe(true);
 
-      expect(await fileExists(claudeSkill)).toBe(true);
-      expect(await fileExists(cursorSkill)).toBe(true);
+      // Claude (a verified symlink tool) gets a symlink into the canonical store.
+      const claudeLink = path.join(testDir, '.claude', 'skills', 'openspec-explore');
+      expect(await isSymlinkInto(claudeLink, '.agents/skills/openspec-explore')).toBe(true);
+
+      // Cursor reads the canonical store natively — no per-tool copy.
+      const cursorSkill = path.join(testDir, '.cursor', 'skills', 'openspec-explore');
+      expect(await pathExists(cursorSkill)).toBe(false);
     });
 
     it('should select all tools with --tools all option', async () => {
@@ -163,14 +177,16 @@ describe('InitCommand', () => {
 
       await initCommand.execute(testDir);
 
-      // Check a few representative tools
-      const claudeSkill = path.join(testDir, '.claude', 'skills', 'openspec-explore', 'SKILL.md');
-      const cursorSkill = path.join(testDir, '.cursor', 'skills', 'openspec-explore', 'SKILL.md');
-      const windsurfSkill = path.join(testDir, '.windsurf', 'skills', 'openspec-explore', 'SKILL.md');
+      // Canonical store + Claude symlink; other tools have no per-tool copy.
+      const canonical = path.join(testDir, '.agents', 'skills', 'openspec-explore', 'SKILL.md');
+      const claudeLink = path.join(testDir, '.claude', 'skills', 'openspec-explore');
+      const cursorSkill = path.join(testDir, '.cursor', 'skills', 'openspec-explore');
+      const windsurfSkill = path.join(testDir, '.windsurf', 'skills', 'openspec-explore');
 
-      expect(await fileExists(claudeSkill)).toBe(true);
-      expect(await fileExists(cursorSkill)).toBe(true);
-      expect(await fileExists(windsurfSkill)).toBe(true);
+      expect(await fileExists(canonical)).toBe(true);
+      expect(await isSymlinkInto(claudeLink, '.agents/skills/openspec-explore')).toBe(true);
+      expect(await pathExists(cursorSkill)).toBe(false);
+      expect(await pathExists(windsurfSkill)).toBe(false);
     });
 
     it('should skip tool configuration with --tools none option', async () => {
@@ -198,11 +214,11 @@ describe('InitCommand', () => {
 
       await initCommand.execute(testDir);
 
-      const claudeSkill = path.join(testDir, '.claude', 'skills', 'openspec-explore', 'SKILL.md');
-      const cursorSkill = path.join(testDir, '.cursor', 'skills', 'openspec-explore', 'SKILL.md');
+      const canonical = path.join(testDir, '.agents', 'skills', 'openspec-explore', 'SKILL.md');
+      const claudeLink = path.join(testDir, '.claude', 'skills', 'openspec-explore');
 
-      expect(await fileExists(claudeSkill)).toBe(true);
-      expect(await fileExists(cursorSkill)).toBe(true);
+      expect(await fileExists(canonical)).toBe(true);
+      expect(await isSymlinkInto(claudeLink, '.agents/skills/openspec-explore')).toBe(true);
     });
 
     it('should reject combining reserved keywords with explicit tool ids', async () => {
@@ -246,12 +262,12 @@ describe('InitCommand', () => {
       const initCommand2 = new InitCommand({ tools: 'cursor', force: true });
       await initCommand2.execute(testDir);
 
-      // Both tools should have skills
-      const claudeSkill = path.join(testDir, '.claude', 'skills', 'openspec-explore', 'SKILL.md');
-      const cursorSkill = path.join(testDir, '.cursor', 'skills', 'openspec-explore', 'SKILL.md');
+      // The canonical store persists across re-runs; Claude keeps its symlink.
+      const canonical = path.join(testDir, '.agents', 'skills', 'openspec-explore', 'SKILL.md');
+      const claudeLink = path.join(testDir, '.claude', 'skills', 'openspec-explore');
 
-      expect(await fileExists(claudeSkill)).toBe(true);
-      expect(await fileExists(cursorSkill)).toBe(true);
+      expect(await fileExists(canonical)).toBe(true);
+      expect(await isSymlinkInto(claudeLink, '.agents/skills/openspec-explore')).toBe(true);
     });
 
     it('should refresh skills on re-run for the same tool', async () => {
@@ -451,9 +467,11 @@ describe('InitCommand - profile and detection features', () => {
     // Legacy files should be cleaned up automatically
     expect(await fileExists(path.join(legacyDir, 'opsx-propose.md'))).toBe(false);
 
-    // Skills are the sole artifact now — they should be installed for the tool.
-    const skillFile = path.join(testDir, '.opencode', 'skills', 'openspec-explore', 'SKILL.md');
-    expect(await fileExists(skillFile)).toBe(true);
+    // Skills are the sole artifact now — they land in the canonical store
+    // (OpenCode reads `.agents/skills` natively, so no per-tool copy is written).
+    const canonical = path.join(testDir, '.agents', 'skills', 'openspec-explore', 'SKILL.md');
+    expect(await fileExists(canonical)).toBe(true);
+    expect(await pathExists(path.join(testDir, '.opencode', 'skills', 'openspec-explore'))).toBe(false);
   });
 
   it('should preselect configured tools but not directory-detected tools in extend mode', async () => {
@@ -590,6 +608,26 @@ async function fileExists(filePath: string): Promise<boolean> {
   try {
     await fs.access(filePath);
     return true;
+  } catch {
+    return false;
+  }
+}
+
+async function pathExists(targetPath: string): Promise<boolean> {
+  try {
+    await fs.lstat(targetPath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function isSymlinkInto(linkPath: string, canonicalSuffix: string): Promise<boolean> {
+  try {
+    const stats = await fs.lstat(linkPath);
+    if (!stats.isSymbolicLink()) return false;
+    const target = (await fs.readlink(linkPath)).replace(/\\/g, '/');
+    return target.endsWith(canonicalSuffix);
   } catch {
     return false;
   }

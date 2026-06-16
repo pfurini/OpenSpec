@@ -7,6 +7,7 @@
 import path from 'path';
 import * as fs from 'fs';
 import { AI_TOOLS } from '../config.js';
+import { getCanonicalSkillsDir } from './skill-install.js';
 
 /**
  * Names of skill directories created by openspec init.
@@ -176,6 +177,49 @@ export function getToolVersionStatus(
     generatedByVersion,
     needsUpdate,
   };
+}
+
+/**
+ * Lists managed skill names present in the canonical `.agents/skills` store.
+ */
+export function getInstalledCanonicalSkillNames(projectRoot: string): string[] {
+  const dir = getCanonicalSkillsDir(projectRoot);
+  let entries: fs.Dirent[];
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  return entries
+    .filter((entry) => entry.isDirectory() || entry.isSymbolicLink())
+    .map((entry) => entry.name)
+    .filter((name) => (SKILL_NAMES as readonly string[]).includes(name))
+    .filter((name) => fs.existsSync(path.join(dir, name, 'SKILL.md')));
+}
+
+/**
+ * Whether the canonical skill store holds at least one managed skill. This is
+ * the source of truth for "OpenSpec is installed", independent of any per-tool
+ * directory — most agents read `.agents/skills` natively (Claude Code, which
+ * needs its own symlinked copy, is the notable exception).
+ */
+export function isCanonicalStorePopulated(projectRoot: string): boolean {
+  return getInstalledCanonicalSkillNames(projectRoot).length > 0;
+}
+
+/**
+ * Reads the generatedBy version stamped in the canonical store, or null if the
+ * store is empty/unversioned.
+ */
+export function getCanonicalSkillVersion(projectRoot: string): string | null {
+  const dir = getCanonicalSkillsDir(projectRoot);
+  for (const skillName of SKILL_NAMES) {
+    const skillFile = path.join(dir, skillName, 'SKILL.md');
+    if (fs.existsSync(skillFile)) {
+      return extractGeneratedByVersion(skillFile);
+    }
+  }
+  return null;
 }
 
 /**

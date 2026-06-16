@@ -217,28 +217,80 @@ Old instructions content
 
       await updateCommand.execute(testDir);
 
-      // Both tools should be updated
+      // Both configured tools are detected and reported.
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining('Updating 2 tool(s)')
       );
 
-      // Verify Claude skills updated
+      // The single canonical store is refreshed (every tool reads it).
+      const canonicalSkill = await fs.readFile(
+        path.join(testDir, '.agents', 'skills', 'openspec-explore', 'SKILL.md'),
+        'utf-8'
+      );
+      expect(canonicalSkill).toContain('name: openspec-explore');
+
+      // Claude's directory is now a symlink resolving to the fresh canonical content.
+      const claudeLink = await fs.lstat(path.join(claudeSkillsDir, 'openspec-explore'));
+      expect(claudeLink.isSymbolicLink()).toBe(true);
       const claudeSkill = await fs.readFile(
         path.join(claudeSkillsDir, 'openspec-explore', 'SKILL.md'),
         'utf-8'
       );
       expect(claudeSkill).toContain('name: openspec-explore');
 
-      // Verify Cursor skills updated
-      const cursorSkill = await fs.readFile(
-        path.join(cursorSkillsDir, 'openspec-explore', 'SKILL.md'),
-        'utf-8'
+      consoleSpy.mockRestore();
+    });
+
+  });
+
+  describe('canonical-only agents (no per-tool directory)', () => {
+    it('should refresh the canonical store for a tool that reads .agents/skills natively', async () => {
+      // Cursor reads the canonical store natively, so init writes no .cursor dir.
+      const initCommand = new InitCommand({ tools: 'cursor', force: true });
+      await initCommand.execute(testDir);
+
+      // Sanity: skills exist in the canonical store, not under .cursor.
+      const canonical = path.join(testDir, '.agents', 'skills', 'openspec-explore', 'SKILL.md');
+      expect(await FileSystemUtils.fileExists(canonical)).toBe(true);
+      expect(await FileSystemUtils.directoryExists(path.join(testDir, '.cursor'))).toBe(false);
+
+      // Force an update by staling the canonical version.
+      const content = await fs.readFile(canonical, 'utf-8');
+      await fs.writeFile(
+        canonical,
+        content.replace(/generatedBy:\s*["'][^"']+["']/, 'generatedBy: "0.1.0"')
       );
-      expect(cursorSkill).toContain('name: openspec-explore');
+
+      const consoleSpy = vi.spyOn(console, 'log');
+
+      await updateCommand.execute(testDir);
+
+      // Update recognizes the install and refreshes it (no "No configured tools").
+      const calls = consoleSpy.mock.calls.map((call) => call.map(String).join(' '));
+      expect(calls.some((c) => c.includes('No configured tools'))).toBe(false);
+      expect(calls.some((c) => c.includes('Updated: OpenSpec skills'))).toBe(true);
+
+      const { version } = await import('../../package.json');
+      const refreshed = await fs.readFile(canonical, 'utf-8');
+      expect(refreshed).toContain(`generatedBy: "${version}"`);
 
       consoleSpy.mockRestore();
     });
 
+    it('should report up to date for a current canonical-only install', async () => {
+      const initCommand = new InitCommand({ tools: 'cursor', force: true });
+      await initCommand.execute(testDir);
+
+      const consoleSpy = vi.spyOn(console, 'log');
+
+      await updateCommand.execute(testDir);
+
+      const calls = consoleSpy.mock.calls.map((call) => call.map(String).join(' '));
+      expect(calls.some((c) => c.includes('No configured tools'))).toBe(false);
+      expect(calls.some((c) => c.includes('OpenSpec skills up to date'))).toBe(true);
+
+      consoleSpy.mockRestore();
+    });
   });
 
   describe('error handling', () => {
@@ -278,8 +330,8 @@ Old instructions content
       consoleSpy.mockRestore();
     });
 
-    it('should continue updating other tools when one fails', async () => {
-      // Set up Claude and Cursor
+    it('should fall back to copying when symlink creation is not permitted', async () => {
+      // Configured Claude tool.
       const claudeSkillsDir = path.join(testDir, '.claude', 'skills');
       await fs.mkdir(path.join(claudeSkillsDir, 'openspec-explore'), {
         recursive: true,
@@ -289,42 +341,37 @@ Old instructions content
         'old'
       );
 
-      const cursorSkillsDir = path.join(testDir, '.cursor', 'skills');
-      await fs.mkdir(path.join(cursorSkillsDir, 'openspec-explore'), {
-        recursive: true,
-      });
-      await fs.writeFile(
-        path.join(cursorSkillsDir, 'openspec-explore', 'SKILL.md'),
-        'old'
-      );
-
-      // Mock writeFile to fail only for Claude
-      const originalWriteFile = FileSystemUtils.writeFile.bind(FileSystemUtils);
-      const writeSpy = vi
-        .spyOn(FileSystemUtils, 'writeFile')
-        .mockImplementation(async (filePath, content) => {
-          if (filePath.includes('.claude') && filePath.includes('SKILL.md')) {
-            throw new Error('EACCES: permission denied');
-          }
-          return originalWriteFile(filePath, content);
-        });
+      // Simulate a platform that refuses symlink creation (e.g. Windows without
+      // Developer Mode). Install must degrade to a copy, never hard-fail.
+      const nodeFs = await import('node:fs');
+      const symlinkSpy = vi
+        .spyOn(nodeFs.promises, 'symlink')
+        .mockRejectedValue(new Error('EPERM: symlink not permitted'));
 
       const consoleSpy = vi.spyOn(console, 'log');
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       await updateCommand.execute(testDir);
 
-      // Cursor should still be updated - check the actual format from ora spinner
+      // Update succeeds rather than failing.
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Updated: Cursor')
+        expect.stringContaining('Updated')
       );
 
-      // Claude should be reported as failed
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Failed')
+      // Claude's skill is a real copied directory (not a symlink) with fresh content.
+      const claudeStat = await nodeFs.promises.lstat(
+        path.join(claudeSkillsDir, 'openspec-explore')
       );
+      expect(claudeStat.isSymbolicLink()).toBe(false);
+      const claudeSkill = await fs.readFile(
+        path.join(claudeSkillsDir, 'openspec-explore', 'SKILL.md'),
+        'utf-8'
+      );
+      expect(claudeSkill).toContain('name: openspec-explore');
 
-      writeSpy.mockRestore();
+      symlinkSpy.mockRestore();
       consoleSpy.mockRestore();
+      warnSpy.mockRestore();
     });
   });
 
@@ -706,12 +753,13 @@ metadata:
       consoleSpy.mockRestore();
     });
 
-    it('should only update tools that need updating', async () => {
-      // Initialize both tools so Cursor is fully synced with profile/delivery.
+    it('should refresh the canonical store when the installed version is stale', async () => {
+      // Init claude,cursor: one canonical store + a Claude symlink (Cursor reads
+      // the canonical store natively, so it has no per-tool directory).
       const initCommand = new InitCommand({ tools: 'claude,cursor', force: true });
       await initCommand.execute(testDir);
 
-      // Make Claude stale to force a version update.
+      // Make the canonical store stale (via Claude's symlink) to force an update.
       const claudeSkillFile = path.join(testDir, '.claude', 'skills', 'openspec-explore', 'SKILL.md');
       const claudeContent = await fs.readFile(claudeSkillFile, 'utf-8');
       await fs.writeFile(
@@ -723,15 +771,18 @@ metadata:
 
       await updateCommand.execute(testDir);
 
-      // Should show only Claude being updated
+      // Claude is the single tool with a per-tool surface, so it is reported.
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining('Updating 1 tool(s)')
       );
 
-      // Should mention Cursor is already up to date
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Already up to date: cursor')
+      // The canonical store is refreshed to the current version.
+      const { version } = await import('../../package.json');
+      const canonical = await fs.readFile(
+        path.join(testDir, '.agents', 'skills', 'openspec-explore', 'SKILL.md'),
+        'utf-8'
       );
+      expect(canonical).toContain(`generatedBy: "${version}"`);
 
       consoleSpy.mockRestore();
     });
@@ -1065,12 +1116,13 @@ More user content after markers.
         expect.stringContaining('Tools detected from legacy artifacts')
       );
 
-      // Both tools should have skills created
+      // Skills land in the canonical store (both tools read it); Claude also
+      // gets its symlink.
+      const canonicalSkillFile = path.join(testDir, '.agents', 'skills', 'openspec-explore', 'SKILL.md');
       const claudeSkillFile = path.join(testDir, '.claude', 'skills', 'openspec-explore', 'SKILL.md');
-      const cursorSkillFile = path.join(testDir, '.cursor', 'skills', 'openspec-explore', 'SKILL.md');
 
+      expect(await FileSystemUtils.fileExists(canonicalSkillFile)).toBe(true);
       expect(await FileSystemUtils.fileExists(claudeSkillFile)).toBe(true);
-      expect(await FileSystemUtils.fileExists(cursorSkillFile)).toBe(true);
 
       consoleSpy.mockRestore();
     });
@@ -1153,9 +1205,9 @@ More user content after markers.
         expect.stringContaining('Tools detected from legacy artifacts')
       );
 
-      // Cursor skills should be created
-      const cursorSkillFile = path.join(testDir, '.cursor', 'skills', 'openspec-explore', 'SKILL.md');
-      expect(await FileSystemUtils.fileExists(cursorSkillFile)).toBe(true);
+      // Cursor's skills land in the canonical store it reads natively.
+      const canonicalSkillFile = path.join(testDir, '.agents', 'skills', 'openspec-explore', 'SKILL.md');
+      expect(await FileSystemUtils.fileExists(canonicalSkillFile)).toBe(true);
 
       // Should show "Getting started" for newly configured Cursor
       expect(consoleSpy).toHaveBeenCalledWith(

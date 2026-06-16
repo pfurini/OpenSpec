@@ -16,6 +16,9 @@ export {
   getToolVersionStatus,
   getConfiguredTools,
   getAllToolVersionStatus,
+  getInstalledCanonicalSkillNames,
+  isCanonicalStorePopulated,
+  getCanonicalSkillVersion,
 } from './tool-detection.js';
 
 export {
@@ -24,3 +27,13 @@ export {
   generateSkillContent,
   buildSkillArtifacts,
 } from './skill-generation.js';
+
+export {
+  CANONICAL_SKILLS_RELDIR,
+  SYMLINK_TOOL_IDS,
+  type InstallableSkill,
+  type InstallSkillsOptions,
+  installSkills,
+  removeSkill,
+  getCanonicalSkillsDir,
+} from './skill-install.js';

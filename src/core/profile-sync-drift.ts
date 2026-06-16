@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import { AI_TOOLS } from './config.js';
 import { ALL_WORKFLOWS } from './profiles.js';
 import { getConfiguredTools } from './shared/index.js';
+import { getCanonicalSkillsDir } from './shared/skill-install.js';
 
 type WorkflowId = (typeof ALL_WORKFLOWS)[number];
 
@@ -64,6 +65,36 @@ export function hasToolProfileDrift(
     const dirName = WORKFLOW_TO_SKILL_DIR[workflow];
     const skillDir = path.join(skillsDir, dirName);
     if (fs.existsSync(skillDir)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Detects profile drift in the canonical `.agents/skills` store: a desired
+ * workflow's skill is missing, or a deselected workflow's skill lingers.
+ */
+export function hasCanonicalProfileDrift(
+  projectPath: string,
+  desiredWorkflows: readonly string[]
+): boolean {
+  const knownDesiredWorkflows = toKnownWorkflows(desiredWorkflows);
+  const desiredWorkflowSet = new Set<WorkflowId>(knownDesiredWorkflows);
+  const skillsDir = getCanonicalSkillsDir(projectPath);
+
+  for (const workflow of knownDesiredWorkflows) {
+    const dirName = WORKFLOW_TO_SKILL_DIR[workflow];
+    if (!fs.existsSync(path.join(skillsDir, dirName, 'SKILL.md'))) {
+      return true;
+    }
+  }
+
+  for (const workflow of ALL_WORKFLOWS) {
+    if (desiredWorkflowSet.has(workflow)) continue;
+    const dirName = WORKFLOW_TO_SKILL_DIR[workflow];
+    if (fs.existsSync(path.join(skillsDir, dirName))) {
       return true;
     }
   }

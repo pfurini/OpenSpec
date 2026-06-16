@@ -8,17 +8,18 @@
 import path from 'path';
 import chalk from 'chalk';
 import ora from 'ora';
-import * as fs from 'fs';
 import { createRequire } from 'module';
 import { FileSystemUtils } from '../utils/file-system.js';
-import { AI_TOOLS, OPENSPEC_DIR_NAME, getSkillBundleCapability } from './config.js';
+import { AI_TOOLS, OPENSPEC_DIR_NAME } from './config.js';
 import {
   getToolVersionStatus,
   getSkillTemplates,
-  generateSkillContent,
-  buildSkillArtifacts,
   getToolsWithSkillsDir,
   getConfiguredTools,
+  isCanonicalStorePopulated,
+  getCanonicalSkillVersion,
+  installSkills,
+  removeSkill,
   type ToolVersionStatus,
 } from './shared/index.js';
 import {
@@ -36,6 +37,7 @@ import { getAvailableTools } from './available-tools.js';
 import {
   WORKFLOW_TO_SKILL_DIR,
   getToolsNeedingProfileSync,
+  hasCanonicalProfileDrift,
 } from './profile-sync-drift.js';
 import {
   scanInstalledWorkflows as scanInstalledWorkflowsShared,
@@ -105,7 +107,20 @@ export class UpdateCommand {
     // 5. Find configured tools
     const configuredTools = getConfiguredTools(resolvedProjectPath);
 
+    // Most agents read the canonical `.agents/skills` store natively and never
+    // get a per-tool directory, so `configuredTools` can be empty even though
+    // OpenSpec is installed. Refresh the canonical store directly in that case.
     if (configuredTools.length === 0 && newlyConfiguredTools.length === 0) {
+      if (isCanonicalStorePopulated(resolvedProjectPath)) {
+        await this.updateCanonicalStore(
+          resolvedProjectPath,
+          desiredWorkflows,
+          profile,
+          globalConfig.workflows
+        );
+        return;
+      }
+
       console.log(chalk.yellow('No configured tools found.'));
       console.log(chalk.dim('Run "openspec init" to set up tools.'));
       return;
@@ -154,42 +169,46 @@ export class UpdateCommand {
     // 9. Determine skills to generate
     const skillTemplates = getSkillTemplates(desiredWorkflows);
 
-    // 10. Update tools (all if force, otherwise only those needing update)
+    // 10. Update tools (all if force, otherwise only those needing update).
+    // Skills are written once to the canonical `.agents/skills` store and
+    // re-symlinked for symlink-capable tools (Claude). Every configured tool
+    // consumes that single store, so refreshing it refreshes them all.
     const toolsToUpdate = this.force ? configuredTools : [...toolsToUpdateSet];
     const updatedTools: string[] = [];
     const failedTools: Array<{ name: string; error: string }> = [];
     let removedDeselectedSkillCount = 0;
 
-    for (const toolId of toolsToUpdate) {
-      const tool = AI_TOOLS.find((t) => t.value === toolId);
-      if (!tool?.skillsDir) continue;
-
-      const spinner = ora(`Updating ${tool.name}...`).start();
+    if (toolsToUpdate.length > 0) {
+      const spinner = ora('Updating OpenSpec skills...').start();
+      const warnings: string[] = [];
 
       try {
-        const skillsDir = path.join(resolvedProjectPath, tool.skillsDir, 'skills');
+        await installSkills(resolvedProjectPath, skillTemplates, {
+          symlinkTools: toolsToUpdate,
+          version: OPENSPEC_VERSION,
+          onWarn: (message) => warnings.push(message),
+        });
 
-        // Degrade multi-file bundles to the tool's capability.
-        const capability = getSkillBundleCapability(tool.value);
-        for (const { template, dirName } of skillTemplates) {
-          const skillDir = path.join(skillsDir, dirName);
-          const artifacts = buildSkillArtifacts(template, OPENSPEC_VERSION, capability);
-          for (const artifact of artifacts) {
-            const filePath = path.join(skillDir, artifact.relPath);
-            await FileSystemUtils.writeFile(filePath, artifact.content);
-            if (artifact.executable) await fs.promises.chmod(filePath, 0o755);
-          }
+        removedDeselectedSkillCount += await this.removeUnselectedSkillDirs(
+          resolvedProjectPath,
+          desiredWorkflows,
+          toolsToUpdate
+        );
+
+        spinner.succeed('Updated OpenSpec skills');
+        for (const warning of warnings) {
+          console.log(chalk.yellow(`⚠ ${warning}`));
         }
 
-        removedDeselectedSkillCount += await this.removeUnselectedSkillDirs(skillsDir, desiredWorkflows);
-
-        spinner.succeed(`Updated ${tool.name}`);
-        updatedTools.push(tool.name);
+        for (const toolId of toolsToUpdate) {
+          const tool = AI_TOOLS.find((t) => t.value === toolId);
+          if (tool?.skillsDir) updatedTools.push(tool.name);
+        }
       } catch (error) {
-        spinner.fail(`Failed to update ${tool.name}`);
+        spinner.fail('Failed to update OpenSpec skills');
         failedTools.push({
-          name: tool.name,
-          error: error instanceof Error ? error.message : String(error)
+          name: 'OpenSpec skills',
+          error: error instanceof Error ? error.message : String(error),
         });
       }
     }
@@ -339,8 +358,9 @@ export class UpdateCommand {
    * Returns the number of directories removed.
    */
   private async removeUnselectedSkillDirs(
-    skillsDir: string,
-    desiredWorkflows: readonly (typeof ALL_WORKFLOWS)[number][]
+    projectPath: string,
+    desiredWorkflows: readonly (typeof ALL_WORKFLOWS)[number][],
+    symlinkTools: readonly string[]
   ): Promise<number> {
     const desiredSet = new Set(desiredWorkflows);
     let removed = 0;
@@ -350,10 +370,8 @@ export class UpdateCommand {
       const dirName = WORKFLOW_TO_SKILL_DIR[workflow];
       if (!dirName) continue;
 
-      const skillDir = path.join(skillsDir, dirName);
       try {
-        if (fs.existsSync(skillDir)) {
-          await fs.promises.rm(skillDir, { recursive: true, force: true });
+        if (await removeSkill(projectPath, dirName, { symlinkTools })) {
           removed++;
         }
       } catch {
@@ -362,6 +380,77 @@ export class UpdateCommand {
     }
 
     return removed;
+  }
+
+  /**
+   * Refreshes the canonical `.agents/skills` store for projects whose agents
+   * read it natively (no per-tool directory to key off). Mirrors the per-tool
+   * update flow's version/drift gating and reporting, but at store granularity.
+   */
+  private async updateCanonicalStore(
+    projectPath: string,
+    desiredWorkflows: readonly (typeof ALL_WORKFLOWS)[number][],
+    profile: Profile,
+    customWorkflows?: readonly string[]
+  ): Promise<void> {
+    const currentVersion = getCanonicalSkillVersion(projectPath);
+    const needsVersionUpdate = currentVersion === null || currentVersion !== OPENSPEC_VERSION;
+    const needsConfigSync = hasCanonicalProfileDrift(projectPath, desiredWorkflows);
+
+    if (!this.force && !needsVersionUpdate && !needsConfigSync) {
+      console.log(chalk.green(`✓ OpenSpec skills up to date (v${OPENSPEC_VERSION})`));
+      console.log();
+      console.log(chalk.dim('Use --force to refresh files anyway.'));
+      this.displayOldCoreCustomProfileNote(profile, customWorkflows);
+      return;
+    }
+
+    if (this.force) {
+      console.log('Force updating OpenSpec skills');
+    } else {
+      const fromVersion = needsVersionUpdate ? (currentVersion ?? 'unknown') : null;
+      console.log(
+        fromVersion
+          ? `Updating OpenSpec skills (${fromVersion} → ${OPENSPEC_VERSION})`
+          : 'Updating OpenSpec skills (config sync)'
+      );
+    }
+    console.log();
+
+    const skillTemplates = getSkillTemplates(desiredWorkflows);
+    const spinner = ora('Updating OpenSpec skills...').start();
+    let removedDeselectedSkillCount = 0;
+
+    try {
+      await installSkills(projectPath, skillTemplates, {
+        symlinkTools: [],
+        version: OPENSPEC_VERSION,
+      });
+      removedDeselectedSkillCount = await this.removeUnselectedSkillDirs(
+        projectPath,
+        desiredWorkflows,
+        []
+      );
+      spinner.succeed('Updated OpenSpec skills');
+    } catch (error) {
+      spinner.fail('Failed to update OpenSpec skills');
+      console.log(chalk.red(`  ${error instanceof Error ? error.message : String(error)}`));
+      return;
+    }
+
+    console.log();
+    console.log(chalk.green(`✓ Updated: OpenSpec skills (v${OPENSPEC_VERSION})`));
+    if (removedDeselectedSkillCount > 0) {
+      console.log(
+        chalk.dim(`Removed: ${removedDeselectedSkillCount} skill directories (deselected workflows)`)
+      );
+    }
+
+    this.displayExtraWorkflowsNote(projectPath, [], desiredWorkflows);
+    this.displayOldCoreCustomProfileNote(profile, customWorkflows);
+
+    console.log();
+    console.log(chalk.dim('Restart your IDE for changes to take effect.'));
   }
 
   /**
@@ -528,15 +617,10 @@ export class UpdateCommand {
       const spinner = ora(`Setting up ${tool.name}...`).start();
 
       try {
-        const skillsDir = path.join(projectPath, tool.skillsDir, 'skills');
-
-        for (const { template, dirName } of skillTemplates) {
-          const skillDir = path.join(skillsDir, dirName);
-          const skillFile = path.join(skillDir, 'SKILL.md');
-
-          const skillContent = generateSkillContent(template, OPENSPEC_VERSION);
-          await FileSystemUtils.writeFile(skillFile, skillContent);
-        }
+        await installSkills(projectPath, skillTemplates, {
+          symlinkTools: [toolId],
+          version: OPENSPEC_VERSION,
+        });
 
         spinner.succeed(`Setup complete for ${tool.name}`);
         newlyConfigured.push(toolId);
