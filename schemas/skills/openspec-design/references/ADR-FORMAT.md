@@ -17,7 +17,7 @@ id: ADR-NNNN
 title: {the decision, one line}
 status: proposed        # proposed | accepted | deprecated | superseded-by: ADR-MMMM
 date: {today — run `date +%Y-%m-%d`}
-change: {this change name}     # the link /opsx:archive uses to promote it
+change: {this change name}     # the link the openspec-archive-change skill uses to promote it
 ---
 
 # {Short title of the decision}
@@ -38,12 +38,12 @@ and *why* — not in filling out sections. Everything under the title is free-fo
   finds `// ADR-0011` in the code needs the doc to tell them whether it still holds — without a
   status, a stale reference is indistinguishable from a live one.
 - **`date`** — `YYYY-MM-DD`, the day it was recorded.
-- **`change`** — the name of the change that introduced it. This is the link `/opsx:archive` uses to
-  promote the ADR from `proposed` to `accepted` when the change ships.
+- **`change`** — the name of the change that introduced it. This is the link the `openspec-archive-change`
+  skill uses to promote the ADR from `proposed` to `accepted` when the change ships.
 
 **Status lifecycle in this workflow:** new ADRs are born `proposed` (a design decision, not yet
-shipped). `/opsx:archive` promotes every ADR tagged `change: <name>` to `accepted` when the change
-is archived. When a later decision replaces one, set the old ADR's status to `superseded-by:
+shipped). The `openspec-archive-change` skill promotes every ADR tagged `change: <name>` to `accepted`
+when the change is archived. When a later decision replaces one, set the old ADR's status to `superseded-by:
 ADR-MMMM` rather than deleting the file — deleting leaves the inline code references and registry
 entries dangling.
 

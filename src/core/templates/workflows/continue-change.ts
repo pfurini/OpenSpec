@@ -74,7 +74,7 @@ export function getContinueChangeSkillTemplate(): SkillTemplate {
    - Show what was created and what's now unlocked
    - **Then advance based on \`continueMode\` (from status):**
      - **\`step\` (default):** STOP after creating ONE artifact. (The user runs continue again for the next.)
-     - **\`flow-to-gate\`:** re-run \`openspec status --change "<name>" --json\` and repeat for the next ready artifact — but BEFORE writing it, read its \`instruction\`. If the instruction tells you to STOP because a precondition is missing (a *gate* — e.g. a design step whose \`design.md\` must first be authored by the interactive \`/opsx:design\` thinker), STOP there and report exactly what's needed; do NOT write that artifact. Otherwise create it and keep going. Stop when you hit a gate, no artifact is \`ready\`, or every apply-required artifact is done.
+     - **\`flow-to-gate\`:** re-run \`openspec status --change "<name>" --json\` and repeat for the next ready artifact — but BEFORE writing it, read its \`instruction\`. If the instruction tells you to STOP because a precondition is missing (a *gate* — e.g. a design step whose \`design.md\` must first be authored by the interactive \`openspec-design\` thinker), STOP there and report exactly what's needed; do NOT write that artifact. Otherwise create it and keep going. Stop when you hit a gate, no artifact is \`ready\`, or every apply-required artifact is done.
 
    ---
 

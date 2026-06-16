@@ -35,7 +35,7 @@ Then **sequence** those units into the **wave skeleton** — the value-ordered v
 Before writing anything, present the shape back to the user, scaled to complexity — a few sentences for a simple change; the approach + decomposition + **the wave skeleton (waves, their value goals, ordering, the wave-0 tracer)** + the load-bearing decisions for a complex one. Ask "does this look right?" and fold in corrections. **This is the gate: don't write `design.md` until the user has confirmed the shape — including the wave map.**
 
 ### 5 · Write design.md directly
-Write the settled HOW straight into `<changeRoot>/design.md` (no shadow note — this IS the durable record `/opsx:continue` transcribes the wave map from, so it must hold the full design):
+Write the settled HOW straight into `<changeRoot>/design.md` (no shadow note — this IS the durable record the `openspec-continue-change` skill transcribes the wave map from, so it must hold the full design):
 - **Context** — current state cited by `path:line`; constraints; relevant ADRs (reference, don't re-argue).
 - **Goals / Non-Goals**.
 - **Decisions** — every settled choice + rationale + alternatives considered; reference ADRs for the load-bearing ones.
@@ -61,7 +61,7 @@ Record an ADR **only if all three hold**: hard to reverse · surprising without 
 - ✅ *"Profile data stays owned by the user-management capability; the self-service page references it, doesn't fork it."* — hard to reverse, surprising, a real trade-off. → **ADR.**
 - ❌ *"Reuse the existing Button component for Save."* — trivially reversible, unsurprising, no real alternative. → just do it.
 
-(Status stays `proposed` here. When the change is archived, `/opsx:archive` promotes the ADRs tagged `change: <name>` to `accepted`. ADRs live *outside* the change directory, so they survive archival as the project's durable architectural memory.)
+(Status stays `proposed` here. When the change is archived, the `openspec-archive-change` skill promotes the ADRs tagged `change: <name>` to `accepted`. ADRs live *outside* the change directory, so they survive archival as the project's durable architectural memory.)
 
 ### 7 · Visual question? Suggest the visual flow
 Suggest a separate visual-design flow **only if seeing beats reading AND it's UI (not architecture)**. Don't attempt UI mockups inline.
@@ -78,7 +78,7 @@ You author `design.md` directly, so you own the completeness check the old trans
 - **Open Questions holds no dodged decision** — only genuine, explicitly-deferred user/external unknowns (often empty).
 - **Every ADR traces to a decision the user explicitly confirmed** — none silently auto-decided (if one did, you skipped the gate; take it back to the user).
 
-Fix inline. Then ask the user to review `design.md` (esp. the wave map) before they run `/opsx:continue`.
+Fix inline. Then ask the user to review `design.md` (esp. the wave map) before they run the `openspec-continue-change` skill.
 
 ### 9 · Handoff
-"`design.md` written to `<change>/design.md` (+ N ADRs at `status: proposed`). Decomposed into <k> components, sequenced into <w> waves (wave 0 = tracer); every decision and test layer settled. Run `/opsx:continue` to transcribe the wave skeleton into `tasks.md`." You wrote `design.md` here; `/opsx:continue` writes only `tasks.md` (mechanically) — no code is written in either step.
+"`design.md` written to `<change>/design.md` (+ N ADRs at `status: proposed`). Decomposed into <k> components, sequenced into <w> waves (wave 0 = tracer); every decision and test layer settled. Run the `openspec-continue-change` skill to transcribe the wave skeleton into `tasks.md`." You wrote `design.md` here; the `openspec-continue-change` skill writes only `tasks.md` (mechanically) — no code is written in either step.

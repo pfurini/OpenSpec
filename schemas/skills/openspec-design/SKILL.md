@@ -1,6 +1,6 @@
 ---
 name: openspec-design
-description: Enter design mode - an interactive HOW-thinking partner that interviews you to settle the architecture, then turns a settled WHAT (proposal + specs) into design.md + ADRs, decomposed into well-bounded units and sequenced into a value-ordered TDD wave skeleton. Writes design.md directly (the single source of the HOW contract); /opsx:continue only transcribes its wave skeleton into tasks.md. Use after requirements are settled, to think through how to build it.
+description: Enter design mode - an interactive HOW-thinking partner that interviews you to settle the architecture, then turns a settled WHAT (proposal + specs) into design.md + ADRs, decomposed into well-bounded units and sequenced into a value-ordered TDD wave skeleton. Writes design.md directly (the single source of the HOW contract); the openspec-continue-change skill only transcribes its wave skeleton into tasks.md. Use after requirements are settled, to think through how to build it.
 license: MIT
 compatibility: Requires openspec CLI.
 metadata:
@@ -13,7 +13,7 @@ Enter design mode — your thinking partner for the **HOW**: architecture, the u
 **At a glance:**
 - **In** — an existing change whose WHAT is settled: proposal + specs (plus any accepted ADRs and the glossary, which are constraints).
 - **Do** — interview the HOW with the user → decompose into units → sequence the wave skeleton → get the shape approved → write `design.md` → record ADRs.
-- **Out** — `design.md` (the single source of the HOW contract, written directly into the change dir) + ADRs at `status: proposed`. No code, no tasks; `/opsx:continue` transcribes the wave skeleton into `tasks.md` afterward.
+- **Out** — `design.md` (the single source of the HOW contract, written directly into the change dir) + ADRs at `status: proposed`. No code, no tasks; the `openspec-continue-change` skill transcribes the wave skeleton into `tasks.md` afterward.
 - **Procedure** — the full ordered steps are in **the Flow** (below), the operational backbone. Read it before you design.
 
 **You are a pure thinker.** Like explore, you decide nothing the user wouldn't want a say in — but the durable record you crystallize IS `design.md` itself; there is no shadow note. Reach a *shared model* of the HOW and settle every load-bearing decision *together* before writing anything. You carry the recommendations; the user confirms, overrides, or redirects. Don't silently decide the architecture and hand back finished artifacts.
@@ -28,15 +28,15 @@ Don't manufacture questions to look thorough; don't skip the ones that matter to
 
 ## Where Design Sits
 
-Design runs on an **existing change** that already has proposal + specs (the WHAT). Its output is `design.md` + ADRs. `/opsx:continue` gates on `design.md`: until it exists, continue stops and sends the user here; once it exists, continue mechanically transcribes its wave skeleton into `tasks.md` (it never authors `design.md`).
+Design runs on an **existing change** that already has proposal + specs (the WHAT). Its output is `design.md` + ADRs. The `openspec-continue-change` skill gates on `design.md`: until it exists, it stops and sends the user here; once it exists, it mechanically transcribes its wave skeleton into `tasks.md` (it never authors `design.md`).
 
-**Prereq:** proposal + specs must exist. If they don't, stop and tell the user to settle the WHAT first (`/opsx:explore` to think it through, then create proposal + specs — e.g. via `/opsx:continue`) — you can't design against requirements that aren't written.
+**Prereq:** proposal + specs must exist. If they don't, stop and tell the user to settle the WHAT first (the `openspec-explore` skill to think it through, then create proposal + specs — e.g. via the `openspec-continue-change` skill) — you can't design against requirements that aren't written.
 
 **If no change is named:** run `openspec list --json` and find the changes whose `design` artifact isn't `done` yet (confirm via `openspec status --change "<name>" --json` — `done` means `design.md` already exists). Those are ready for the HOW. A change that already has `design.md` is complete (or resumable) there — offer to revise it. Let the user pick which change to design.
 
 ---
 
-## Interview the HOW — the heart of this command
+## Interview the HOW — the heart of this skill
 
 Run it as a grill, not a survey. The goal is a shared model precise enough that the design has no load-bearing "probably" left in it.
 
@@ -89,7 +89,7 @@ Capture the result in design.md's **Wave Skeleton / Build Sequence** section —
 <!--bundle:start-->
 ## The Flow — read before you design
 
-The end-to-end design procedure — prime → approaches → interview → decompose → sequence into waves → write `design.md` → record ADRs → self-review → handoff — is in **references/flow.md**. Load it and follow it in order; it is the operational backbone of this command, and it holds the full decompose spine and the settle-everything rule referenced above.
+The end-to-end design procedure — prime → approaches → interview → decompose → sequence into waves → write `design.md` → record ADRs → self-review → handoff — is in **references/flow.md**. Load it and follow it in order; it is the operational backbone of this skill, and it holds the full decompose spine and the settle-everything rule referenced above.
 <!--bundle:end-->
 
 ---

@@ -12,7 +12,7 @@ const STEP_1_INTENT = `1. **Understand what to build — and check for a pending
    \`\`\`bash
    openspec list --explorations --json
    \`\`\`
-   A \`"pending": true\` exploration is an exploration note (from \`/opsx:explore\`) that hasn't been turned into a change yet. If one matches what the user wants — or if they gave no specific input — offer it:
+   A \`"pending": true\` exploration is an exploration note (from \`openspec-explore\`) that hasn't been turned into a change yet. If one matches what the user wants — or if they gave no specific input — offer it:
    > "You have a pending exploration **<name>**. Start a change from it? I'll reuse its name so its notes flow into the proposal and specs."
    - If they choose it → use the exploration's **slug as the change name**. The schema's proposal/specs steps then incorporate \`openspec/explorations/<slug>.md\` automatically (matched by name — no extra wiring).
    - Otherwise, continue with their description.
@@ -42,7 +42,7 @@ const EXISTING_CHANGE_DETECTOR = `2. **Check whether this should extend an exist
    > "This looks like it extends **<existing>** (which is about <one-line summary>). Continue that change instead of creating a new one?"
 
    Options: [Continue <existing> / Create new anyway].
-   - If they choose to continue → hand off to \`/opsx:continue <existing>\` (or operate on that change). Do **not** create a new change.
+   - If they choose to continue → hand off to \`openspec-continue-change <existing>\` (or operate on that change). Do **not** create a new change.
    - If they choose new, or there's no real overlap → proceed.
 
    When there are no active changes, skip straight to creating.`;
