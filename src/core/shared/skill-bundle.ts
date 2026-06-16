@@ -188,8 +188,8 @@ export function validateBundleBlocks(instructions: string, bundle: SkillBundle |
 
 /**
  * Concatenates a skill's instructions with its bundle files into a single
- * self-contained body. Used for `flatten` tools and for slash commands (which
- * are single-file by design).
+ * self-contained body. Used for `flatten` tools, which need the skill as a
+ * single file.
  *
  * Each `<!--bundle:start-->…<!--bundle:end-->` block is replaced **in place** by
  * the in-order concatenation of the files its prose names (references inlined

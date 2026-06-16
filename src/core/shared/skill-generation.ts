@@ -1,7 +1,7 @@
 /**
  * Skill Generation Utilities
  *
- * Shared utilities for generating skill and command files.
+ * Shared utilities for generating skill files.
  */
 
 import {

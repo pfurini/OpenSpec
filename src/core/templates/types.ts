@@ -1,5 +1,5 @@
 /**
- * Core template types for skills and slash commands.
+ * Core template types for skills.
  */
 
 /**
