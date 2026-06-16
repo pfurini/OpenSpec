@@ -9,13 +9,13 @@ OpenSpec helps you and your AI coding assistant agree on what to build before an
 **Default quick path (core profile):**
 
 ```text
-/opsx:propose ──► /opsx:apply ──► /opsx:sync ──► /opsx:archive
+/openspec-propose ──► /openspec-apply-change ──► /openspec-sync-specs ──► /openspec-archive-change
 ```
 
 **Expanded path (custom workflow selection):**
 
 ```text
-/opsx:new ──► /opsx:ff or /opsx:continue ──► /opsx:apply ──► /opsx:verify ──► /opsx:archive
+/openspec-new-change ──► /openspec-ff-change or /openspec-continue-change ──► /openspec-apply-change ──► /openspec-verify-change ──► /openspec-archive-change
 ```
 
 The default global profile is `core`, which includes `propose`, `explore`, `apply`, `sync`, and `archive`. You can enable the expanded workflow commands with `openspec config profile` and then `openspec update`.
@@ -123,7 +123,7 @@ Let's walk through adding dark mode to an application.
 ### 1. Start the Change (Default)
 
 ```text
-You: /opsx:propose add-dark-mode
+You: /openspec-propose add-dark-mode
 
 AI:  Created openspec/changes/add-dark-mode/
      ✓ proposal.md — why we're doing this, what's changing
@@ -133,7 +133,7 @@ AI:  Created openspec/changes/add-dark-mode/
      Ready for implementation!
 ```
 
-If you've enabled the expanded workflow profile, you can also do this as two steps: `/opsx:new` then `/opsx:ff` (or `/opsx:continue` incrementally).
+If you've enabled the expanded workflow profile, you can also do this as two steps: `/openspec-new-change` then `/openspec-ff-change` (or `/openspec-continue-change` incrementally).
 
 ### 2. What Gets Created
 
@@ -201,7 +201,7 @@ The system SHALL allow users to choose between light and dark themes.
 ### 3. Implement
 
 ```
-You: /opsx:apply
+You: /openspec-apply-change
 
 AI:  Working through tasks...
      ✓ 1.1 Created ThemeContext with light/dark state
@@ -217,7 +217,7 @@ During implementation, if you discover the design needs adjustment, just update 
 ### 4. Archive
 
 ```
-You: /opsx:archive
+You: /openspec-archive-change
 
 AI:  Archiving add-dark-mode...
      ✓ Merged specs into openspec/specs/ui/spec.md
@@ -247,7 +247,7 @@ openspec view
 
 ## Next Steps
 
-- [Workflows](workflows.md) - Common patterns and when to use each command
-- [Commands](commands.md) - Full reference for all slash commands
+- [Workflows](workflows.md) - Common patterns and when to use each skill
+- [Commands](commands.md) - Full reference for all workflow skills
 - [Concepts](concepts.md) - Deeper understanding of specs, changes, and schemas
 - [Customization](customization.md) - Make OpenSpec work your way

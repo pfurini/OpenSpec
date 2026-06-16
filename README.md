@@ -36,18 +36,18 @@ Our philosophy:
 > [!TIP]
 > **New workflow now available!** We've rebuilt OpenSpec with a new artifact-guided workflow.
 >
-> Run `/opsx:propose "your idea"` to get started. → [Learn more here](docs/opsx.md)
+> Run `/openspec-propose "your idea"` to get started. → [Learn more here](docs/opsx.md)
 
 <p align="center">
   Follow <a href="https://x.com/0xTab">@0xTab on X</a> for updates · Join the <a href="https://discord.gg/YctCnvvshC">OpenSpec Discord</a> for help and questions.
 </p>
 
-<!-- TODO: Add GIF demo of /opsx:propose → /opsx:archive workflow -->
+<!-- TODO: Add GIF demo of /openspec-propose → /openspec-archive-change workflow -->
 
 ## See it in action
 
 ```text
-You: /opsx:propose add-dark-mode
+You: /openspec-propose add-dark-mode
 AI:  Created openspec/changes/add-dark-mode/
      ✓ proposal.md — why we're doing this, what's changing
      ✓ specs/       — requirements and scenarios
@@ -55,7 +55,7 @@ AI:  Created openspec/changes/add-dark-mode/
      ✓ tasks.md     — implementation checklist
      Ready for implementation!
 
-You: /opsx:apply
+You: /openspec-apply-change
 AI:  Implementing tasks...
      ✓ 1.1 Add theme context provider
      ✓ 1.2 Create toggle component
@@ -63,7 +63,7 @@ AI:  Implementing tasks...
      ✓ 2.2 Wire up localStorage
      All tasks complete!
 
-You: /opsx:archive
+You: /openspec-archive-change
 AI:  Archived to openspec/changes/archive/2025-01-23-add-dark-mode/
      Specs updated. Ready for the next feature.
 ```
@@ -94,9 +94,9 @@ cd your-project
 openspec init
 ```
 
-Now tell your AI: `/opsx:propose <what-you-want-to-build>`
+Now tell your AI: `/openspec-propose <what-you-want-to-build>`
 
-If you want the expanded workflow (`/opsx:new`, `/opsx:continue`, `/opsx:ff`, `/opsx:verify`, `/opsx:bulk-archive`, `/opsx:onboard`), select it with `openspec config profile` and apply with `openspec update`.
+If you want the expanded workflow (`/openspec-new-change`, `/openspec-continue-change`, `/openspec-ff-change`, `/openspec-verify-change`, `/openspec-bulk-archive-change`, `/openspec-onboard`), select it with `openspec config profile` and apply with `openspec update`.
 
 > [!NOTE]
 > Not sure if your tool is supported? [View the full list](docs/supported-tools.md) – we support 25+ tools and growing.

@@ -706,27 +706,27 @@ openspec/
 │                              OPENSPEC FLOW                                   │
 │                                                                              │
 │   ┌────────────────┐                                                         │
-│   │  1. START      │  /opsx:propose (core) or /opsx:new (expanded)           │
+│   │  1. START      │  /openspec-propose or /openspec-new-change              │
 │   │     CHANGE     │                                                         │
 │   └───────┬────────┘                                                         │
 │           │                                                                  │
 │           ▼                                                                  │
 │   ┌────────────────┐                                                         │
-│   │  2. CREATE     │  /opsx:ff or /opsx:continue (expanded workflow)         │
+│   │  2. CREATE     │  /openspec-ff-change or /openspec-continue-change       │
 │   │     ARTIFACTS  │  Creates proposal → specs → design → tasks              │
 │   │                │  (based on schema dependencies)                         │
 │   └───────┬────────┘                                                         │
 │           │                                                                  │
 │           ▼                                                                  │
 │   ┌────────────────┐                                                         │
-│   │  3. IMPLEMENT  │  /opsx:apply                                            │
+│   │  3. IMPLEMENT  │  /openspec-apply-change                                 │
 │   │     TASKS      │  Work through tasks, checking them off                  │
 │   │                │◄──── Update artifacts as you learn                      │
 │   └───────┬────────┘                                                         │
 │           │                                                                  │
 │           ▼                                                                  │
 │   ┌────────────────┐                                                         │
-│   │  4. VERIFY     │  /opsx:verify (optional)                                │
+│   │  4. VERIFY     │  /openspec-verify-change (optional)                     │
 │   │     WORK       │  Check implementation matches specs                     │
 │   └───────┬────────┘                                                         │
 │           │                                                                  │
@@ -739,6 +739,10 @@ openspec/
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
+
+`/openspec-propose` is the default `core`-profile entry point; `/openspec-new-change`,
+`/openspec-ff-change`, `/openspec-continue-change`, and `/openspec-verify-change` belong to the
+expanded workflow.
 
 **The virtuous cycle:**
 
@@ -768,5 +772,5 @@ openspec/
 
 - [Getting Started](getting-started.md) - Practical first steps
 - [Workflows](workflows.md) - Common patterns and when to use each
-- [Commands](commands.md) - Full command reference
+- [Commands](commands.md) - Full skill reference
 - [Customization](customization.md) - Create custom schemas and configure your project
