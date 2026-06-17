@@ -1425,62 +1425,46 @@ More user content after markers.
   });
 
   describe('new tool detection', () => {
-    it('should detect new tool directories not currently configured', async () => {
-      // Set up a configured Claude tool
-      const claudeSkillsDir = path.join(testDir, '.claude', 'skills');
-      await fs.mkdir(path.join(claudeSkillsDir, 'openspec-explore'), { recursive: true });
-      await fs.writeFile(path.join(claudeSkillsDir, 'openspec-explore', 'SKILL.md'), 'old');
+    it('does not flag a detected non-symlink tool as new once the canonical store is installed', async () => {
+      // Install via the new model: canonical store + Claude symlink.
+      const initCommand = new InitCommand({ tools: 'claude', force: true });
+      await initCommand.execute(testDir);
 
-      // Create a Cursor directory (not configured — no skills)
+      // Cursor's IDE directory is present, but Cursor reads .agents/skills
+      // natively — it is already served and must not be flagged as "new".
       await fs.mkdir(path.join(testDir, '.cursor'), { recursive: true });
 
       const consoleSpy = vi.spyOn(console, 'log');
 
-      await updateCommand.execute(testDir);
+      await new UpdateCommand({ force: true }).execute(testDir);
 
-      // Should detect Cursor as a new tool
       const calls = consoleSpy.mock.calls.map(call =>
         call.map(arg => String(arg)).join(' ')
       );
-      const hasNewToolMessage = calls.some(call =>
-        call.includes("Detected new tool: Cursor. Run 'openspec init' to add it.")
-      );
-      expect(hasNewToolMessage).toBe(true);
+      const hasNewToolMessage = calls.some(call => call.includes('Detected new tool'));
+      expect(hasNewToolMessage).toBe(false);
 
       consoleSpy.mockRestore();
     });
 
-    it('should consolidate multiple new tools into one message', async () => {
-      // Set up a configured Claude tool
-      const claudeSkillsDir = path.join(testDir, '.claude', 'skills');
-      await fs.mkdir(path.join(claudeSkillsDir, 'openspec-explore'), { recursive: true });
-      await fs.writeFile(path.join(claudeSkillsDir, 'openspec-explore', 'SKILL.md'), 'old');
+    it('does not flag multiple canonical-served tools as new', async () => {
+      const initCommand = new InitCommand({ tools: 'claude', force: true });
+      await initCommand.execute(testDir);
 
-      // Create two unconfigured tool directories
+      // Two more IDE directories present; both read the canonical store natively.
       await fs.mkdir(path.join(testDir, '.github'), { recursive: true });
       await fs.writeFile(path.join(testDir, '.github', 'copilot-instructions.md'), '');
       await fs.mkdir(path.join(testDir, '.windsurf'), { recursive: true });
 
       const consoleSpy = vi.spyOn(console, 'log');
 
-      await updateCommand.execute(testDir);
+      await new UpdateCommand({ force: true }).execute(testDir);
 
       const calls = consoleSpy.mock.calls.map(call =>
         call.map(arg => String(arg)).join(' ')
       );
-
-      const consolidatedCalls = calls.filter(call =>
-        call.includes('Detected new tools:')
-      );
-      expect(consolidatedCalls).toHaveLength(1);
-      expect(consolidatedCalls[0]).toContain('GitHub Copilot');
-      expect(consolidatedCalls[0]).toContain('Windsurf');
-      expect(consolidatedCalls[0]).toContain("Run 'openspec init' to add them.");
-
-      const repeatedSingularCalls = calls.filter(call =>
-        call.includes('Detected new tool:')
-      );
-      expect(repeatedSingularCalls).toHaveLength(0);
+      const hasNewToolMessage = calls.some(call => call.includes('Detected new tool'));
+      expect(hasNewToolMessage).toBe(false);
 
       consoleSpy.mockRestore();
     });

@@ -20,6 +20,7 @@ import {
   getCanonicalSkillVersion,
   installSkills,
   removeSkill,
+  SYMLINK_TOOL_IDS,
   type ToolVersionStatus,
 } from './shared/index.js';
 import {
@@ -293,12 +294,23 @@ export class UpdateCommand {
 
   /**
    * Detects new tool directories that aren't currently configured and displays a hint.
+   *
+   * Once OpenSpec is installed, the canonical `.agents/skills` store already
+   * serves every tool that reads it natively (i.e. every non-symlink tool), so
+   * those are never "new" — only symlink-capable tools (Claude) that lack their
+   * link still need setup.
    */
   private detectNewTools(projectPath: string, configuredTools: string[]): void {
     const availableTools = getAvailableTools(projectPath);
     const configuredSet = new Set(configuredTools);
+    const canonicalServed = isCanonicalStorePopulated(projectPath);
 
-    const newTools = availableTools.filter((t) => !configuredSet.has(t.value));
+    const newTools = availableTools.filter((t) => {
+      if (configuredSet.has(t.value)) return false;
+      // A detected non-symlink tool is already served by the canonical store.
+      if (canonicalServed && !SYMLINK_TOOL_IDS.includes(t.value)) return false;
+      return true;
+    });
 
     if (newTools.length > 0) {
       const newToolNames = newTools.map((tool) => tool.name);
