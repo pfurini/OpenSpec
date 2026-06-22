@@ -7,6 +7,7 @@
 export type { SkillTemplate } from './types.js';
 
 export { getExploreSkillTemplate } from './workflows/explore.js';
+export { getReverseSkillTemplate } from './workflows/reverse.js';
 export { getOpsxDesignSkillTemplate } from './workflows/design.js';
 export { getNewChangeSkillTemplate } from './workflows/new-change.js';
 export { getContinueChangeSkillTemplate } from './workflows/continue-change.js';

@@ -6,6 +6,7 @@
 
 import {
   getExploreSkillTemplate,
+  getReverseSkillTemplate,
   getOpsxDesignSkillTemplate,
   getNewChangeSkillTemplate,
   getContinueChangeSkillTemplate,
@@ -43,6 +44,7 @@ export interface SkillTemplateEntry {
 export function getSkillTemplates(workflowFilter?: readonly string[]): SkillTemplateEntry[] {
   const all: SkillTemplateEntry[] = [
     { template: getExploreSkillTemplate(), dirName: 'openspec-explore', workflowId: 'explore' },
+    { template: getReverseSkillTemplate(), dirName: 'openspec-reverse', workflowId: 'reverse' },
     { template: getOpsxDesignSkillTemplate(), dirName: 'openspec-design', workflowId: 'design' },
     { template: getNewChangeSkillTemplate(), dirName: 'openspec-new-change', workflowId: 'new' },
     { template: getContinueChangeSkillTemplate(), dirName: 'openspec-continue-change', workflowId: 'continue' },

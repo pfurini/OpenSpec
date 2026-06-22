@@ -57,6 +57,7 @@ const hash = (value) => createHash('sha256').update(value).digest('hex');
 // --- factory lists (mirror of the parity test, in the same order) ---------
 const FUNCTION_FACTORY_NAMES = [
   'getExploreSkillTemplate',
+  'getReverseSkillTemplate',
   'getOpsxDesignSkillTemplate',
   'getNewChangeSkillTemplate',
   'getContinueChangeSkillTemplate',
@@ -74,6 +75,7 @@ const FUNCTION_FACTORY_NAMES = [
 // [dirName, skill-template factory name] — feeds the generated-content + tree maps.
 const SKILL_FACTORY_ENTRIES = [
   ['openspec-explore', 'getExploreSkillTemplate'],
+  ['openspec-reverse', 'getReverseSkillTemplate'],
   ['openspec-design', 'getOpsxDesignSkillTemplate'],
   ['openspec-new-change', 'getNewChangeSkillTemplate'],
   ['openspec-continue-change', 'getContinueChangeSkillTemplate'],

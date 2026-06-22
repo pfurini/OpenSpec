@@ -14,6 +14,7 @@ import { getCanonicalSkillsDir } from './skill-install.js';
  */
 export const SKILL_NAMES = [
   'openspec-explore',
+  'openspec-reverse',
   'openspec-design',
   'openspec-new-change',
   'openspec-continue-change',

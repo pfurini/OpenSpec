@@ -8,6 +8,7 @@ import {
   getBulkArchiveChangeSkillTemplate,
   getContinueChangeSkillTemplate,
   getExploreSkillTemplate,
+  getReverseSkillTemplate,
   getOpsxDesignSkillTemplate,
   getFeedbackSkillTemplate,
   getFfChangeSkillTemplate,
@@ -21,6 +22,7 @@ import { generateSkillContent, buildSkillArtifacts } from '../../../src/core/sha
 
 const EXPECTED_FUNCTION_HASHES: Record<string, string> = {
   getExploreSkillTemplate: 'dd21790d9fd81d61b0eaaeba32b60cabe9aa58fe5d06d14dd1fe1d8d6eefe910',
+  getReverseSkillTemplate: '9ee726fdad9b9376802b1c6bad28d416efbcb67a0b92be640fae06ec53715cb0',
   getOpsxDesignSkillTemplate: '80bfceb8d0f42a6b29c0542a258acddaafc893694d9c9893cf3e922a4d8ab9a3',
   getNewChangeSkillTemplate: '2ac7d5f59b5b76a87c14d70e59eb22c21b447f0047ecf95c3d8ff5bc146dc4d1',
   getContinueChangeSkillTemplate: 'b5df70304d16b6ce4b311ba206062d715ef482c162e896360e6c0790254ca235',
@@ -37,6 +39,7 @@ const EXPECTED_FUNCTION_HASHES: Record<string, string> = {
 
 const EXPECTED_GENERATED_SKILL_CONTENT_HASHES: Record<string, string> = {
   'openspec-explore': '9b75a6fd67e2286d7fbb4d3d6a88025bb4a120aee10c06c55f041d51bb2a2d8e',
+  'openspec-reverse': '809506a7d0d288b5971b9f090c694bd6b948ae3ca4fe5b0df0f3b46df66a681f',
   'openspec-design': 'bf19fdcadebacc8e135ece16ca575cdc160b704c33d5386f37467affdef7eec3',
   'openspec-new-change': 'a6a956df4c601f06444011925fc105e964c0ab25f3a2485533acffad4e7646b3',
   'openspec-continue-change': '0f21b5a488700a6908427a2a09b2f929db58fb3932a28853605fd8488dbfbf71',
@@ -79,6 +82,7 @@ describe('skill templates split parity', () => {
   it('preserves all template function payloads exactly', () => {
     const functionFactories: Record<string, () => unknown> = {
       getExploreSkillTemplate,
+      getReverseSkillTemplate,
       getOpsxDesignSkillTemplate,
       getNewChangeSkillTemplate,
       getContinueChangeSkillTemplate,
@@ -105,6 +109,7 @@ describe('skill templates split parity', () => {
     // deployed via generateSkillContent, while feedback is covered in function payload parity.
     const skillFactories: Array<[string, () => SkillTemplate]> = [
       ['openspec-explore', getExploreSkillTemplate],
+      ['openspec-reverse', getReverseSkillTemplate],
       ['openspec-design', getOpsxDesignSkillTemplate],
       ['openspec-new-change', getNewChangeSkillTemplate],
       ['openspec-continue-change', getContinueChangeSkillTemplate],

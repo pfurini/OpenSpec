@@ -24,25 +24,24 @@
 
 ## 3. Skill authoring: `schemas/skills/openspec-reverse/`
 
-- [ ] 3.1 Author `SKILL.md` (frontmatter `name: openspec-reverse` MUST equal dir name; description,
+- [x] 3.1 Author `SKILL.md` (frontmatter `name: openspec-reverse` MUST equal dir name; description,
       license, compatibility, metadata)
-- [ ] 3.2 Write the Flow: preflight CLI check → `reverse scan` → present capability map via
+- [x] 3.2 Write the Flow: preflight CLI check → `reverse scan` → present capability map via
       `AskUserQuestion` → per-capability test-first extraction → `reverse scaffold` → write draft →
       `openspec validate`
-- [ ] 3.3 Encode signal priority (tests → docs/ADRs/README → code) and the draft/confirmed-only/
+- [x] 3.3 Encode signal priority (tests → docs/ADRs/README → code) and the draft/confirmed-only/
       no-fabrication guardrails from the design's Non-Goals
 - [ ] 3.4 Add `references/*.md` for the extraction heuristics and altitude guidance if the body grows
       past a single readable file (use `<!--bundle:start-->`/`<!--bundle:end-->` markers)
 
 ## 4. Register the skill in the generated catalog
 
-- [ ] 4.1 Add `src/core/templates/workflows/reverse.ts` thin factory (`loadSkillSource('openspec-reverse', …)`)
-- [ ] 4.2 Re-export `getReverseSkillTemplate` from `src/core/templates/skill-templates.ts`
-- [ ] 4.3 Add registry entry in `getSkillTemplates()` (`dirName: 'openspec-reverse', workflowId: 'reverse'`)
-- [ ] 4.4 Add `'openspec-reverse'` to `SKILL_NAMES` in `src/core/shared/tool-detection.ts`
-- [ ] 4.5 Run `pnpm run rebaseline:skills`; verify parity test green; commit updated test file
-
-## 5. Docs
+- [x] 4.1 Add `src/core/templates/workflows/reverse.ts` thin factory (`loadSkillSource('openspec-reverse', …)`)
+- [x] 4.2 Re-export `getReverseSkillTemplate` from `src/core/templates/skill-templates.ts`
+- [x] 4.3 Add registry entry in `getSkillTemplates()` (`dirName: 'openspec-reverse', workflowId: 'reverse'`)
+- [x] 4.4 Add `'openspec-reverse'` to `SKILL_NAMES` in `src/core/shared/tool-detection.ts`
+- [x] 4.5 Run `pnpm run rebaseline:skills`; verify parity test green; commit updated test file
+ Docs
 
 - [ ] 5.1 Document the brownfield baselining workflow (scan → ratify-per-capability → validate)
 - [ ] 5.2 State the non-goals (not authoritative, not idempotent across LLM runs, confirmed-only)

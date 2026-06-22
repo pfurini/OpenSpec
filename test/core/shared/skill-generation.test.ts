@@ -6,9 +6,9 @@ import {
 
 describe('skill-generation', () => {
   describe('getSkillTemplates', () => {
-    it('should return all 12 skill templates', () => {
+    it('should return all 13 skill templates', () => {
       const templates = getSkillTemplates();
-      expect(templates).toHaveLength(12);
+      expect(templates).toHaveLength(13);
     });
 
     it('should have unique directory names', () => {
@@ -23,6 +23,7 @@ describe('skill-generation', () => {
       const dirNames = templates.map(t => t.dirName);
 
       expect(dirNames).toContain('openspec-explore');
+      expect(dirNames).toContain('openspec-reverse');
       expect(dirNames).toContain('openspec-new-change');
       expect(dirNames).toContain('openspec-continue-change');
       expect(dirNames).toContain('openspec-apply-change');
