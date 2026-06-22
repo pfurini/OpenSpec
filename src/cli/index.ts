@@ -10,6 +10,7 @@ import { ListCommand } from '../core/list.js';
 import { ArchiveCommand } from '../core/archive.js';
 import { ViewCommand } from '../core/view.js';
 import { registerSpecCommand } from '../commands/spec.js';
+import { registerReverseCommand } from '../commands/reverse.js';
 import { ChangeCommand } from '../commands/change.js';
 import { ValidateCommand } from '../commands/validate.js';
 import { ShowCommand } from '../commands/show.js';
@@ -327,6 +328,7 @@ program
   });
 
 registerSpecCommand(program);
+registerReverseCommand(program);
 registerConfigCommand(program);
 registerSchemaCommand(program);
 registerWorkspaceCommand(program);

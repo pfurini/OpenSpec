@@ -1010,4 +1010,45 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
       },
     ],
   },
+  {
+    name: 'reverse',
+    description: 'Brownfield helpers: inventory a codebase and scaffold draft baseline specs',
+    flags: [],
+    subcommands: [
+      {
+        name: 'scan',
+        description: 'Inventory the codebase and propose a candidate capability map (read-only)',
+        flags: [
+          {
+            name: 'path',
+            description: 'Directory to scan (defaults to current directory)',
+            takesValue: true,
+          },
+          COMMON_FLAGS.json,
+        ],
+      },
+      {
+        name: 'scaffold',
+        description: 'Create an idempotent draft baseline spec skeleton for a capability',
+        acceptsPositional: true,
+        positionals: [{ name: 'capability' }],
+        flags: [
+          {
+            name: 'path',
+            description: 'Project root containing openspec/ (defaults to current directory)',
+            takesValue: true,
+          },
+          {
+            name: 'purpose',
+            description: 'Purpose text for the spec (defaults to a TBD placeholder)',
+            takesValue: true,
+          },
+          {
+            name: 'force',
+            description: 'Overwrite an existing spec even if it contains non-skeleton content',
+          },
+        ],
+      },
+    ],
+  },
 ];
