@@ -113,10 +113,12 @@ and scenarios, and append any open-question / review lines.
 **e. Validate before moving on.**
 
 ```bash
-openspec validate <capability> --type spec --strict
+openspec validate <capability> --type spec
 ```
 
-Fix any format failures for this capability before starting the next one.
+Fix any structural failures for this capability before starting the next one. Do NOT use `--strict`
+here: strict mode escalates draft-stage warnings (a brief/`TBD` Purpose, etc.) to errors, and these
+are drafts by design. Strict validation is for after a human has ratified and completed the spec.
 
 **f. Show the human and pause.** Summarize what you drafted for this capability — requirements added,
 open questions, review flags — and let them correct it before you move to the next capability.
