@@ -1,6 +1,6 @@
 ---
 name: openspec-reverse
-description: Draft an OpenSpec spec baseline from an existing (brownfield) codebase that was never built with OpenSpec. Use when a repo has code but no openspec/specs/, and you want reviewable draft specs to ratify — not authoritative specs. Reverse-engineers observable behavior into capability specs, test-and-doc first, one capability at a time, with a human confirming every step.
+description: Reverse-engineer a draft OpenSpec spec baseline from an existing (brownfield) codebase. Use when a repo has code but no openspec/specs/ yet and the user wants reviewable draft specs — extracted from observable behavior, test-and-doc first, one capability at a time, ratified by a human.
 license: MIT
 compatibility: Requires openspec CLI.
 metadata:

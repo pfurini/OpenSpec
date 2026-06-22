@@ -548,6 +548,16 @@ The system MUST expire sessions after 15 minutes of inactivity.
 
 **Brownfield fit.** Most work modifies existing behavior. Deltas make modifications first-class, not an afterthought.
 
+### Baselining an existing codebase
+
+Deltas describe what's *changing* — which assumes a baseline spec to change against. A brownfield repo
+that was never built with OpenSpec has code but no `openspec/specs/`. To bootstrap that baseline, the
+`openspec-reverse` skill reverse-engineers **draft** specs from observable behavior (tests and docs
+first, code second), one capability at a time, with a human ratifying each one. It is backed by the
+deterministic `openspec reverse scan` / `openspec reverse scaffold` commands. The output is an
+explicitly-marked draft to review — not authoritative specs. See the
+[Workflow Skills reference](commands.md) and [Reverse Engineering Commands](cli.md).
+
 ## Schemas
 
 Schemas define the artifact types and their dependencies for a workflow.

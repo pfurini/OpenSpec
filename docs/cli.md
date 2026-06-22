@@ -682,6 +682,74 @@ Validating add-dark-mode...
 
 ---
 
+## Reverse Engineering Commands
+
+Deterministic, no-LLM helpers for **brownfield baselining** — bootstrapping an initial
+`openspec/specs/` set from a codebase that was never built with OpenSpec. They are orchestrated by
+the `openspec-reverse` skill (see [Workflow Skills](commands.md)), but are useful on their own.
+
+### `openspec reverse scan`
+
+Inventory the codebase and propose a candidate capability map. Read-only — no writes, no network, no
+language model.
+
+```
+openspec reverse scan [options]
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--path <dir>` | Directory to scan (default: current directory) |
+| `--json` | Output a structured report (file counts, languages, candidate capabilities) |
+
+The scan honors `.gitignore` plus a built-in vendored/generated ignore set (`node_modules`, `dist`,
+`target`, `.venv`, …) and classifies files as source / test / doc. Candidate capabilities are grouped
+by top-level module and cross-checked against existing `openspec/specs/` (already-specified
+capabilities are marked).
+
+**Example:**
+
+```bash
+openspec reverse scan
+# Scanned /repo
+#   319 files — 174 source, 95 test, 50 doc
+#   Languages: typescript (262), markdown (50)
+#
+# Candidate capabilities (12):
+#   auth — 34 files
+#   billing — 18 files
+#   telemetry — 2 files [already specified]
+```
+
+### `openspec reverse scaffold`
+
+Create an idempotent draft baseline spec skeleton for one capability.
+
+```
+openspec reverse scaffold <capability> [options]
+```
+
+**Arguments:**
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `capability` | Yes | Capability slug (lowercase, hyphenated) → `openspec/specs/<capability>/spec.md` |
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--path <dir>` | Project root containing `openspec/` (default: current directory) |
+| `--purpose <text>` | Purpose text for the spec (default: a `TBD` placeholder) |
+| `--force` | Overwrite an existing spec even if it contains non-skeleton content |
+
+The skeleton carries a `DRAFT BASELINE` banner. Re-running on a skeleton is a no-op; the command
+refuses to overwrite human-authored content unless `--force` is passed.
+
+---
+
 ## Lifecycle Commands
 
 ### `openspec archive`

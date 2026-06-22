@@ -37,6 +37,8 @@ Our philosophy:
 > **New workflow now available!** We've rebuilt OpenSpec with a new artifact-guided workflow.
 >
 > Run `/openspec-propose "your idea"` to get started. → [Learn more here](docs/opsx.md)
+>
+> Already have a codebase with no specs? Run `/openspec-reverse` to draft a spec baseline from it. → [Baselining an existing codebase](docs/concepts.md#baselining-an-existing-codebase)
 
 <p align="center">
   Follow <a href="https://x.com/0xTab">@0xTab on X</a> for updates · Join the <a href="https://discord.gg/YctCnvvshC">OpenSpec Discord</a> for help and questions.

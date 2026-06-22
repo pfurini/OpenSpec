@@ -26,6 +26,7 @@ For workflow patterns and when to use each skill, see [Workflows](workflows.md).
 | `/openspec-verify-change` | Validate implementation matches artifacts |
 | `/openspec-bulk-archive-change` | Archive multiple changes at once |
 | `/openspec-onboard` | Guided tutorial through the complete workflow |
+| `/openspec-reverse` | Draft a spec baseline from an existing (brownfield) codebase |
 
 The default global profile is `core`. To enable the expanded workflow skills, run `openspec config profile`, select workflows, then run `openspec update` in your project.
 
@@ -605,6 +606,48 @@ AI:  Welcome to OpenSpec!
 - Uses real code, not toy examples
 - Creates a real change you can keep or discard
 - Takes 15-30 minutes to complete
+
+---
+
+### `/openspec-reverse`
+
+Reverse-engineer a **draft** spec baseline from an existing (brownfield) codebase that has no
+`openspec/specs/` yet.
+
+**Syntax:**
+```
+/openspec-reverse
+```
+
+**What it does:**
+- Runs `openspec reverse scan` to inventory the repo and propose a candidate capability map
+- Asks you to ratify the map (keep / rename / merge / split / skip) before extracting anything
+- Extracts one capability at a time, reading **tests and docs first, code second**, citing `file:line`
+- Drafts requirements at behavioral altitude, scaffolds via `openspec reverse scaffold`, and validates
+- Records anything it can't confirm as an open question; flags possible bugs instead of codifying them
+
+**What it is NOT (non-goals):**
+- **Not authoritative** — every output carries a `DRAFT BASELINE` banner and must be ratified by a human
+- **Not idempotent across runs** — extraction is model-driven; only the `reverse scan`/`scaffold` helpers are deterministic
+- **Not a whole-repo dump** — you confirm the map and each draft, capability by capability
+- **Does not invent intent** — unconfirmed behavior becomes an open question, never a `SHALL`
+
+**Example:**
+```text
+You: /openspec-reverse
+
+AI:  Scanned the repo: 174 source, 95 test files across 12 candidate capabilities.
+     Which should I baseline? (auth, billing, …) — confirm or adjust the grouping.
+
+You: Start with auth.
+
+AI:  Reading test/auth/* and docs/auth.md first…
+     Drafted openspec/specs/auth/spec.md — 4 requirements, 2 open questions. Review before I continue.
+```
+
+**Notes:**
+- See [Reverse Engineering Commands](cli.md) for the underlying `openspec reverse scan` / `scaffold` CLI.
+- The drafts live under `openspec/specs/`; once ratified, future changes diff against them like any baseline.
 
 ---
 

@@ -22,7 +22,7 @@ import { generateSkillContent, buildSkillArtifacts } from '../../../src/core/sha
 
 const EXPECTED_FUNCTION_HASHES: Record<string, string> = {
   getExploreSkillTemplate: 'dd21790d9fd81d61b0eaaeba32b60cabe9aa58fe5d06d14dd1fe1d8d6eefe910',
-  getReverseSkillTemplate: '06eeb576e16b49ad0b8d980a2ef8db94c81b228046ba7c08bc0d03683fdfc42f',
+  getReverseSkillTemplate: '59d5aef26d74abcafaf5249dfda57b707ebe8e01432bb6c6bfc085674c49916b',
   getOpsxDesignSkillTemplate: '80bfceb8d0f42a6b29c0542a258acddaafc893694d9c9893cf3e922a4d8ab9a3',
   getNewChangeSkillTemplate: '2ac7d5f59b5b76a87c14d70e59eb22c21b447f0047ecf95c3d8ff5bc146dc4d1',
   getContinueChangeSkillTemplate: 'b5df70304d16b6ce4b311ba206062d715ef482c162e896360e6c0790254ca235',
@@ -39,7 +39,7 @@ const EXPECTED_FUNCTION_HASHES: Record<string, string> = {
 
 const EXPECTED_GENERATED_SKILL_CONTENT_HASHES: Record<string, string> = {
   'openspec-explore': '9b75a6fd67e2286d7fbb4d3d6a88025bb4a120aee10c06c55f041d51bb2a2d8e',
-  'openspec-reverse': '7e8e8bf90917944ea16254844d8052ca0f871faa91cab8bb1aa12a63a4e162f9',
+  'openspec-reverse': 'a83721c430fcb0f62f8839c496a1efe1eadf3c5da11199c7b471540c2c3474cf',
   'openspec-design': 'bf19fdcadebacc8e135ece16ca575cdc160b704c33d5386f37467affdef7eec3',
   'openspec-new-change': 'a6a956df4c601f06444011925fc105e964c0ab25f3a2485533acffad4e7646b3',
   'openspec-continue-change': '0f21b5a488700a6908427a2a09b2f929db58fb3932a28853605fd8488dbfbf71',

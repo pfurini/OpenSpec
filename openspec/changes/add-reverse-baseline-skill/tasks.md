@@ -31,8 +31,8 @@
       `openspec validate`
 - [x] 3.3 Encode signal priority (tests → docs/ADRs/README → code) and the draft/confirmed-only/
       no-fabrication guardrails from the design's Non-Goals
-- [ ] 3.4 Add `references/*.md` for the extraction heuristics and altitude guidance if the body grows
-      past a single readable file (use `<!--bundle:start-->`/`<!--bundle:end-->` markers)
+- [x] 3.4 N/A — the body fits one readable file; no `references/*.md` bundle needed. (Condition not
+      met: if the SKILL.md grows, split with `<!--bundle:start-->`/`<!--bundle:end-->` markers.)
 
 ## 4. Register the skill in the generated catalog
 
@@ -43,12 +43,12 @@
 - [x] 4.5 Run `pnpm run rebaseline:skills`; verify parity test green; commit updated test file
  Docs
 
-- [ ] 5.1 Document the brownfield baselining workflow (scan → ratify-per-capability → validate)
-- [ ] 5.2 State the non-goals (not authoritative, not idempotent across LLM runs, confirmed-only)
-- [ ] 5.3 Cross-link from `docs/concepts.md` brownfield section and `README.md`
+- [x] 5.1 Document the brownfield baselining workflow (scan → ratify-per-capability → validate)
+- [x] 5.2 State the non-goals (not authoritative, not idempotent across LLM runs, confirmed-only)
+- [x] 5.3 Cross-link from `docs/concepts.md` brownfield section and `README.md`
 
 ## 6. Validation
 
-- [ ] 6.1 `pnpm run build` then `pnpm test` green
-- [ ] 6.2 `openspec validate add-reverse-baseline-skill --strict` passes for this change
-- [ ] 6.3 Manual end-to-end dry run against a small brownfield fixture repo; confirm drafts validate
+- [x] 6.1 `pnpm run build` then `pnpm test` green
+- [x] 6.2 `openspec validate add-reverse-baseline-skill --strict` passes for this change
+- [x] 6.3 Manual end-to-end dry run against a small brownfield fixture repo; confirm drafts validate
