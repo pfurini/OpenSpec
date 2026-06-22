@@ -101,6 +101,12 @@ comment. Keep the count tractable — a handful of real requirements beats a tra
 - Current behavior may be a bug, or code contradicts a doc/test → flag for the reviewer in the draft
   (`> REVIEW(reverse): possible-bug — <what>, <path:line>`); do not promote it to a `SHALL`.
 
+**Nothing confirmable? Skip the capability — do not emit an empty spec.** A spec needs at least one
+requirement to be valid. If you cannot confirm a single requirement for this capability (only open
+questions), do NOT scaffold or write a file for it. Instead carry its open questions into the Step 4
+wrap-up under "not baselined — nothing confirmable yet" and move on. Skipping is the honest result, not
+a failure.
+
 **d. Scaffold and write.** Create the canonical skeleton, then fill it (keep the draft banner):
 
 ```bash
@@ -128,6 +134,8 @@ open questions, review flags — and let them correct it before you move to the 
 When the confirmed capabilities are drafted:
 
 - Summarize: capabilities drafted, total requirements, and the consolidated open-question / review list.
+- List any capabilities **not baselined** because nothing was confirmable, with their open questions —
+  these got no spec file, by design.
 - Remind the user these are **drafts requiring ratification** — the banner stays until a human removes it.
 - Suggest next steps: ratify and refine each spec, or fold a ratified baseline into the project (these
   specs already live under `openspec/specs/`; a future change can diff against them).

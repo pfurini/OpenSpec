@@ -53,6 +53,11 @@ cannot confirm.
 - **THEN** the agent SHALL flag it for the reviewer
 - **AND** SHALL NOT silently codify it as a requirement
 
+#### Scenario: Capability with nothing confirmable is skipped
+- **WHEN** the agent cannot confirm a single requirement for a capability (only open questions)
+- **THEN** the agent SHALL NOT write a spec file for that capability
+- **AND** SHALL carry its open questions into the completion summary as not-baselined
+
 ### Requirement: Validate generated baselines
 The agent SHALL validate each generated capability spec before reporting completion.
 
