@@ -213,6 +213,17 @@ describe('config profile interactive flow', () => {
     expect(checkboxCall.message).toBe('Select workflows to make available:');
     expect(checkboxCall.pageSize).toBe(ALL_WORKFLOWS.length);
     expect(checkboxCall.theme).toEqual({ icon: { checked: '[x]', unchecked: '[ ]' } });
+
+    // Completeness guard: every workflow must have a curated picker label,
+    // not the generic `Workflow: <id>` fallback. Catches a new workflow added to
+    // ALL_WORKFLOWS without a WORKFLOW_PROMPT_META entry.
+    for (const choice of checkboxCall.choices as Array<{ value: string; name: string; description: string }>) {
+      expect(choice.name, `workflow '${choice.value}' missing a picker name`).not.toBe(choice.value);
+      expect(
+        choice.description,
+        `workflow '${choice.value}' missing a WORKFLOW_PROMPT_META entry`
+      ).not.toBe(`Workflow: ${choice.value}`);
+    }
     expect(checkboxCall.choices).toEqual(expect.arrayContaining([
       expect.objectContaining({
         value: 'propose',
@@ -228,6 +239,11 @@ describe('config profile interactive flow', () => {
         value: 'reverse',
         name: 'Reverse-engineer specs',
         description: 'Draft a spec baseline from an existing (brownfield) codebase',
+      }),
+      expect.objectContaining({
+        value: 'design',
+        name: 'Design the HOW',
+        description: 'Settle the architecture into design.md and ADRs',
       }),
     ]));
     const proposeChoice = checkboxCall.choices.find((choice: { value: string }) => choice.value === 'propose');

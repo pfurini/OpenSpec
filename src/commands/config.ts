@@ -61,6 +61,10 @@ const WORKFLOW_PROMPT_META: Record<string, WorkflowPromptMeta> = {
     name: 'Reverse-engineer specs',
     description: 'Draft a spec baseline from an existing (brownfield) codebase',
   },
+  design: {
+    name: 'Design the HOW',
+    description: 'Settle the architecture into design.md and ADRs',
+  },
   new: {
     name: 'New change',
     description: 'Create a new change scaffold quickly',
