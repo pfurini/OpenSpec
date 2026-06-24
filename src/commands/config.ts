@@ -57,6 +57,10 @@ const WORKFLOW_PROMPT_META: Record<string, WorkflowPromptMeta> = {
     name: 'Explore ideas',
     description: 'Investigate a problem before implementation',
   },
+  reverse: {
+    name: 'Reverse-engineer specs',
+    description: 'Draft a spec baseline from an existing (brownfield) codebase',
+  },
   new: {
     name: 'New change',
     description: 'Create a new change scaffold quickly',

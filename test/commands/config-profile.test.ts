@@ -224,6 +224,11 @@ describe('config profile interactive flow', () => {
         name: 'Verify change',
         description: 'Run verification checks against a change',
       }),
+      expect.objectContaining({
+        value: 'reverse',
+        name: 'Reverse-engineer specs',
+        description: 'Draft a spec baseline from an existing (brownfield) codebase',
+      }),
     ]));
     const proposeChoice = checkboxCall.choices.find((choice: { value: string }) => choice.value === 'propose');
     const onboardChoice = checkboxCall.choices.find((choice: { value: string }) => choice.value === 'onboard');
