@@ -23,7 +23,7 @@ import { generateSkillContent, buildSkillArtifacts } from '../../../src/core/sha
 const EXPECTED_FUNCTION_HASHES: Record<string, string> = {
   getExploreSkillTemplate: 'dd21790d9fd81d61b0eaaeba32b60cabe9aa58fe5d06d14dd1fe1d8d6eefe910',
   getReverseSkillTemplate: 'acbc88d5e7a97ee104e6b53b1029b51bf2ebd045a7f4c8887931378ec4532c8d',
-  getOpsxDesignSkillTemplate: '80bfceb8d0f42a6b29c0542a258acddaafc893694d9c9893cf3e922a4d8ab9a3',
+  getOpsxDesignSkillTemplate: '6898a671d3558482598984a693c7bbf6bda146708702b6e2952722bb6b1d6c65',
   getNewChangeSkillTemplate: '2ac7d5f59b5b76a87c14d70e59eb22c21b447f0047ecf95c3d8ff5bc146dc4d1',
   getContinueChangeSkillTemplate: 'b5df70304d16b6ce4b311ba206062d715ef482c162e896360e6c0790254ca235',
   getApplyChangeSkillTemplate: 'd2a6e033b071872604837b3a1fa1915d9eaf4fc46ad10a3c6f5395df96dab42f',
@@ -54,8 +54,8 @@ const EXPECTED_GENERATED_SKILL_CONTENT_HASHES: Record<string, string> = {
 };
 
 const EXPECTED_BUNDLE_TREE_HASHES: Record<string, string> = {
-  'openspec-design:full': '54b01d5aabfa8356f4f619363ec1c7f5130e20e43e006e9bd4967521a6393790',
-  'openspec-design:flatten': 'cdd829acef46da50aacf025f5be4c802c7b587e2d480257745df2e6724347c1f',
+  'openspec-design:full': '87f5399f07ef7a50f89bf056c605852bfd3fd10db512437036117b07c87a942d',
+  'openspec-design:flatten': 'a81a43303e1c393850f767d5cffcd3ffe47eb5b1fcc2e1abd9683b54759a964d',
 };
 
 function stableStringify(value: unknown): string {
