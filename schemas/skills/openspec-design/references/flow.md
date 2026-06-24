@@ -49,7 +49,7 @@ Write the settled HOW straight into `<changeRoot>/design.md` (no shadow note —
 
 Scale each section to its weight; skip what doesn't apply. Don't pad.
 
-**Glossary:** if the design introduces a genuinely new shared term — a concept others will reference — offer to append it to the project glossary (the existing root `GLOSSARY.md`, or create one at the repo root). One line, append don't clobber. Reuse the glossary's existing terms; don't log throwaway implementation names. (Structure, the `_Avoid_` synonym-killing convention, and single-vs-multi-context layout: the **Glossary Format** reference.)
+**Glossary:** if the design introduces a genuinely new shared term — a concept others will reference — offer to append it to the project glossary (the existing root `GLOSSARY.md`, or create one at the repo root). One line, append don't clobber. Reuse the glossary's existing terms; don't log throwaway implementation names. (Structure, the `_Avoid_` synonym-killing convention, and the optional `code` identifier / default-language `label` fields: the **Glossary Format** reference.)
 
 ### 6 · Record ADRs
 Record an ADR **only if all three hold**: hard to reverse · surprising without context · the result of a real trade-off (the expanded "what qualifies" list is in the **ADR Format** reference). Write `ADR-NNNN-slug.md` into the project's ADR directory — use the repo's existing one if it has ADRs, else create `docs/adr/` (the convention). **For the frontmatter (`id` / `title` / `status: proposed` / `date` / `change:`), the status lifecycle, and numbering, follow the ADR Format reference** — don't re-derive it here.
