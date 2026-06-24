@@ -345,8 +345,8 @@ describe('InitCommand', () => {
       const skillFile = path.join(testDir, '.claude', 'skills', 'openspec-explore', 'SKILL.md');
       const content = await fs.readFile(skillFile, 'utf-8');
 
-      // Should contain generatedBy field with a version string
-      expect(content).toMatch(/generatedBy:\s*["']?\d+\.\d+\.\d+["']?/);
+      // Should contain generatedBy field with a version string (semver, incl. optional prerelease/build)
+      expect(content).toMatch(/generatedBy:\s*["']?\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?["']?/);
     });
   });
 
