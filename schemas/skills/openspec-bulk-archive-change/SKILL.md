@@ -10,6 +10,8 @@ metadata:
 
 Archive multiple completed changes in a single operation.
 
+${STORE_SELECTION_GUIDANCE}
+
 This skill allows you to batch-archive changes, handling spec conflicts intelligently by checking the codebase to determine what's actually implemented.
 
 **Input**: None required (prompts for selection)

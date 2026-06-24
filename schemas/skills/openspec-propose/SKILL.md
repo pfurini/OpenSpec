@@ -10,6 +10,8 @@ metadata:
 
 Propose a new change - create the change and generate all artifacts in one step.
 
+${STORE_SELECTION_GUIDANCE}
+
 I'll create a change with artifacts:
 - proposal.md (what & why)
 - design.md (how)

@@ -190,7 +190,9 @@ function maybeWarnProjectConfigDrift(
   if (!fs.existsSync(openspecDir)) {
     return;
   }
-  if (!hasProjectConfigDrift(projectDir, state.workflows, state.delivery)) {
+  // delivery is retained as an inert config field through L2; the skills-only
+  // drift check no longer considers it. Full delivery removal lands in L3.
+  if (!hasProjectConfigDrift(projectDir, state.workflows)) {
     return;
   }
   console.log(colorize('Warning: Global config is not applied to this project. Run `openspec update` to sync.'));

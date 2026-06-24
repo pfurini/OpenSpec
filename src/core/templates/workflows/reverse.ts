@@ -1,19 +1,18 @@
 /**
- * Skill Template Workflow Module — archive-change.
+ * Skill Template Workflow Module — reverse.
  *
- * Authored as a directory under `schemas/skills/openspec-archive-change/`
+ * Authored as a directory under `schemas/skills/openspec-reverse/`
  * (`SKILL.md` with frontmatter); this factory loads it.
  */
 import type { SkillTemplate } from '../types.js';
-import { STORE_SELECTION_GUIDANCE } from './store-selection.js';
 import { loadSkillSource } from '../../shared/skill-bundle.js';
 
-const source = loadSkillSource('openspec-archive-change', { STORE_SELECTION_GUIDANCE });
+const source = loadSkillSource('openspec-reverse');
 
-export function getArchiveChangeSkillTemplate(): SkillTemplate {
+export function getReverseSkillTemplate(): SkillTemplate {
   const { frontmatter } = source;
   if (!frontmatter.name || !frontmatter.description) {
-    throw new Error("openspec-archive-change SKILL.md must define 'name' and 'description' in frontmatter");
+    throw new Error("openspec-reverse SKILL.md must define 'name' and 'description' in frontmatter");
   }
   return {
     name: frontmatter.name,

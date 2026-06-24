@@ -116,92 +116,60 @@ describe('InitCommand', () => {
       }
     });
 
-    it('should create core profile commands for Claude Code by default', async () => {
-      const initCommand = new InitCommand({ tools: 'claude', force: true });
-
-      await initCommand.execute(testDir);
-
-      // Core profile: propose, explore, apply, sync, archive
-      const coreCommandNames = [
-        'opsx/propose.md',
-        'opsx/explore.md',
-        'opsx/apply.md',
-        'opsx/sync.md',
-        'opsx/archive.md',
-      ];
-
-      for (const cmdName of coreCommandNames) {
-        const cmdFile = path.join(testDir, '.claude', 'commands', cmdName);
-        expect(await fileExists(cmdFile)).toBe(true);
-      }
-
-      // Non-core commands should NOT be created
-      const nonCoreCommandNames = [
-        'opsx/new.md',
-        'opsx/continue.md',
-        'opsx/ff.md',
-        'opsx/bulk-archive.md',
-        'opsx/verify.md',
-      ];
-
-      for (const cmdName of nonCoreCommandNames) {
-        const cmdFile = path.join(testDir, '.claude', 'commands', cmdName);
-        expect(await fileExists(cmdFile)).toBe(false);
-      }
-    });
-
-    it('should create skills in Cursor skills directory', async () => {
+    it('should write skills to the canonical store for a non-symlink tool (Cursor)', async () => {
       const initCommand = new InitCommand({ tools: 'cursor', force: true });
 
       await initCommand.execute(testDir);
 
-      const skillFile = path.join(testDir, '.cursor', 'skills', 'openspec-explore', 'SKILL.md');
-      expect(await fileExists(skillFile)).toBe(true);
+      // Skills land once in the canonical store; Cursor reads it natively.
+      const canonical = path.join(testDir, '.agents', 'skills', 'openspec-explore', 'SKILL.md');
+      expect(await fileExists(canonical)).toBe(true);
+
+      // No per-tool copy is created for non-symlink tools.
+      const cursorSkill = path.join(testDir, '.cursor', 'skills', 'openspec-explore');
+      expect(await pathExists(cursorSkill)).toBe(false);
     });
 
-    it('should create skills in Windsurf skills directory', async () => {
+    it('should write skills to the canonical store for a non-symlink tool (Windsurf)', async () => {
       const initCommand = new InitCommand({ tools: 'windsurf', force: true });
 
       await initCommand.execute(testDir);
 
-      const skillFile = path.join(testDir, '.windsurf', 'skills', 'openspec-explore', 'SKILL.md');
-      expect(await fileExists(skillFile)).toBe(true);
+      const canonical = path.join(testDir, '.agents', 'skills', 'openspec-explore', 'SKILL.md');
+      expect(await fileExists(canonical)).toBe(true);
+
+      const windsurfSkill = path.join(testDir, '.windsurf', 'skills', 'openspec-explore');
+      expect(await pathExists(windsurfSkill)).toBe(false);
     });
 
-    it('should support Kimi CLI as an adapterless skills-only tool', async () => {
-      saveGlobalConfig({
-        featureFlags: {},
-        profile: 'core',
-        delivery: 'both',
-      });
-
+    it('should install skills for Kimi CLI (skills-only, no commands)', async () => {
       const initCommand = new InitCommand({ tools: 'kimi', force: true });
       await initCommand.execute(testDir);
 
-      const skillFile = path.join(testDir, '.kimi', 'skills', 'openspec-explore', 'SKILL.md');
-      expect(await fileExists(skillFile)).toBe(true);
+      const canonical = path.join(testDir, '.agents', 'skills', 'openspec-explore', 'SKILL.md');
+      expect(await fileExists(canonical)).toBe(true);
 
+      // Commands are retired — no command directory is ever created.
       const commandsDir = path.join(testDir, '.kimi', 'commands');
       expect(await directoryExists(commandsDir)).toBe(false);
-
-      const logCalls = (console.log as unknown as { mock: { calls: unknown[][] } }).mock.calls.flat().map(String);
-      expect(
-        logCalls.some(
-          (entry) => entry.includes('Commands skipped for: kimi') && entry.includes('(no adapter)'),
-        ),
-      ).toBe(true);
     });
 
-    it('should create skills for multiple tools at once', async () => {
+    it('should create one canonical store and a Claude symlink for multiple tools at once', async () => {
       const initCommand = new InitCommand({ tools: 'claude,cursor', force: true });
 
       await initCommand.execute(testDir);
 
-      const claudeSkill = path.join(testDir, '.claude', 'skills', 'openspec-explore', 'SKILL.md');
-      const cursorSkill = path.join(testDir, '.cursor', 'skills', 'openspec-explore', 'SKILL.md');
+      // Single canonical copy.
+      const canonical = path.join(testDir, '.agents', 'skills', 'openspec-explore', 'SKILL.md');
+      expect(await fileExists(canonical)).toBe(true);
 
-      expect(await fileExists(claudeSkill)).toBe(true);
-      expect(await fileExists(cursorSkill)).toBe(true);
+      // Claude (a verified symlink tool) gets a symlink into the canonical store.
+      const claudeLink = path.join(testDir, '.claude', 'skills', 'openspec-explore');
+      expect(await isSymlinkInto(claudeLink, '.agents/skills/openspec-explore')).toBe(true);
+
+      // Cursor reads the canonical store natively — no per-tool copy.
+      const cursorSkill = path.join(testDir, '.cursor', 'skills', 'openspec-explore');
+      expect(await pathExists(cursorSkill)).toBe(false);
     });
 
     it('should select all tools with --tools all option', async () => {
@@ -209,14 +177,16 @@ describe('InitCommand', () => {
 
       await initCommand.execute(testDir);
 
-      // Check a few representative tools
-      const claudeSkill = path.join(testDir, '.claude', 'skills', 'openspec-explore', 'SKILL.md');
-      const cursorSkill = path.join(testDir, '.cursor', 'skills', 'openspec-explore', 'SKILL.md');
-      const windsurfSkill = path.join(testDir, '.windsurf', 'skills', 'openspec-explore', 'SKILL.md');
+      // Canonical store + Claude symlink; other tools have no per-tool copy.
+      const canonical = path.join(testDir, '.agents', 'skills', 'openspec-explore', 'SKILL.md');
+      const claudeLink = path.join(testDir, '.claude', 'skills', 'openspec-explore');
+      const cursorSkill = path.join(testDir, '.cursor', 'skills', 'openspec-explore');
+      const windsurfSkill = path.join(testDir, '.windsurf', 'skills', 'openspec-explore');
 
-      expect(await fileExists(claudeSkill)).toBe(true);
-      expect(await fileExists(cursorSkill)).toBe(true);
-      expect(await fileExists(windsurfSkill)).toBe(true);
+      expect(await fileExists(canonical)).toBe(true);
+      expect(await isSymlinkInto(claudeLink, '.agents/skills/openspec-explore')).toBe(true);
+      expect(await pathExists(cursorSkill)).toBe(false);
+      expect(await pathExists(windsurfSkill)).toBe(false);
     });
 
     it('should skip tool configuration with --tools none option', async () => {
@@ -244,11 +214,11 @@ describe('InitCommand', () => {
 
       await initCommand.execute(testDir);
 
-      const claudeSkill = path.join(testDir, '.claude', 'skills', 'openspec-explore', 'SKILL.md');
-      const cursorSkill = path.join(testDir, '.cursor', 'skills', 'openspec-explore', 'SKILL.md');
+      const canonical = path.join(testDir, '.agents', 'skills', 'openspec-explore', 'SKILL.md');
+      const claudeLink = path.join(testDir, '.claude', 'skills', 'openspec-explore');
 
-      expect(await fileExists(claudeSkill)).toBe(true);
-      expect(await fileExists(cursorSkill)).toBe(true);
+      expect(await fileExists(canonical)).toBe(true);
+      expect(await isSymlinkInto(claudeLink, '.agents/skills/openspec-explore')).toBe(true);
     });
 
     it('should reject combining reserved keywords with explicit tool ids', async () => {
@@ -292,12 +262,12 @@ describe('InitCommand', () => {
       const initCommand2 = new InitCommand({ tools: 'cursor', force: true });
       await initCommand2.execute(testDir);
 
-      // Both tools should have skills
-      const claudeSkill = path.join(testDir, '.claude', 'skills', 'openspec-explore', 'SKILL.md');
-      const cursorSkill = path.join(testDir, '.cursor', 'skills', 'openspec-explore', 'SKILL.md');
+      // The canonical store persists across re-runs; Claude keeps its symlink.
+      const canonical = path.join(testDir, '.agents', 'skills', 'openspec-explore', 'SKILL.md');
+      const claudeLink = path.join(testDir, '.claude', 'skills', 'openspec-explore');
 
-      expect(await fileExists(claudeSkill)).toBe(true);
-      expect(await fileExists(cursorSkill)).toBe(true);
+      expect(await fileExists(canonical)).toBe(true);
+      expect(await isSymlinkInto(claudeLink, '.agents/skills/openspec-explore')).toBe(true);
     });
 
     it('should refresh skills on re-run for the same tool', async () => {
@@ -375,34 +345,8 @@ describe('InitCommand', () => {
       const skillFile = path.join(testDir, '.claude', 'skills', 'openspec-explore', 'SKILL.md');
       const content = await fs.readFile(skillFile, 'utf-8');
 
-      // Should contain generatedBy field with a version string
-      expect(content).toMatch(/generatedBy:\s*["']?\d+\.\d+\.\d+["']?/);
-    });
-  });
-
-  describe('command generation', () => {
-    it('should generate Claude Code commands with correct format', async () => {
-      const initCommand = new InitCommand({ tools: 'claude', force: true });
-      await initCommand.execute(testDir);
-
-      const cmdFile = path.join(testDir, '.claude', 'commands', 'opsx', 'explore.md');
-      const content = await fs.readFile(cmdFile, 'utf-8');
-
-      // Claude commands use YAML frontmatter
-      expect(content).toMatch(/^---\n/);
-      expect(content).toContain('name:');
-      expect(content).toContain('description:');
-    });
-
-    it('should generate Cursor commands with correct format', async () => {
-      const initCommand = new InitCommand({ tools: 'cursor', force: true });
-      await initCommand.execute(testDir);
-
-      const cmdFile = path.join(testDir, '.cursor', 'commands', 'opsx-explore.md');
-      expect(await fileExists(cmdFile)).toBe(true);
-
-      const content = await fs.readFile(cmdFile, 'utf-8');
-      expect(content).toMatch(/^---\n/);
+      // Should contain generatedBy field with a version string (semver, incl. optional prerelease/build)
+      expect(content).toMatch(/generatedBy:\s*["']?\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?["']?/);
     });
   });
 
@@ -436,55 +380,6 @@ describe('InitCommand', () => {
     });
   });
 
-  describe('tool-specific adapters', () => {
-    it('should generate Gemini CLI commands as TOML files', async () => {
-      const initCommand = new InitCommand({ tools: 'gemini', force: true });
-      await initCommand.execute(testDir);
-
-      const cmdFile = path.join(testDir, '.gemini', 'commands', 'opsx', 'explore.toml');
-      expect(await fileExists(cmdFile)).toBe(true);
-
-      const content = await fs.readFile(cmdFile, 'utf-8');
-      expect(content).toContain('description =');
-      expect(content).toContain('prompt =');
-    });
-
-    it('should generate Windsurf commands', async () => {
-      const initCommand = new InitCommand({ tools: 'windsurf', force: true });
-      await initCommand.execute(testDir);
-
-      const cmdFile = path.join(testDir, '.windsurf', 'workflows', 'opsx-explore.md');
-      expect(await fileExists(cmdFile)).toBe(true);
-    });
-
-    it('should generate Continue prompt files', async () => {
-      const initCommand = new InitCommand({ tools: 'continue', force: true });
-      await initCommand.execute(testDir);
-
-      const cmdFile = path.join(testDir, '.continue', 'prompts', 'opsx-explore.prompt');
-      expect(await fileExists(cmdFile)).toBe(true);
-
-      const content = await fs.readFile(cmdFile, 'utf-8');
-      expect(content).toContain('name: opsx-explore');
-      expect(content).toContain('invokable: true');
-    });
-
-    it('should generate Cline workflow files', async () => {
-      const initCommand = new InitCommand({ tools: 'cline', force: true });
-      await initCommand.execute(testDir);
-
-      const cmdFile = path.join(testDir, '.clinerules', 'workflows', 'opsx-explore.md');
-      expect(await fileExists(cmdFile)).toBe(true);
-    });
-
-    it('should generate GitHub Copilot prompt files', async () => {
-      const initCommand = new InitCommand({ tools: 'github-copilot', force: true });
-      await initCommand.execute(testDir);
-
-      const cmdFile = path.join(testDir, '.github', 'prompts', 'opsx-explore.prompt.md');
-      expect(await fileExists(cmdFile)).toBe(true);
-    });
-  });
 });
 
 describe('InitCommand - profile and detection features', () => {
@@ -519,7 +414,6 @@ describe('InitCommand - profile and detection features', () => {
     saveGlobalConfig({
       featureFlags: {},
       profile: 'custom',
-      delivery: 'both',
       workflows: ['explore', 'new', 'apply'],
     });
 
@@ -573,9 +467,11 @@ describe('InitCommand - profile and detection features', () => {
     // Legacy files should be cleaned up automatically
     expect(await fileExists(path.join(legacyDir, 'opsx-propose.md'))).toBe(false);
 
-    // New commands should be at the correct plural path
-    const newCommandsDir = path.join(testDir, '.opencode', 'commands');
-    expect(await directoryExists(newCommandsDir)).toBe(true);
+    // Skills are the sole artifact now — they land in the canonical store
+    // (OpenCode reads `.agents/skills` natively, so no per-tool copy is written).
+    const canonical = path.join(testDir, '.agents', 'skills', 'openspec-explore', 'SKILL.md');
+    expect(await fileExists(canonical)).toBe(true);
+    expect(await pathExists(path.join(testDir, '.opencode', 'skills', 'openspec-explore'))).toBe(false);
   });
 
   it('should preselect configured tools but not directory-detected tools in extend mode', async () => {
@@ -632,7 +528,6 @@ describe('InitCommand - profile and detection features', () => {
     saveGlobalConfig({
       featureFlags: {},
       profile: 'custom',
-      delivery: 'both',
       workflows: ['explore', 'new'],
     });
 
@@ -650,35 +545,10 @@ describe('InitCommand - profile and detection features', () => {
     expect(await fileExists(proposeSkill)).toBe(false);
   });
 
-  it('should migrate commands-only extend mode to custom profile without injecting propose', async () => {
-    await fs.mkdir(path.join(testDir, 'openspec'), { recursive: true });
-    await fs.mkdir(path.join(testDir, '.claude', 'commands', 'opsx'), { recursive: true });
-    await fs.writeFile(path.join(testDir, '.claude', 'commands', 'opsx', 'explore.md'), '# explore\n');
-
-    const initCommand = new InitCommand({ tools: 'claude', force: true });
-    await initCommand.execute(testDir);
-
-    const config = getGlobalConfig();
-    expect(config.profile).toBe('custom');
-    expect(config.delivery).toBe('commands');
-    expect(config.workflows).toEqual(['explore']);
-
-    const exploreCommand = path.join(testDir, '.claude', 'commands', 'opsx', 'explore.md');
-    const proposeCommand = path.join(testDir, '.claude', 'commands', 'opsx', 'propose.md');
-    expect(await fileExists(exploreCommand)).toBe(true);
-    expect(await fileExists(proposeCommand)).toBe(false);
-
-    const exploreSkill = path.join(testDir, '.claude', 'skills', 'openspec-explore', 'SKILL.md');
-    const proposeSkill = path.join(testDir, '.claude', 'skills', 'openspec-propose', 'SKILL.md');
-    expect(await fileExists(exploreSkill)).toBe(false);
-    expect(await fileExists(proposeSkill)).toBe(false);
-  });
-
   it('should not prompt for confirmation when applying custom profile in interactive init', async () => {
     saveGlobalConfig({
       featureFlags: {},
       profile: 'custom',
-      delivery: 'both',
       workflows: ['explore', 'new'],
     });
 
@@ -700,11 +570,10 @@ describe('InitCommand - profile and detection features', () => {
     expect(logCalls.some((entry) => entry.includes('Applying custom profile'))).toBe(false);
   });
 
-  it('should respect delivery=skills setting (no commands)', async () => {
+  it('installs skills only (commands are retired)', async () => {
     saveGlobalConfig({
       featureFlags: {},
       profile: 'core',
-      delivery: 'skills',
     });
 
     const initCommand = new InitCommand({ tools: 'claude', force: true });
@@ -714,54 +583,22 @@ describe('InitCommand - profile and detection features', () => {
     const skillFile = path.join(testDir, '.claude', 'skills', 'openspec-explore', 'SKILL.md');
     expect(await fileExists(skillFile)).toBe(true);
 
-    // Commands should NOT exist
+    // No command files are generated
     const cmdFile = path.join(testDir, '.claude', 'commands', 'opsx', 'explore.md');
     expect(await fileExists(cmdFile)).toBe(false);
   });
 
-  it('should respect delivery=commands setting (no skills)', async () => {
-    saveGlobalConfig({
-      featureFlags: {},
-      profile: 'core',
-      delivery: 'commands',
-    });
+  it('leaves pre-existing command files untouched (no active cleanup; delete + reinstall is the migration path)', async () => {
+    // Simulate an old install that still has generated command files on disk.
+    await fs.mkdir(path.join(testDir, '.claude', 'commands', 'opsx'), { recursive: true });
+    const cmdFile = path.join(testDir, '.claude', 'commands', 'opsx', 'explore.md');
+    await fs.writeFile(cmdFile, '# stale command\n');
 
     const initCommand = new InitCommand({ tools: 'claude', force: true });
     await initCommand.execute(testDir);
 
-    // Skills should NOT exist
-    const skillFile = path.join(testDir, '.claude', 'skills', 'openspec-explore', 'SKILL.md');
-    expect(await fileExists(skillFile)).toBe(false);
-
-    // Commands should exist
-    const cmdFile = path.join(testDir, '.claude', 'commands', 'opsx', 'explore.md');
+    // The stale command file is left as-is; skills are installed alongside it.
     expect(await fileExists(cmdFile)).toBe(true);
-  });
-
-  it('should remove commands on re-init when delivery changes to skills', async () => {
-    saveGlobalConfig({
-      featureFlags: {},
-      profile: 'core',
-      delivery: 'both',
-    });
-
-    const initCommand1 = new InitCommand({ tools: 'claude', force: true });
-    await initCommand1.execute(testDir);
-
-    const cmdFile = path.join(testDir, '.claude', 'commands', 'opsx', 'explore.md');
-    expect(await fileExists(cmdFile)).toBe(true);
-
-    saveGlobalConfig({
-      featureFlags: {},
-      profile: 'core',
-      delivery: 'skills',
-    });
-
-    const initCommand2 = new InitCommand({ tools: 'claude', force: true });
-    await initCommand2.execute(testDir);
-
-    expect(await fileExists(cmdFile)).toBe(false);
-
     const skillFile = path.join(testDir, '.claude', 'skills', 'openspec-explore', 'SKILL.md');
     expect(await fileExists(skillFile)).toBe(true);
   });
@@ -771,6 +608,26 @@ async function fileExists(filePath: string): Promise<boolean> {
   try {
     await fs.access(filePath);
     return true;
+  } catch {
+    return false;
+  }
+}
+
+async function pathExists(targetPath: string): Promise<boolean> {
+  try {
+    await fs.lstat(targetPath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function isSymlinkInto(linkPath: string, canonicalSuffix: string): Promise<boolean> {
+  try {
+    const stats = await fs.lstat(linkPath);
+    if (!stats.isSymbolicLink()) return false;
+    const target = (await fs.readlink(linkPath)).replace(/\\/g, '/');
+    return target.endsWith(canonicalSuffix);
   } catch {
     return false;
   }

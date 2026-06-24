@@ -7,8 +7,6 @@
 export {
   SKILL_NAMES,
   type SkillName,
-  COMMAND_IDS,
-  type CommandId,
   type ToolSkillStatus,
   type ToolVersionStatus,
   getToolsWithSkillsDir,
@@ -18,13 +16,24 @@ export {
   getToolVersionStatus,
   getConfiguredTools,
   getAllToolVersionStatus,
+  getInstalledCanonicalSkillNames,
+  isCanonicalStorePopulated,
+  getCanonicalSkillVersion,
 } from './tool-detection.js';
 
 export {
   type SkillTemplateEntry,
-  type CommandTemplateEntry,
   getSkillTemplates,
-  getCommandTemplates,
-  getCommandContents,
   generateSkillContent,
+  buildSkillArtifacts,
 } from './skill-generation.js';
+
+export {
+  CANONICAL_SKILLS_RELDIR,
+  SYMLINK_TOOL_IDS,
+  type InstallableSkill,
+  type InstallSkillsOptions,
+  installSkills,
+  removeSkill,
+  getCanonicalSkillsDir,
+} from './skill-install.js';

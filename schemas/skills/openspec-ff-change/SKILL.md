@@ -10,6 +10,8 @@ metadata:
 
 Fast-forward through artifact creation - generate everything needed to start implementation in one go.
 
+${STORE_SELECTION_GUIDANCE}
+
 **Input**: The user's request should include a change name (kebab-case) OR a description of what they want to build.
 
 **Steps**

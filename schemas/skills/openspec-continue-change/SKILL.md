@@ -10,6 +10,8 @@ metadata:
 
 Continue working on a change by creating the next artifact.
 
+${STORE_SELECTION_GUIDANCE}
+
 **Input**: Optionally specify a change name. If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
 
 **Steps**

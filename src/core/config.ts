@@ -9,6 +9,21 @@ export interface OpenSpecConfig {
   aiTools: string[];
 }
 
+/**
+ * How a tool consumes multi-file skill bundles (references/, scripts/):
+ * - `full`: progressive disclosure — references/scripts written as separate files
+ * - `flatten`: single SKILL.md only — references concatenated, scripts dropped
+ *
+ * "Agent Skills" (SKILL.md + references/ + scripts/) is a cross-tool open standard
+ * supported by 30+ platforms (Claude, Codex, Cursor, Gemini CLI, Copilot, …), and
+ * OpenSpec already emits the Agent Skills layout to every tool with a skillsDir — so
+ * `full` is the default. `flatten` is opt-in for tools known not to read subdirectories
+ * (it always yields a complete, if larger, SKILL.md — never silent content loss).
+ * Converges with the future `ToolProfile` capability model
+ * (`unify-template-generation-pipeline`).
+ */
+export type SkillBundleCapability = 'full' | 'flatten';
+
 export interface AIToolOption {
   name: string;
   value: string;
@@ -16,6 +31,18 @@ export interface AIToolOption {
   successLabel?: string;
   skillsDir?: string; // e.g., '.claude' - /skills suffix per Agent Skills spec
   detectionPaths?: string[]; // Override skillsDir for auto-detection; any path existing triggers detection
+  skillBundle?: SkillBundleCapability; // multi-file bundle support; defaults to 'full' for skillsDir tools
+}
+
+/**
+ * Resolves a tool's skill-bundle capability. Tools with a skillsDir default to
+ * `full` (the Agent Skills standard); set `skillBundle: 'flatten'` to opt a tool
+ * out. Tools with no skillsDir resolve to `flatten` (no multi-file surface).
+ */
+export function getSkillBundleCapability(toolValue: string): SkillBundleCapability {
+  const tool = AI_TOOLS.find((t) => t.value === toolValue);
+  if (tool?.skillBundle) return tool.skillBundle;
+  return tool?.skillsDir ? 'full' : 'flatten';
 }
 
 export const AI_TOOLS: AIToolOption[] = [
