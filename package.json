@@ -41,6 +41,7 @@
   "scripts": {
     "lint": "eslint src/",
     "build": "node build.js",
+    "rebaseline:skills": "pnpm build && node scripts/rebaseline-skill-hashes.mjs",
     "dev": "tsc --watch",
     "dev:cli": "pnpm build && node bin/openspec.js",
     "test": "vitest run",
