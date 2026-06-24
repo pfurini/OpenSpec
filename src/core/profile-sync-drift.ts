@@ -12,6 +12,7 @@ type WorkflowId = (typeof ALL_WORKFLOWS)[number];
  */
 export const WORKFLOW_TO_SKILL_DIR: Record<WorkflowId, string> = {
   'explore': 'openspec-explore',
+  'reverse': 'openspec-reverse',
   'design': 'openspec-design',
   'new': 'openspec-new-change',
   'continue': 'openspec-continue-change',
