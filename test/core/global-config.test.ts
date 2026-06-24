@@ -12,7 +12,7 @@ import {
   GLOBAL_CONFIG_DIR_NAME,
   GLOBAL_CONFIG_FILE_NAME
 } from '../../src/core/global-config.js';
-import type { Profile, Delivery } from '../../src/core/global-config.js';
+import type { Profile } from '../../src/core/global-config.js';
 
 describe('global-config', () => {
   let tempDir: string;
@@ -140,7 +140,7 @@ describe('global-config', () => {
 
       const config = getGlobalConfig();
 
-      expect(config).toEqual({ featureFlags: {}, profile: 'core', delivery: 'both' });
+      expect(config).toEqual({ featureFlags: {}, profile: 'core' });
     });
 
     it('should not create directory when reading non-existent config', () => {
@@ -177,7 +177,7 @@ describe('global-config', () => {
 
       const config = getGlobalConfig();
 
-      expect(config).toEqual({ featureFlags: {}, profile: 'core', delivery: 'both' });
+      expect(config).toEqual({ featureFlags: {}, profile: 'core' });
     });
 
     it('should log warning for invalid JSON', () => {
@@ -231,7 +231,7 @@ describe('global-config', () => {
     });
 
     describe('schema evolution', () => {
-      it('should add default profile and delivery when loading old config without them', () => {
+      it('should add default profile when loading old config without it', () => {
         process.env.XDG_CONFIG_HOME = tempDir;
         const configDir = path.join(tempDir, 'openspec');
         const configPath = path.join(configDir, 'config.json');
@@ -245,12 +245,11 @@ describe('global-config', () => {
         const config = getGlobalConfig();
 
         expect(config.profile).toBe('core');
-        expect(config.delivery).toBe('both');
         expect(config.workflows).toBeUndefined();
         expect(config.featureFlags?.existingFlag).toBe(true);
       });
 
-      it('should preserve explicit profile and delivery values from config', () => {
+      it('should preserve explicit profile values from config', () => {
         process.env.XDG_CONFIG_HOME = tempDir;
         const configDir = path.join(tempDir, 'openspec');
         const configPath = path.join(configDir, 'config.json');
@@ -259,14 +258,12 @@ describe('global-config', () => {
         fs.writeFileSync(configPath, JSON.stringify({
           featureFlags: {},
           profile: 'custom',
-          delivery: 'skills',
           workflows: ['propose', 'review']
         }));
 
         const config = getGlobalConfig();
 
         expect(config.profile).toBe('custom');
-        expect(config.delivery).toBe('skills');
         expect(config.workflows).toEqual(['propose', 'review']);
       });
 
@@ -275,7 +272,6 @@ describe('global-config', () => {
         const originalConfig = {
           featureFlags: { flag1: true },
           profile: 'custom' as Profile,
-          delivery: 'commands' as Delivery,
           workflows: ['propose']
         };
 
@@ -283,7 +279,6 @@ describe('global-config', () => {
         const loadedConfig = getGlobalConfig();
 
         expect(loadedConfig.profile).toBe('custom');
-        expect(loadedConfig.delivery).toBe('commands');
         expect(loadedConfig.workflows).toEqual(['propose']);
       });
 
@@ -295,8 +290,7 @@ describe('global-config', () => {
         fs.mkdirSync(configDir, { recursive: true });
         fs.writeFileSync(configPath, JSON.stringify({
           featureFlags: {},
-          profile: 'core',
-          delivery: 'both'
+          profile: 'core'
         }));
 
         const config = getGlobalConfig();

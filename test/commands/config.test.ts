@@ -1,22 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { Command } from 'commander';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
-
-async function runConfigCommand(args: string[]): Promise<void> {
-  const { registerConfigCommand } = await import('../../src/commands/config.js');
-  const program = new Command();
-  registerConfigCommand(program);
-  await program.parseAsync(['node', 'openspec', 'config', ...args]);
-}
 
 describe('config command integration', () => {
   // These tests use real file system operations with XDG_CONFIG_HOME override
   let tempDir: string;
   let originalEnv: NodeJS.ProcessEnv;
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
-  let consoleLogSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     // Create unique temp directory for each test
@@ -29,7 +20,6 @@ describe('config command integration', () => {
 
     // Spy on console.error
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -41,7 +31,6 @@ describe('config command integration', () => {
 
     // Restore spies
     consoleErrorSpy.mockRestore();
-    consoleLogSpy.mockRestore();
 
     // Reset module cache to pick up new XDG_CONFIG_HOME
     vi.resetModules();
@@ -99,22 +88,6 @@ describe('config command integration', () => {
     // Should return defaults
     expect(config.featureFlags).toEqual({});
     expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Invalid JSON'));
-  });
-
-  it('should set workflows from JSON array syntax', async () => {
-    await runConfigCommand([
-      'set',
-      'workflows',
-      '["new","ff","apply","archive"]',
-    ]);
-
-    const { getGlobalConfig } = await import('../../src/core/global-config.js');
-    const config = getGlobalConfig();
-
-    expect(config.workflows).toEqual(['new', 'ff', 'apply', 'archive']);
-    expect(consoleLogSpy).toHaveBeenCalledWith(
-      'Set workflows = new,ff,apply,archive'
-    );
   });
 });
 
@@ -205,11 +178,6 @@ describe('config key validation', () => {
     expect(validateConfigKeyPath('profile').valid).toBe(true);
   });
 
-  it('allows delivery key', async () => {
-    const { validateConfigKeyPath } = await import('../../src/core/config-schema.js');
-    expect(validateConfigKeyPath('delivery').valid).toBe(true);
-  });
-
   it('allows workflows key', async () => {
     const { validateConfigKeyPath } = await import('../../src/core/config-schema.js');
     expect(validateConfigKeyPath('workflows').valid).toBe(true);
@@ -233,23 +201,20 @@ describe('config profile command', () => {
     vi.resetModules();
   });
 
-  it('core preset should set profile to core and preserve delivery', async () => {
+  it('core preset should set profile to core with the core workflows', async () => {
     const { getGlobalConfig, saveGlobalConfig } = await import('../../src/core/global-config.js');
 
-    // Set initial config with custom delivery
-    saveGlobalConfig({ featureFlags: {}, profile: 'custom', delivery: 'skills', workflows: ['explore'] });
+    saveGlobalConfig({ featureFlags: {}, profile: 'custom', workflows: ['explore'] });
 
     // Simulate the core preset logic
     const config = getGlobalConfig();
     const { CORE_WORKFLOWS } = await import('../../src/core/profiles.js');
     config.profile = 'core';
     config.workflows = [...CORE_WORKFLOWS];
-    // Delivery should be preserved
     saveGlobalConfig(config);
 
     const result = getGlobalConfig();
     expect(result.profile).toBe('core');
-    expect(result.delivery).toBe('skills'); // preserved
     expect(result.workflows).toEqual(['propose', 'explore', 'apply', 'sync', 'archive']);
   });
 
@@ -268,7 +233,6 @@ describe('config profile command', () => {
     saveGlobalConfig({
       featureFlags: {},
       profile: isCoreMatch ? 'core' : 'custom',
-      delivery: 'both',
       workflows: selectedWorkflows,
     });
 
@@ -288,25 +252,17 @@ describe('config profile command', () => {
     expect(isCoreMatch).toBe(true);
   });
 
-  it('config schema should validate profile and delivery values', async () => {
+  it('config schema should validate profile values', async () => {
     const { validateConfig } = await import('../../src/core/config-schema.js');
 
-    expect(validateConfig({ featureFlags: {}, profile: 'core', delivery: 'both' }).success).toBe(true);
-    expect(validateConfig({ featureFlags: {}, profile: 'custom', delivery: 'skills' }).success).toBe(true);
-    expect(validateConfig({ featureFlags: {}, profile: 'custom', delivery: 'commands', workflows: ['explore'] }).success).toBe(true);
+    expect(validateConfig({ featureFlags: {}, profile: 'core' }).success).toBe(true);
+    expect(validateConfig({ featureFlags: {}, profile: 'custom', workflows: ['explore'] }).success).toBe(true);
   });
 
   it('config schema should reject invalid profile values', async () => {
     const { validateConfig } = await import('../../src/core/config-schema.js');
 
     const result = validateConfig({ featureFlags: {}, profile: 'invalid' });
-    expect(result.success).toBe(false);
-  });
-
-  it('config schema should reject invalid delivery values', async () => {
-    const { validateConfig } = await import('../../src/core/config-schema.js');
-
-    const result = validateConfig({ featureFlags: {}, delivery: 'invalid' });
     expect(result.success).toBe(false);
   });
 });

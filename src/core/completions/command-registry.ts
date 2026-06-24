@@ -178,7 +178,7 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
   },
   {
     name: 'instructions',
-    description: 'Output enriched instructions for creating an artifact or applying tasks',
+    description: 'Output enriched instructions for creating an artifact, applying tasks, or planning a wave',
     acceptsPositional: true,
     positionals: [{ name: 'artifact', optional: true }],
     flags: [
@@ -190,6 +190,11 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
       {
         name: 'schema',
         description: 'Schema override',
+        takesValue: true,
+      },
+      {
+        name: 'wave',
+        description: 'Wave number to plan (only with the "wave-plan" target; 0 = tracer bullet)',
         takesValue: true,
       },
       COMMON_FLAGS.json,
@@ -755,6 +760,90 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
             name: 'force',
             description: 'Overwrite existing schema',
           },
+        ],
+      },
+    ],
+  },
+  {
+    name: 'reverse',
+    description: 'Brownfield helpers: inventory a codebase and scaffold draft baseline specs',
+    flags: [],
+    subcommands: [
+      {
+        name: 'scan',
+        description: 'Inventory the codebase and propose a candidate capability map (read-only)',
+        flags: [
+          {
+            name: 'path',
+            description: 'Directory to scan (defaults to current directory)',
+            takesValue: true,
+          },
+          COMMON_FLAGS.json,
+        ],
+      },
+      {
+        name: 'scaffold',
+        description: 'Create an idempotent draft baseline spec skeleton for a capability',
+        acceptsPositional: true,
+        positionals: [{ name: 'capability' }],
+        flags: [
+          {
+            name: 'path',
+            description: 'Project root containing openspec/ (defaults to current directory)',
+            takesValue: true,
+          },
+          {
+            name: 'purpose',
+            description: 'Purpose text for the spec (defaults to a TBD placeholder)',
+            takesValue: true,
+          },
+          {
+            name: 'force',
+            description: 'Overwrite an existing spec even if it contains non-skeleton content',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    name: 'lint',
+    description: 'Run deterministic grounding-lint rules (e.g. ADR registry drift)',
+    flags: [
+      {
+        name: 'adr',
+        description: 'Run only the ADR registry rule',
+      },
+      {
+        name: 'adr-dir',
+        description: 'ADR directory',
+        takesValue: true,
+      },
+      COMMON_FLAGS.json,
+    ],
+  },
+  {
+    name: 'adr',
+    description: 'Architecture Decision Record utilities',
+    flags: [],
+    subcommands: [
+      {
+        name: 'index',
+        description: 'Generate (or, with --check, verify) the ADR registry from ADR frontmatter',
+        flags: [
+          {
+            name: 'dir',
+            description: 'ADR directory',
+            takesValue: true,
+          },
+          {
+            name: 'check',
+            description: 'Check the registry is up to date; exit non-zero on drift or parse errors',
+          },
+          {
+            name: 'force',
+            description: 'Overwrite a registry file that lacks the generated marker',
+          },
+          COMMON_FLAGS.json,
         ],
       },
     ],

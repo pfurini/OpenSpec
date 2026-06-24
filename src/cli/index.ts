@@ -30,12 +30,14 @@ import {
   statusCommand,
   instructionsCommand,
   applyInstructionsCommand,
+  waveInstructionsCommand,
   templatesCommand,
   schemasCommand,
   newChangeCommand,
   DEFAULT_SCHEMA,
   type StatusOptions,
   type InstructionsOptions,
+  type WaveInstructionsOptions,
   type TemplatesOptions,
   type SchemasOptions,
   type NewChangeOptions,
@@ -545,17 +547,21 @@ program
 // Instructions command
 program
   .command('instructions [artifact]')
-  .description('Output enriched instructions for creating an artifact or applying tasks')
+  .description('Output enriched instructions for creating an artifact, applying tasks, or planning a wave')
   .option('--change <id>', 'Change name')
   .option('--schema <name>', 'Schema override (auto-detected from config.yaml)')
+  .option('--wave <n>', 'Wave number to plan (only with the "wave-plan" target; 0 = tracer bullet)')
   .option('--json', 'Output as JSON')
   .option('--store <id>', STORE_OPTION_DESCRIPTION)
   .addOption(hiddenStorePathOption())
-  .action(async (artifactId: string | undefined, options: InstructionsOptions) => {
+  .action(async (artifactId: string | undefined, options: InstructionsOptions & WaveInstructionsOptions) => {
     try {
-      // Special case: "apply" is not an artifact, but a command to get apply instructions
+      // Special cases: "apply" and "wave-plan" are not artifacts, but commands that
+      // serve the schema's apply / wavePlan phase instructions.
       if (artifactId === 'apply') {
         await applyInstructionsCommand(options);
+      } else if (artifactId === 'wave-plan') {
+        await waveInstructionsCommand(options);
       } else {
         await instructionsCommand(artifactId, options);
       }

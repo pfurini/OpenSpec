@@ -49,6 +49,21 @@ export interface ApplyInstructions {
   references?: ReferenceIndexEntry[];
 }
 
+export interface WaveInstructions {
+  changeName: string;
+  changeDir: string;
+  schemaName: string;
+  /** The wave being planned (0 = tracer bullet). */
+  wave: number;
+  /** Files the JIT planner reads as Mandatory Reading (proposal/specs/design/tasks). */
+  contextFiles: Record<string, string[]>;
+  /** Absolute path where the planner writes the executable plan (plans/wave-N.md). */
+  outputPath: string;
+  state: 'blocked' | 'ready';
+  missingArtifacts?: string[];
+  instruction: string;
+}
+
 // -----------------------------------------------------------------------------
 // Constants
 // -----------------------------------------------------------------------------
