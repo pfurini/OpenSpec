@@ -23,6 +23,9 @@ import { registerStoreCommand } from '../commands/store.js';
 import { registerDoctorCommand } from '../commands/doctor.js';
 import { registerContextCommand } from '../commands/context.js';
 import { registerWorksetCommand } from '../commands/workset.js';
+import { registerReverseCommand } from '../commands/reverse.js';
+import { adrIndexCommand, type AdrIndexOptions } from '../commands/adr.js';
+import { lintCommand, type LintCommandOptions } from '../commands/lint.js';
 import {
   statusCommand,
   instructionsCommand,
@@ -349,6 +352,44 @@ registerStoreCommand(program);
 registerDoctorCommand(program);
 registerContextCommand(program);
 registerWorksetCommand(program);
+registerReverseCommand(program);
+
+// Lint command (deterministic grounding-lint rules)
+program
+  .command('lint')
+  .description('Run deterministic grounding-lint rules (e.g. ADR registry drift)')
+  .option('--adr', 'Run only the ADR registry rule')
+  .option('--adr-dir <path>', `ADR directory (default: ${'docs/adr'})`)
+  .option('--json', 'Output as JSON')
+  .action(async (options: LintCommandOptions) => {
+    try {
+      await lintCommand(options);
+    } catch (error) {
+      console.log();
+      ora().fail(`Error: ${(error as Error).message}`);
+      process.exit(1);
+    }
+  });
+
+// ADR command group
+const adrCmd = program.command('adr').description('Architecture Decision Record utilities');
+
+adrCmd
+  .command('index')
+  .description('Generate (or, with --check, verify) the ADR registry from ADR frontmatter')
+  .option('--dir <path>', `ADR directory (default: ${'docs/adr'})`)
+  .option('--check', 'Check the registry is up to date; exit non-zero on drift or parse errors')
+  .option('--force', 'Overwrite a registry file that lacks the generated marker')
+  .option('--json', 'Output as JSON')
+  .action(async (options: AdrIndexOptions) => {
+    try {
+      await adrIndexCommand(options);
+    } catch (error) {
+      console.log();
+      ora().fail(`Error: ${(error as Error).message}`);
+      process.exit(1);
+    }
+  });
 
 // Top-level validate command
 program
