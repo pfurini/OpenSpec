@@ -151,6 +151,8 @@ export interface ChangeStatus {
   isComplete: boolean;
   /** Artifact IDs required before apply phase (from schema's apply.requires) */
   applyRequires: string[];
+  /** How `continue` advances through artifacts (from schema's continueMode; default 'step') */
+  continueMode: 'step' | 'flow-to-gate';
   /** Status of each artifact */
   artifacts: ArtifactStatus[];
 }
@@ -440,6 +442,7 @@ export function formatChangeStatus(
     artifactPaths,
     isComplete,
     applyRequires,
+    continueMode: schema.continueMode ?? 'step',
     nextSteps: buildNextSteps({
       changeName: context.changeName,
       artifactStatuses,

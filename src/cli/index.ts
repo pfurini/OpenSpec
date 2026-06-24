@@ -219,24 +219,25 @@ program
 
 program
   .command('list')
-  .description('List items (changes by default). Use --specs to list specs.')
+  .description('List items (changes by default). Use --specs or --explorations.')
   .option('--specs', 'List specs instead of changes')
   .option('--changes', 'List changes explicitly (default)')
+  .option('--explorations', 'List exploration notes (pending vs linked to a change)')
   .option('--sort <order>', 'Sort order: "recent" (default) or "name"', 'recent')
   .option('--json', 'Output as JSON (for programmatic use)')
   .option('--store <id>', STORE_OPTION_DESCRIPTION)
   .addOption(hiddenStorePathOption())
-  .action(async (options?: { specs?: boolean; changes?: boolean; sort?: string; json?: boolean; store?: string; storePath?: string }) => {
+  .action(async (options?: { specs?: boolean; changes?: boolean; explorations?: boolean; sort?: string; json?: boolean; store?: string; storePath?: string }) => {
     try {
       const root = await resolveRootForCommand(options ?? {}, {
         json: options?.json,
-        failurePayload: options?.specs ? { specs: [], root: null } : { changes: [], root: null },
+        failurePayload: options?.explorations ? { explorations: [], root: null } : options?.specs ? { specs: [], root: null } : { changes: [], root: null },
       });
       if (!root) {
         return;
       }
       const listCommand = new ListCommand();
-      const mode: 'changes' | 'specs' = options?.specs ? 'specs' : 'changes';
+      const mode: 'changes' | 'specs' | 'explorations' = options?.explorations ? 'explorations' : options?.specs ? 'specs' : 'changes';
       const sort = options?.sort === 'name' ? 'name' : 'recent';
       await listCommand.execute(root.path, mode, {
         sort,

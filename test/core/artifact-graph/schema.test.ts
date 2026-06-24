@@ -31,6 +31,36 @@ artifacts:
       expect(schema.artifacts[1].requires).toEqual(['proposal']);
     });
 
+    it('parses continueMode when present and leaves it undefined when absent', () => {
+      const base = `
+name: test-schema
+version: 1
+artifacts:
+  - id: proposal
+    generates: proposal.md
+    description: Initial proposal
+    template: templates/proposal.md
+    requires: []
+`;
+      expect(parseSchema(base).continueMode).toBeUndefined();
+      expect(parseSchema(base + 'continueMode: flow-to-gate\n').continueMode).toBe('flow-to-gate');
+    });
+
+    it('rejects an invalid continueMode', () => {
+      const yaml = `
+name: test-schema
+version: 1
+continueMode: ludicrous-speed
+artifacts:
+  - id: proposal
+    generates: proposal.md
+    description: Initial proposal
+    template: templates/proposal.md
+    requires: []
+`;
+      expect(() => parseSchema(yaml)).toThrow(SchemaValidationError);
+    });
+
     it('should throw on missing required fields', () => {
       const yaml = `
 name: test-schema

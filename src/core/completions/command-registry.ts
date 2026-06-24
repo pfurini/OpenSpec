@@ -40,7 +40,7 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
   },
   {
     name: 'list',
-    description: 'List items (changes by default, or specs with --specs)',
+    description: 'List items (changes by default). Use --specs or --explorations.',
     flags: [
       {
         name: 'specs',
@@ -49,6 +49,10 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
       {
         name: 'changes',
         description: 'List changes explicitly (default)',
+      },
+      {
+        name: 'explorations',
+        description: 'List exploration notes (pending vs linked to a change)',
       },
       {
         name: 'sort',
