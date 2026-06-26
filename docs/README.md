@@ -7,17 +7,17 @@ OpenSpec helps you and your AI coding assistant **agree on what to build before 
 If you read nothing else, read these two pages:
 
 1. [Getting Started](getting-started.md): install, initialize, and ship your first change.
-2. [How Commands Work](how-commands-work.md): where you actually type `/opsx:propose` (hint: in your AI chat, not the terminal). This trips up almost everyone once.
+2. [How Commands Work](how-commands-work.md): where you actually type `/openspec-propose` (hint: in your AI chat, not the terminal). This trips up almost everyone once.
 
 That second one matters more than it looks. OpenSpec has two halves: a command line tool you run in your terminal, and slash commands you give to your AI assistant. Knowing which is which saves you the most common moment of confusion.
 
-> **The best habit to build first: when you're not sure what to build, start with `/opsx:explore`.** It's a no-stakes thinking partner that reads your code, weighs options, and sharpens a fuzzy idea into a concrete plan before any artifact or code exists. The [Explore First](explore.md) guide makes the case.
+> **The best habit to build first: when you're not sure what to build, start with `/openspec-explore`.** It's a no-stakes thinking partner that reads your code, weighs options, and sharpens a fuzzy idea into a concrete plan before any artifact or code exists. The [Explore First](explore.md) guide makes the case.
 
 ## Pick your path
 
 **I'm brand new.** Start with [Getting Started](getting-started.md), then skim the [Core Concepts at a Glance](overview.md). When something feels mysterious, the [FAQ](faq.md) and [Glossary](glossary.md) are nearby.
 
-**I have a problem but not a plan.** This is the common case, and it has a dedicated answer: [Explore First](explore.md). Use `/opsx:explore` to think it through with the AI before committing to anything.
+**I have a problem but not a plan.** This is the common case, and it has a dedicated answer: [Explore First](explore.md). Use `/openspec-explore` to think it through with the AI before committing to anything.
 
 **I have a big existing codebase.** You don't document all of it. [Using OpenSpec in an Existing Project](existing-projects.md) shows how to start on real, brownfield code without boiling the ocean.
 
@@ -38,7 +38,7 @@ That second one matters more than it looks. OpenSpec has two halves: a command l
 | Doc | What it gives you |
 |-----|-------------------|
 | [Getting Started](getting-started.md) | Install, initialize, and run your first change end to end |
-| [Explore First](explore.md) | Use `/opsx:explore` to think through an idea before you commit |
+| [Explore First](explore.md) | Use `/openspec-explore` to think through an idea before you commit |
 | [How Commands Work](how-commands-work.md) | Where slash commands run, what "interactive mode" means, terminal vs chat |
 | [Core Concepts at a Glance](overview.md) | The whole mental model on one page: specs, changes, deltas, archive |
 | [Installation](installation.md) | npm, pnpm, yarn, bun, Nix, and how to verify it worked |
@@ -51,7 +51,7 @@ That second one matters more than it looks. OpenSpec has two halves: a command l
 | [Examples & Recipes](examples.md) | Full walkthroughs of real changes, copy-pasteable |
 | [Using OpenSpec in an Existing Project](existing-projects.md) | Adopting OpenSpec on a large brownfield codebase |
 | [Editing & Iterating on a Change](editing-changes.md) | Update artifacts, go back, reconcile manual edits |
-| [Commands](commands.md) | Reference for every `/opsx:*` slash command |
+| [Commands](commands.md) | Reference for every `/openspec-*` slash command |
 | [CLI](cli.md) | Reference for every `openspec` terminal command |
 
 ### Understand it deeply
@@ -90,13 +90,13 @@ That second one matters more than it looks. OpenSpec has two halves: a command l
 ```text
 1. Install        npm install -g @fission-ai/openspec@latest
 2. Initialize     cd your-project && openspec init
-3. Explore        (in your AI chat)  /opsx:explore           ← optional, but a great habit
-4. Propose        (in your AI chat)  /opsx:propose add-dark-mode
-5. Build          (in your AI chat)  /opsx:apply
-6. Archive        (in your AI chat)  /opsx:archive
+3. Explore        (in your AI chat)  /openspec-explore           ← optional, but a great habit
+4. Propose        (in your AI chat)  /openspec-propose add-dark-mode
+5. Build          (in your AI chat)  /openspec-apply-change
+6. Archive        (in your AI chat)  /openspec-archive-change
 ```
 
-Steps 1 and 2 happen in your terminal. The rest happen in your AI assistant's chat. That split is the one thing worth memorizing, and [How Commands Work](how-commands-work.md) explains exactly why. Step 3 is optional, but starting with `/opsx:explore` when you're unsure is the habit most worth forming.
+Steps 1 and 2 happen in your terminal. The rest happen in your AI assistant's chat. That split is the one thing worth memorizing, and [How Commands Work](how-commands-work.md) explains exactly why. Step 3 is optional, but starting with `/openspec-explore` when you're unsure is the habit most worth forming.
 
 ## Where else to get help
 
