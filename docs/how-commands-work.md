@@ -69,20 +69,13 @@ The slash commands are the **steering wheel**, and every AI tool has a slightly 
 
 The strength of this design: you learn the workflow once and carry it across tools. The tradeoff: the exact syntax of a command can differ slightly between tools, which is the next section.
 
-## Slash command syntax by tool
+## Slash command syntax
 
-The intent is identical everywhere. The punctuation differs. Use the form that matches your assistant.
+Skills are invoked in your assistant's chat by name, as `/openspec-<skill>` — the same form across nearly every tool:
 
-| Tool | How you type it |
-|------|-----------------|
-| Claude Code | `/openspec-propose`, `/openspec-apply-change` |
-| Cursor | `/opsx-propose`, `/opsx-apply` |
-| Windsurf | `/opsx-propose`, `/opsx-apply` |
-| GitHub Copilot (IDE) | `/opsx-propose`, `/opsx-apply` |
-| Kimi CLI | skill-style, e.g. `/skill:openspec-propose` |
-| Trae | skill-style, e.g. `/openspec-propose` |
+`/openspec-propose`, `/openspec-explore`, `/openspec-apply-change`, …
 
-Most tools use either the colon form (`/openspec-propose`) or the dash form (`/opsx-propose`). A few tools surface OpenSpec as named skills instead of slash commands; for those you invoke the skill by name. The full per-tool list, including exactly which files get written where, lives in [Supported Tools](supported-tools.md).
+A few tools surface skills under a skill-specific prefix instead — for example Kimi CLI uses `/skill:openspec-propose`. The install model (one canonical `.agents/skills` store) is the same everywhere; only how the tool *exposes* the skill differs. See [Supported Tools](supported-tools.md).
 
 When in doubt, type a slash in your AI chat and look at the autocomplete. Your tool will show you the form it expects.
 

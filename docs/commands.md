@@ -610,20 +610,16 @@ AI:  Welcome to OpenSpec!
 
 ---
 
-## Command Syntax by AI Tool
+## Skill Invocation by AI Tool
 
-Different AI tools use slightly different command syntax. Use the format that matches your tool:
+OpenSpec ships its workflow as skills, invoked by name. Nearly every tool uses the same form — `/openspec-<skill>`:
 
-| Tool | Syntax Example |
-|------|----------------|
-| Claude Code | `/openspec-propose`, `/openspec-apply-change` |
-| Cursor | `/opsx-propose`, `/opsx-apply` |
-| Windsurf | `/opsx-propose`, `/opsx-apply` |
-| Copilot (IDE) | `/opsx-propose`, `/opsx-apply` |
-| Kimi CLI | Skill-based invocations such as `/skill:openspec-propose`, `/skill:openspec-apply-change` (no generated `opsx-*` command files) |
-| Trae | Skill-based invocations such as `/openspec-propose`, `/openspec-apply-change` (no generated `opsx-*` command files) |
+| Tool | Invocation example |
+|------|--------------------|
+| Most tools (Claude Code, Cursor, Windsurf, Copilot, …) | `/openspec-propose`, `/openspec-apply-change` |
+| Kimi CLI | Skill-prefixed, e.g. `/skill:openspec-propose`, `/skill:openspec-apply-change` |
 
-The intent is the same across tools, but how commands are surfaced can differ by integration.
+The intent is the same across tools; only how each integration *surfaces* the skill differs. There are no per-tool command files — the skills live in one canonical `.agents/skills` store (see [Supported Tools](supported-tools.md)).
 
 > **Note:** GitHub Copilot commands (`.github/prompts/*.prompt.md`) are only available in IDE extensions (VS Code, JetBrains, Visual Studio). GitHub Copilot CLI does not currently support custom prompt files — see [Supported Tools](supported-tools.md) for details and workarounds.
 

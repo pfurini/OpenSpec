@@ -38,9 +38,9 @@ There isn't a separate mode to start. You open your AI assistant like normal and
 
 Most likely you typed it in the terminal instead of your AI chat, or the commands aren't installed yet. Run `openspec update` in your project, restart your assistant, then try typing `/opsx` in chat and watch for autocomplete. [Troubleshooting](troubleshooting.md#commands-dont-show-up) has the full checklist.
 
-### Why is the syntax `/openspec-propose` in one tool and `/opsx-propose` in another?
+### How do I invoke a skill in my AI tool?
 
-Each AI tool surfaces custom commands a little differently. The intent is identical; only the punctuation changes. Type a slash in your chat and the autocomplete shows you the form your tool expects. The per-tool table is in [How Commands Work](how-commands-work.md#slash-command-syntax-by-tool).
+Skills are invoked by name in your assistant's chat: `/openspec-propose`, `/openspec-apply-change`, and so on. Nearly every tool uses this form; a few (like Kimi CLI) surface skills under a prefix such as `/skill:openspec-propose`. Type a slash in your chat and the autocomplete shows you the form your tool expects. See [How Commands Work](how-commands-work.md#slash-command-syntax).
 
 ### What's the difference between a skill and a command?
 
