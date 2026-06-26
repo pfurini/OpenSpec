@@ -47,15 +47,15 @@ If `/openspec-propose` (or your tool's equivalent) doesn't appear or doesn't do 
    openspec update
    ```
 
-   This rewrites the skill and command files for every tool you've configured.
+   This rewrites the skills for every tool you've configured.
 
-3. **Restart your assistant.** Most tools scan for skills and commands at startup. A fresh window often does it.
+3. **Restart your assistant.** Most tools scan for skills at startup. A fresh window often does it.
 
-4. **Confirm the files exist.** For Claude Code, check that `.claude/skills/` contains `openspec-*` folders. Other tools use their own directories, all listed in [Supported Tools](supported-tools.md).
+4. **Confirm the files exist.** Check that the canonical `.agents/skills/` store contains `openspec-*` folders. For Claude Code, `.claude/skills/` holds symlinks into it; other tools read `.agents/skills` directly. See [Supported Tools](supported-tools.md).
 
 5. **Check you initialized this project.** Skills are written per project. If you cloned a repo or switched folders, run `openspec init` (or `openspec update`) there.
 
-6. **Confirm your tool supports command files.** A few tools (Kimi CLI, Trae, ForgeCode, Mistral Vibe) don't get generated `opsx-*` command files; they use skill-based invocations instead. The forms differ per tool: see [Supported Tools](supported-tools.md) and [How Commands Work](how-commands-work.md#slash-command-syntax-by-tool).
+6. **Confirm the invocation form.** Skills are invoked in your assistant's chat as `/openspec-<skill>` (a few tools surface them as named skills you call by name). See [Supported Tools](supported-tools.md) and [How Commands Work](how-commands-work.md).
 
 ## Working with changes
 

@@ -79,7 +79,7 @@ npm install -g @fission-ai/openspec@latest   # or pnpm/yarn/bun equivalent
 openspec update                              # run inside each project
 ```
 
-`openspec update` regenerates the skill and command files for the tools you've configured, so your slash commands stay current with the installed version.
+`openspec update` regenerates the skills for the tools you've configured, so your slash commands stay current with the installed version.
 
 ## Uninstalling
 
@@ -99,7 +99,7 @@ rm -rf openspec/
 
 Think before you do this: `openspec/specs/` and `openspec/changes/archive/` are your record of how the system behaves and why it changed. If you might want that history, keep the folder (or keep it in git) even after uninstalling.
 
-**3. Remove generated AI tool files (optional).** OpenSpec writes skill and command files into per-tool directories like `.claude/skills/openspec-*/`, `.cursor/commands/opsx-*`, and so on. Delete the `openspec-*` skills and `opsx-*` commands for whichever tools you configured. The exact paths per tool are listed in [Supported Tools](supported-tools.md).
+**3. Remove generated AI tool files (optional).** OpenSpec writes skills to the canonical `.agents/skills/openspec-*/` store (with `.claude/skills/openspec-*` symlinks for Claude Code). Delete the `openspec-*` skill folders from `.agents/skills/` and remove any `.claude/skills/openspec-*` symlinks. See [Supported Tools](supported-tools.md).
 
 If you also have OpenSpec marker blocks in files like `CLAUDE.md` or `AGENTS.md`, remove those blocks by hand; your own content in those files is yours to keep.
 

@@ -136,7 +136,7 @@ It collects anonymous usage stats: command names and version only. No arguments,
 
 ### How do I upgrade?
 
-Two steps. Upgrade the package (`npm install -g @fission-ai/openspec@latest`), then run `openspec update` inside each project to refresh the generated skills and commands.
+Two steps. Upgrade the package (`npm install -g @fission-ai/openspec@latest`), then run `openspec update` inside each project to refresh the generated skills.
 
 ### How do I uninstall OpenSpec?
 

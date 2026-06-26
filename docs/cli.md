@@ -82,7 +82,7 @@ These options work with all commands:
 
 Initialize OpenSpec in your project. Creates the folder structure and configures AI tool integrations.
 
-Default behavior uses global config defaults: profile `core`, delivery `both`, workflows `propose, explore, apply, sync, archive`.
+Default behavior uses global config defaults: profile `core`, workflows `propose, explore, apply, sync, archive`.
 
 ```
 openspec init [path] [options]
@@ -138,17 +138,16 @@ openspec/
 ├── changes/            # Proposed changes
 └── config.yaml         # Project configuration
 
-.claude/skills/         # Claude Code skills (if claude selected)
-.cursor/skills/         # Cursor skills (if cursor selected)
-.cursor/commands/       # Cursor OPSX commands (if delivery includes commands)
-... (other tool configs)
+.agents/skills/         # canonical cross-tool skill store (the install)
+.claude/skills/         # Claude Code symlinks into .agents/skills (if claude selected)
+... (other selected tools read .agents/skills natively)
 ```
 
 ---
 
 ### `openspec update`
 
-Update OpenSpec instruction files after upgrading the CLI. Re-generates AI tool configuration files using your current global profile, selected workflows, and delivery mode.
+Update OpenSpec instruction files after upgrading the CLI. Re-generates AI tool configuration files using your current global profile and selected workflows.
 
 ```
 openspec update [path] [options]
@@ -1041,32 +1040,25 @@ openspec config edit
 # Configure profile with action-based wizard
 openspec config profile
 
-# Fast preset: switch workflows to core (keeps delivery mode)
+# Fast preset: switch workflows to core
 openspec config profile core
 ```
 
 `openspec config profile` starts with a current-state summary, then lets you choose:
-- Change delivery + workflows
-- Change delivery only
-- Change workflows only
+- Configure workflows
 - Keep current settings (exit)
 
 If you keep current settings, no changes are written and no update prompt is shown.
-If there are no config changes but the current project files are out of sync with your global profile/delivery, OpenSpec will show a warning and suggest `openspec update`.
+If there are no config changes but the current project files are out of sync with your global profile, OpenSpec will show a warning and suggest `openspec update`.
 Pressing `Ctrl+C` also cancels the flow cleanly (no stack trace) and exits with code `130`.
 In the workflow checklist, `[x]` means the workflow is selected in global config. To apply those selections to project files, run `openspec update` (or choose `Apply changes to this project now?` when prompted inside a project).
 
 **Interactive examples:**
 
 ```bash
-# Delivery-only update
+# Configure workflows
 openspec config profile
-# choose: Change delivery only
-# choose delivery: Skills only
-
-# Workflows-only update
-openspec config profile
-# choose: Change workflows only
+# choose: Configure workflows
 # toggle workflows in the checklist, then confirm
 ```
 

@@ -86,16 +86,15 @@ Most tools use either the colon form (`/openspec-propose`) or the dash form (`/o
 
 When in doubt, type a slash in your AI chat and look at the autocomplete. Your tool will show you the form it expects.
 
-## How the commands got there: skills and commands
+## How the commands got there: skills
 
-When you run `openspec init` (or `openspec update`), OpenSpec writes small files into your project so your AI tool can find the workflow. Depending on your tool and settings, these are **skills**, **commands**, or both.
+When you run `openspec init` (or `openspec update`), OpenSpec writes the workflow into your project as **Agent Skills** so your AI tool can find it. There is one install location:
 
-- **Skills** live in places like `.claude/skills/openspec-*/SKILL.md`. They're the emerging cross-tool standard: a folder of instructions your assistant auto-detects.
-- **Commands** live in places like `.claude/commands/opsx/<id>.md`. They're the older per-tool slash command files.
+- **Skills** live in the canonical, cross-tool store at `.agents/skills/openspec-*/SKILL.md` — a folder of instructions your assistant auto-detects. Most tools read `.agents/skills` natively; Claude Code additionally gets a symlink at `.claude/skills/openspec-*` so it discovers them through its own skills directory.
 
-You don't have to care which one your tool uses. You just type the slash command and it works. But knowing these files exist helps when something goes wrong: if your commands vanish, it usually means these files are missing or stale, and `openspec update` regenerates them.
+You don't have to care about the plumbing. You just type the slash command (`/openspec-<skill>`) and it works. But knowing the store exists helps when something goes wrong: if your commands vanish, it usually means `.agents/skills` is missing or stale, and `openspec update` regenerates it.
 
-See [Supported Tools](supported-tools.md) for the exact paths per tool, and [Migration Guide](migration-guide.md) for how skills replaced the older command-only approach.
+See [Supported Tools](supported-tools.md) for the install model, and [Migration Guide](migration-guide.md) for how skills replaced the older per-tool command files.
 
 ## Confirming it's installed
 
@@ -103,8 +102,8 @@ Quick checks, fastest first:
 
 1. **Type a slash in your AI chat.** Start typing `/opsx` and watch for autocomplete suggestions. If they appear, you're set.
 2. **Look for the files.** For Claude Code, check that `.claude/skills/` contains `openspec-*` folders. Other tools use their own directories ([Supported Tools](supported-tools.md) lists them).
-3. **Re-run setup.** From your project root, run `openspec update`. This regenerates the skill and command files for whatever tools you configured.
-4. **Restart your assistant.** Many tools scan for skills and commands at startup, so a fresh window can be the missing step.
+3. **Re-run setup.** From your project root, run `openspec update`. This regenerates the skills for whatever tools you configured.
+4. **Restart your assistant.** Many tools scan for skills at startup, so a fresh window can be the missing step.
 
 ## Which commands do I even have?
 
