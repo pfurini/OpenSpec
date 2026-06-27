@@ -41,7 +41,8 @@
 - [x] 4.3 Add registry entry in `getSkillTemplates()` (`dirName: 'openspec-reverse', workflowId: 'reverse'`)
 - [x] 4.4 Add `'openspec-reverse'` to `SKILL_NAMES` in `src/core/shared/tool-detection.ts`
 - [x] 4.5 Run `pnpm run rebaseline:skills`; verify parity test green; commit updated test file
- Docs
+
+## 5. Documentation
 
 - [x] 5.1 Document the brownfield baselining workflow (scan → ratify-per-capability → validate)
 - [x] 5.2 State the non-goals (not authoritative, not idempotent across LLM runs, confirmed-only)
