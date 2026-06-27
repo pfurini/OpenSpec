@@ -159,3 +159,6 @@ opencode.json
 
 # Bob
 .bob/
+
+# Generated OpenSpec skill store (canonical; authored source lives in schemas/skills/)
+.agents/
