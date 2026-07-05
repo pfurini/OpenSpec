@@ -1,8 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { UpdateCommand, scanInstalledWorkflows } from '../../src/core/update.js';
+import { UpdateCommand } from '../../src/core/update.js';
 import { InitCommand } from '../../src/core/init.js';
 import { FileSystemUtils } from '../../src/utils/file-system.js';
 import { OPENSPEC_MARKERS } from '../../src/core/config.js';
+import { WORKFLOW_SKILLS } from '../../src/core/workflow-skills.js';
 import type { GlobalConfig } from '../../src/core/global-config.js';
 import path from 'path';
 import fs from 'fs/promises';
@@ -13,7 +14,6 @@ import { randomUUID } from 'crypto';
 const mockState = {
   config: {
     featureFlags: {},
-    profile: 'core' as const,
   } as GlobalConfig,
 };
 
@@ -28,13 +28,8 @@ vi.mock('../../src/core/global-config.js', async (importOriginal) => {
   };
 });
 
-// Helper to set mock config for tests
-function setMockConfig(config: GlobalConfig) {
-  mockState.config = config;
-}
-
 function resetMockConfig() {
-  mockState.config = { featureFlags: {}, profile: 'core' };
+  mockState.config = { featureFlags: {} };
 }
 
 describe('UpdateCommand', () => {
@@ -139,7 +134,7 @@ Old instructions content
       consoleSpy.mockRestore();
     });
 
-    it('should update core profile skill files when tool is configured', async () => {
+    it('should install every workflow skill when tool is configured', async () => {
       // Set up a configured tool with one skill directory
       const skillsDir = path.join(testDir, '.claude', 'skills');
 
@@ -154,16 +149,7 @@ Old instructions content
 
       await updateCommand.execute(testDir);
 
-      // Verify core profile skill files were created/updated (propose, explore, apply, sync, archive)
-      const coreSkillNames = [
-        'openspec-explore',
-        'openspec-apply-change',
-        'openspec-sync-specs',
-        'openspec-archive-change',
-        'openspec-propose',
-      ];
-
-      for (const skillName of coreSkillNames) {
+      for (const skillName of WORKFLOW_SKILLS) {
         const skillFile = path.join(skillsDir, skillName, 'SKILL.md');
         const exists = await FileSystemUtils.fileExists(skillFile);
         expect(exists).toBe(true);
@@ -172,21 +158,6 @@ Old instructions content
         expect(content).toContain('---');
         expect(content).toContain('name:');
         expect(content).toContain('description:');
-      }
-
-      // Verify non-core skills are NOT created
-      const nonCoreSkillNames = [
-        'openspec-new-change',
-        'openspec-continue-change',
-        'openspec-ff-change',
-        'openspec-bulk-archive-change',
-        'openspec-verify-change',
-      ];
-
-      for (const skillName of nonCoreSkillNames) {
-        const skillFile = path.join(skillsDir, skillName, 'SKILL.md');
-        const exists = await FileSystemUtils.fileExists(skillFile);
-        expect(exists).toBe(false);
       }
     });
   });
@@ -1242,7 +1213,7 @@ More user content after markers.
       consoleSpy.mockRestore();
     });
 
-    it('should create only effective profile skills when upgrading legacy tools', async () => {
+    it('should install the full workflow skill set when upgrading legacy tools', async () => {
       // Create legacy command directory
       await fs.mkdir(path.join(testDir, '.claude', 'commands', 'openspec'), { recursive: true });
       await fs.writeFile(
@@ -1254,32 +1225,20 @@ More user content after markers.
       const forceUpdateCommand = new UpdateCommand({ force: true });
       await forceUpdateCommand.execute(testDir);
 
-      // Default profile is core, so only core workflows should be generated.
-      const skillNames = [
-        'openspec-propose',
-        'openspec-explore',
-        'openspec-apply-change',
-        'openspec-sync-specs',
-        'openspec-archive-change',
-      ];
-
       const skillsDir = path.join(testDir, '.claude', 'skills');
-      for (const skillName of skillNames) {
+      for (const skillName of WORKFLOW_SKILLS) {
         const skillFile = path.join(skillsDir, skillName, 'SKILL.md');
         const exists = await FileSystemUtils.fileExists(skillFile);
         expect(exists).toBe(true);
       }
-
-      const nonCoreSkill = path.join(skillsDir, 'openspec-new-change', 'SKILL.md');
-      expect(await FileSystemUtils.fileExists(nonCoreSkill)).toBe(false);
     });
 
-    it('should not inject non-profile workflows when upgrading legacy tools', async () => {
-      setMockConfig({
+    it('cannot be restricted by retired profile keys in global config', async () => {
+      mockState.config = {
         featureFlags: {},
         profile: 'custom',
         workflows: ['explore'],
-      });
+      } as any;
 
       await fs.mkdir(path.join(testDir, '.claude', 'commands', 'openspec'), { recursive: true });
       await fs.writeFile(
@@ -1290,137 +1249,62 @@ More user content after markers.
       const forceUpdateCommand = new UpdateCommand({ force: true });
       await forceUpdateCommand.execute(testDir);
 
-      // Only the profile's skill is installed (commands are retired).
       const skillsDir = path.join(testDir, '.claude', 'skills');
-      expect(await FileSystemUtils.fileExists(
-        path.join(skillsDir, 'openspec-explore', 'SKILL.md')
-      )).toBe(true);
-      expect(await FileSystemUtils.fileExists(
-        path.join(skillsDir, 'openspec-propose', 'SKILL.md')
-      )).toBe(false);
+      for (const skillName of WORKFLOW_SKILLS) {
+        expect(await FileSystemUtils.fileExists(
+          path.join(skillsDir, skillName, 'SKILL.md')
+        )).toBe(true);
+      }
     });
   });
 
-  describe('profile-aware updates', () => {
-    it('should generate only profile workflows when custom profile is set', async () => {
-      // Set custom profile with only explore and new
-      setMockConfig({
-        featureFlags: {},
-        profile: 'custom',
-        workflows: ['explore', 'new'],
-      });
-
-      // Set up a configured tool
+  describe('install-all convergence', () => {
+    it('installs missing workflow skills without any subset prompt', async () => {
+      // Configured tool with only one skill present.
       const skillsDir = path.join(testDir, '.claude', 'skills');
       await fs.mkdir(path.join(skillsDir, 'openspec-explore'), { recursive: true });
       await fs.writeFile(path.join(skillsDir, 'openspec-explore', 'SKILL.md'), 'old');
 
       await updateCommand.execute(testDir);
 
-      // Should create explore and new skills
-      expect(await FileSystemUtils.fileExists(
-        path.join(skillsDir, 'openspec-explore', 'SKILL.md')
-      )).toBe(true);
-      expect(await FileSystemUtils.fileExists(
-        path.join(skillsDir, 'openspec-new-change', 'SKILL.md')
-      )).toBe(true);
-
-      // Should NOT create non-profile skills
-      expect(await FileSystemUtils.fileExists(
-        path.join(skillsDir, 'openspec-apply-change', 'SKILL.md')
-      )).toBe(false);
-      expect(await FileSystemUtils.fileExists(
-        path.join(skillsDir, 'openspec-propose', 'SKILL.md')
-      )).toBe(false);
+      for (const skillName of WORKFLOW_SKILLS) {
+        expect(await FileSystemUtils.fileExists(
+          path.join(skillsDir, skillName, 'SKILL.md')
+        )).toBe(true);
+      }
     });
 
-    it('should suggest core preset when custom profile preserves the old core workflow set', async () => {
-      setMockConfig({
-        featureFlags: {},
-        profile: 'custom',
-        workflows: ['propose', 'explore', 'apply', 'archive'],
-      });
-
+    it('reinstalls a missing skill even when installed versions are current', async () => {
       const initCommand = new InitCommand({ tools: 'claude', force: true });
       await initCommand.execute(testDir);
 
-      const consoleSpy = vi.spyOn(console, 'log');
+      // Remove one skill from the canonical store; versions are otherwise current.
+      await fs.rm(path.join(testDir, '.agents', 'skills', 'openspec-verify-change'), {
+        recursive: true,
+        force: true,
+      });
 
       await updateCommand.execute(testDir);
 
-      const calls = consoleSpy.mock.calls.map(call =>
-        call.map(arg => String(arg)).join(' ')
-      );
-      expect(calls.some(call =>
-        call.includes('The core profile now includes sync')
-      )).toBe(true);
-      expect(calls.some(call =>
-        call.includes('openspec config profile core') && call.includes('openspec update')
-      )).toBe(true);
-
       expect(await FileSystemUtils.fileExists(
-        path.join(testDir, '.claude', 'skills', 'openspec-sync-specs', 'SKILL.md')
-      )).toBe(false);
-      expect(await FileSystemUtils.fileExists(
-        path.join(testDir, '.claude', 'commands', 'opsx', 'sync.md')
-      )).toBe(false);
-
-      consoleSpy.mockRestore();
+        path.join(testDir, '.agents', 'skills', 'openspec-verify-change', 'SKILL.md')
+      )).toBe(true);
     });
 
-    it('should create profile skills', async () => {
-      setMockConfig({
-        featureFlags: {},
-        profile: 'core',
-      });
-
+    it('leaves unknown skill directories alone', async () => {
       const skillsDir = path.join(testDir, '.claude', 'skills');
       await fs.mkdir(path.join(skillsDir, 'openspec-explore'), { recursive: true });
       await fs.writeFile(path.join(skillsDir, 'openspec-explore', 'SKILL.md'), 'old');
 
+      // A user-authored skill in the same store must survive the update.
+      await fs.mkdir(path.join(skillsDir, 'my-custom-skill'), { recursive: true });
+      await fs.writeFile(path.join(skillsDir, 'my-custom-skill', 'SKILL.md'), 'mine');
+
       await updateCommand.execute(testDir);
 
-      // Skills should be created
       expect(await FileSystemUtils.fileExists(
-        path.join(skillsDir, 'openspec-explore', 'SKILL.md')
+        path.join(skillsDir, 'my-custom-skill', 'SKILL.md')
       )).toBe(true);
-    });
-
-    it('should remove workflows outside profile during update sync', async () => {
-      // Set core profile (propose, explore, apply, sync, archive)
-      setMockConfig({
-        featureFlags: {},
-        profile: 'core',
-      });
-
-      // Set up tool with extra workflows beyond core profile
-      const skillsDir = path.join(testDir, '.claude', 'skills');
-      await fs.mkdir(path.join(skillsDir, 'openspec-explore'), { recursive: true });
-      await fs.writeFile(path.join(skillsDir, 'openspec-explore', 'SKILL.md'), 'old');
-
-      // Add a non-core workflow
-      await fs.mkdir(path.join(skillsDir, 'openspec-new-change'), { recursive: true });
-      await fs.writeFile(path.join(skillsDir, 'openspec-new-change', 'SKILL.md'), 'old');
-
-      const consoleSpy = vi.spyOn(console, 'log');
-
-      await updateCommand.execute(testDir);
-
-      // Deselected workflow skills should be removed.
-      expect(await FileSystemUtils.fileExists(
-        path.join(skillsDir, 'openspec-new-change', 'SKILL.md')
-      )).toBe(false);
-
-      // Should report deselected workflow cleanup.
-      const calls = consoleSpy.mock.calls.map(call =>
-        call.map(arg => String(arg)).join(' ')
-      );
-      const hasDeselectedRemovalNote = calls.some(call =>
-        call.includes('deselected workflows')
-      );
-      expect(hasDeselectedRemovalNote).toBe(true);
-
-      consoleSpy.mockRestore();
     });
   });
 
@@ -1488,62 +1372,6 @@ More user content after markers.
       expect(hasNewToolMessage).toBe(false);
 
       consoleSpy.mockRestore();
-    });
-  });
-
-  describe('scanInstalledWorkflows', () => {
-    it('should detect installed workflows across tools', async () => {
-      // Create skills for Claude
-      const claudeSkillsDir = path.join(testDir, '.claude', 'skills');
-      await fs.mkdir(path.join(claudeSkillsDir, 'openspec-explore'), { recursive: true });
-      await fs.writeFile(path.join(claudeSkillsDir, 'openspec-explore', 'SKILL.md'), 'content');
-      await fs.mkdir(path.join(claudeSkillsDir, 'openspec-apply-change'), { recursive: true });
-      await fs.writeFile(path.join(claudeSkillsDir, 'openspec-apply-change', 'SKILL.md'), 'content');
-
-      const workflows = scanInstalledWorkflows(testDir, ['claude']);
-      expect(workflows).toContain('explore');
-      expect(workflows).toContain('apply');
-      expect(workflows).not.toContain('propose');
-    });
-
-    it('should return union of workflows across multiple tools', async () => {
-      // Claude has explore
-      const claudeSkillsDir = path.join(testDir, '.claude', 'skills');
-      await fs.mkdir(path.join(claudeSkillsDir, 'openspec-explore'), { recursive: true });
-      await fs.writeFile(path.join(claudeSkillsDir, 'openspec-explore', 'SKILL.md'), 'content');
-
-      // Cursor has apply
-      const cursorSkillsDir = path.join(testDir, '.cursor', 'skills');
-      await fs.mkdir(path.join(cursorSkillsDir, 'openspec-apply-change'), { recursive: true });
-      await fs.writeFile(path.join(cursorSkillsDir, 'openspec-apply-change', 'SKILL.md'), 'content');
-
-      const workflows = scanInstalledWorkflows(testDir, ['claude', 'cursor']);
-      expect(workflows).toContain('explore');
-      expect(workflows).toContain('apply');
-    });
-
-    it('should only match workflows in ALL_WORKFLOWS', async () => {
-      // Create a custom skill directory that doesn't match any workflow
-      const skillsDir = path.join(testDir, '.claude', 'skills');
-      await fs.mkdir(path.join(skillsDir, 'my-custom-skill'), { recursive: true });
-      await fs.writeFile(path.join(skillsDir, 'my-custom-skill', 'SKILL.md'), 'content');
-
-      const workflows = scanInstalledWorkflows(testDir, ['claude']);
-      expect(workflows).toHaveLength(0);
-    });
-
-    it('should return empty array when no tools have skills', async () => {
-      const workflows = scanInstalledWorkflows(testDir, ['claude']);
-      expect(workflows).toHaveLength(0);
-    });
-
-    it('should detect installed workflows from managed skill files', async () => {
-      const skillsDir = path.join(testDir, '.claude', 'skills', 'openspec-explore');
-      await fs.mkdir(skillsDir, { recursive: true });
-      await fs.writeFile(path.join(skillsDir, 'SKILL.md'), 'content');
-
-      const workflows = scanInstalledWorkflows(testDir, ['claude']);
-      expect(workflows).toContain('explore');
     });
   });
 

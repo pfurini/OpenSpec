@@ -107,7 +107,7 @@ describe('eviction contract (tracer)', () => {
     expect(result.stdout).not.toContain('feedback');
   });
 
-  it.fails('config and init help have no profile surface', async () => {
+  it('config and init help have no profile surface', async () => {
     const configHelp = await runCLI(['config', '--help']);
     expect(configHelp.exitCode).toBe(0);
     expect(configHelp.stdout).not.toContain('profile');
@@ -153,7 +153,7 @@ describe('eviction contract (tracer)', () => {
     expect(written.tracerKeeper).toBe('stays');
   });
 
-  it.fails(
+  it(
     'init installs exactly the full workflow skill set, ignoring retired config keys',
     async () => {
       const base = await makeTempBase();

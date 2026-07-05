@@ -3,7 +3,8 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';
 import { InitCommand } from '../../src/core/init.js';
-import { saveGlobalConfig, getGlobalConfig } from '../../src/core/global-config.js';
+import { saveGlobalConfig } from '../../src/core/global-config.js';
+import { WORKFLOW_SKILLS } from '../../src/core/workflow-skills.js';
 
 const { confirmMock, showWelcomeScreenMock, searchableMultiSelectMock } = vi.hoisted(() => ({
   confirmMock: vi.fn(),
@@ -77,21 +78,12 @@ describe('InitCommand', () => {
       expect(content).toContain('schema: spec-driven');
     });
 
-    it('should create core profile skills for Claude Code by default', async () => {
+    it('should create every workflow skill for Claude Code', async () => {
       const initCommand = new InitCommand({ tools: 'claude', force: true });
 
       await initCommand.execute(testDir);
 
-      // Core profile: propose, explore, apply, sync, archive
-      const coreSkillNames = [
-        'openspec-propose',
-        'openspec-explore',
-        'openspec-apply-change',
-        'openspec-sync-specs',
-        'openspec-archive-change',
-      ];
-
-      for (const skillName of coreSkillNames) {
+      for (const skillName of WORKFLOW_SKILLS) {
         const skillFile = path.join(testDir, '.claude', 'skills', skillName, 'SKILL.md');
         expect(await fileExists(skillFile)).toBe(true);
 
@@ -101,19 +93,11 @@ describe('InitCommand', () => {
         expect(content).toContain('description:');
       }
 
-      // Non-core skills should NOT be created
-      const nonCoreSkillNames = [
-        'openspec-new-change',
-        'openspec-continue-change',
-        'openspec-ff-change',
-        'openspec-bulk-archive-change',
-        'openspec-verify-change',
-      ];
-
-      for (const skillName of nonCoreSkillNames) {
-        const skillFile = path.join(testDir, '.claude', 'skills', skillName, 'SKILL.md');
-        expect(await fileExists(skillFile)).toBe(false);
-      }
+      // The canonical store contains exactly the enumerated set.
+      const installed = (
+        await fs.readdir(path.join(testDir, '.agents', 'skills'))
+      ).sort();
+      expect(installed).toEqual([...WORKFLOW_SKILLS].sort());
     });
 
     it('should write skills to the canonical store for a non-symlink tool (Cursor)', async () => {
@@ -318,14 +302,14 @@ describe('InitCommand', () => {
       expect(content).toContain('thinking partner');
     });
 
-    it('should include propose skill instructions', async () => {
+    it('should include new-change skill instructions', async () => {
       const initCommand = new InitCommand({ tools: 'claude', force: true });
       await initCommand.execute(testDir);
 
-      const skillFile = path.join(testDir, '.claude', 'skills', 'openspec-propose', 'SKILL.md');
+      const skillFile = path.join(testDir, '.claude', 'skills', 'openspec-new-change', 'SKILL.md');
       const content = await fs.readFile(skillFile, 'utf-8');
 
-      expect(content).toContain('name: openspec-propose');
+      expect(content).toContain('name: openspec-new-change');
     });
 
     it('should include apply-change skill instructions', async () => {
@@ -409,37 +393,19 @@ describe('InitCommand - profile and detection features', () => {
     vi.restoreAllMocks();
   });
 
-  it('should use --profile flag to override global config', async () => {
-    // Set global config to custom profile
+  it('should install the full skill set even when global config carries retired profile keys', async () => {
+    // A pre-eviction config cannot restrict the installed set.
     saveGlobalConfig({
       featureFlags: {},
       profile: 'custom',
       workflows: ['explore', 'new', 'apply'],
-    });
+    } as any);
 
-    // Override with --profile core
-    const initCommand = new InitCommand({ tools: 'claude', force: true, profile: 'core' });
+    const initCommand = new InitCommand({ tools: 'claude', force: true });
     await initCommand.execute(testDir);
 
-    // Core profile skills should be created
-    const proposeSkill = path.join(testDir, '.claude', 'skills', 'openspec-propose', 'SKILL.md');
-    expect(await fileExists(proposeSkill)).toBe(true);
-
-    // Non-core skills (from the custom profile) should NOT be created
-    const newChangeSkill = path.join(testDir, '.claude', 'skills', 'openspec-new-change', 'SKILL.md');
-    expect(await fileExists(newChangeSkill)).toBe(false);
-  });
-
-  it('should reject invalid --profile values', async () => {
-    const initCommand = new InitCommand({
-      tools: 'claude',
-      force: true,
-      profile: 'invalid-profile',
-    });
-
-    await expect(initCommand.execute(testDir)).rejects.toThrow(
-      /Invalid profile "invalid-profile"/
-    );
+    const installed = (await fs.readdir(path.join(testDir, '.agents', 'skills'))).sort();
+    expect(installed).toEqual([...WORKFLOW_SKILLS].sort());
   });
 
   it('should use detected tools in non-interactive mode when no --tools flag', async () => {
@@ -524,34 +490,7 @@ describe('InitCommand - profile and detection features', () => {
     expect(githubCopilot?.preSelected).toBe(true);
   });
 
-  it('should respect custom profile from global config', async () => {
-    saveGlobalConfig({
-      featureFlags: {},
-      profile: 'custom',
-      workflows: ['explore', 'new'],
-    });
-
-    const initCommand = new InitCommand({ tools: 'claude', force: true });
-    await initCommand.execute(testDir);
-
-    // Custom profile skills should be created
-    const exploreSkill = path.join(testDir, '.claude', 'skills', 'openspec-explore', 'SKILL.md');
-    const newChangeSkill = path.join(testDir, '.claude', 'skills', 'openspec-new-change', 'SKILL.md');
-    expect(await fileExists(exploreSkill)).toBe(true);
-    expect(await fileExists(newChangeSkill)).toBe(true);
-
-    // Non-selected skills should NOT be created
-    const proposeSkill = path.join(testDir, '.claude', 'skills', 'openspec-propose', 'SKILL.md');
-    expect(await fileExists(proposeSkill)).toBe(false);
-  });
-
-  it('should not prompt for confirmation when applying custom profile in interactive init', async () => {
-    saveGlobalConfig({
-      featureFlags: {},
-      profile: 'custom',
-      workflows: ['explore', 'new'],
-    });
-
+  it('should not prompt for any workflow subset selection in interactive init', async () => {
     const initCommand = new InitCommand({ force: true });
     vi.spyOn(initCommand as any, 'canPromptInteractively').mockReturnValue(true);
     vi.spyOn(initCommand as any, 'getSelectedTools').mockResolvedValue(['claude']);
@@ -565,16 +504,10 @@ describe('InitCommand - profile and detection features', () => {
     const newChangeSkill = path.join(testDir, '.claude', 'skills', 'openspec-new-change', 'SKILL.md');
     expect(await fileExists(exploreSkill)).toBe(true);
     expect(await fileExists(newChangeSkill)).toBe(true);
-
-    const logCalls = (console.log as unknown as { mock: { calls: unknown[][] } }).mock.calls.flat().map(String);
-    expect(logCalls.some((entry) => entry.includes('Applying custom profile'))).toBe(false);
   });
 
   it('installs skills only (commands are retired)', async () => {
-    saveGlobalConfig({
-      featureFlags: {},
-      profile: 'core',
-    });
+    saveGlobalConfig({ featureFlags: {} });
 
     const initCommand = new InitCommand({ tools: 'claude', force: true });
     await initCommand.execute(testDir);
