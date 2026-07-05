@@ -23,7 +23,7 @@ Transcribed from design.md's Wave Skeleton. Coverage map joins design's Testing 
 
 ## Wave 0
 
-- [ ] The end-state eviction contract exists as one executable test, committed expected-fail (tracer)
+- [x] The end-state eviction contract exists as one executable test, committed expected-fail (tracer)
 - components: `test/cli-e2e/eviction-contract.test.ts` (vitest `.fails` markers): help contains no `feedback`/profile entries; global config with all three retired keys loads silently and writes clean; init installs exactly `WORKFLOW_SKILLS`
 - interfaces: — (test-only wave; asserts future public surface)
 - depends-on: —
