@@ -43,7 +43,7 @@ Transcribed from design.md's Wave Skeleton. Coverage map joins design's Testing 
 
 ## Wave 2
 
-- [ ] Install-all runs on an owned enumeration; profiles and anti-methodology skills are gone
+- [x] Install-all runs on an owned enumeration; profiles and anti-methodology skills are gone
 - components: C1 `workflow-skills.ts` + enumeration-guard test; C4 profile eviction (delete `profiles.ts` + `profile-sync-drift.ts`; trim `config.ts`, `init.ts`, `update.ts` to consume C1); C7 bundle pruning (`openspec-onboard/`, `openspec-propose/`, `openspec-ff-change/`) + parity rebaseline; C5 retired-key drop extended to `profile`/`workflows`
 - interfaces: C1 exports `WORKFLOW_SKILLS: readonly string[]`; C4 init/update call `WORKFLOW_SKILLS`; C7 `pnpm run rebaseline:skills`; C5 `getGlobalConfig()` / `saveGlobalConfig()` unchanged signatures
 - depends-on: Wave 1
