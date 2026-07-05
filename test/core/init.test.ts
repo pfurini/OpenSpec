@@ -420,21 +420,25 @@ describe('InitCommand - profile and detection features', () => {
     expect(await fileExists(skillFile)).toBe(true);
   });
 
-  it('should auto-cleanup legacy artifacts in non-interactive mode without --force', async () => {
+  it('performs no legacy detection or cleanup: legacy artifacts are left untouched', async () => {
     // Create legacy OpenCode command files (singular 'command' path)
     const legacyDir = path.join(testDir, '.opencode', 'command');
     await fs.mkdir(legacyDir, { recursive: true });
     await fs.writeFile(path.join(legacyDir, 'opsx-propose.md'), 'legacy content');
 
-    // Run init in non-interactive mode without --force
     const initCommand = new InitCommand({ tools: 'opencode' });
     await initCommand.execute(testDir);
 
-    // Legacy files should be cleaned up automatically
-    expect(await fileExists(path.join(legacyDir, 'opsx-propose.md'))).toBe(false);
+    // Legacy files are out of contract: no detection, no prompt, no removal.
+    expect(await fileExists(path.join(legacyDir, 'opsx-propose.md'))).toBe(true);
+    expect(confirmMock).not.toHaveBeenCalled();
 
-    // Skills are the sole artifact now — they land in the canonical store
-    // (OpenCode reads `.agents/skills` natively, so no per-tool copy is written).
+    const logCalls = (console.log as unknown as { mock: { calls: unknown[][] } }).mock.calls
+      .flat()
+      .map(String);
+    expect(logCalls.some((entry) => entry.toLowerCase().includes('legacy'))).toBe(false);
+
+    // Skills still land in the canonical store (OpenCode reads it natively).
     const canonical = path.join(testDir, '.agents', 'skills', 'openspec-explore', 'SKILL.md');
     expect(await fileExists(canonical)).toBe(true);
     expect(await pathExists(path.join(testDir, '.opencode', 'skills', 'openspec-explore'))).toBe(false);
