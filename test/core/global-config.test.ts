@@ -300,6 +300,44 @@ describe('global-config', () => {
     });
   });
 
+  describe('retired keys', () => {
+    it('should ignore the telemetry key on read, without warning', () => {
+      process.env.XDG_CONFIG_HOME = tempDir;
+      const configDir = path.join(tempDir, 'openspec');
+      const configPath = path.join(configDir, 'config.json');
+
+      fs.mkdirSync(configDir, { recursive: true });
+      fs.writeFileSync(configPath, JSON.stringify({
+        telemetry: { anonymousId: 'abc', noticeSeen: true },
+        featureFlags: { keep: true },
+        keeper: 'stays'
+      }));
+
+      const config = getGlobalConfig();
+
+      expect(config).not.toHaveProperty('telemetry');
+      expect(config.featureFlags?.keep).toBe(true);
+      expect((config as any).keeper).toBe('stays');
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
+    });
+
+    it('should drop the telemetry key on write and preserve other fields', () => {
+      process.env.XDG_CONFIG_HOME = tempDir;
+      const configPath = path.join(tempDir, 'openspec', 'config.json');
+
+      saveGlobalConfig({
+        telemetry: { anonymousId: 'abc' },
+        featureFlags: { keep: true },
+        keeper: 'stays'
+      } as any);
+
+      const written = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+      expect(written).not.toHaveProperty('telemetry');
+      expect(written.featureFlags.keep).toBe(true);
+      expect(written.keeper).toBe('stays');
+    });
+  });
+
   describe('saveGlobalConfig', () => {
     it('should create directory if it does not exist', () => {
       process.env.XDG_CONFIG_HOME = tempDir;
