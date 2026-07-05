@@ -24,6 +24,19 @@ const DEFAULT_CONFIG: GlobalConfig = {
   profile: 'core',
 };
 
+// Retired keys are ignored on read and removed on write. Matched by this
+// explicit list, not by pattern (spec: global-config "Retired key cleanup").
+// Wave 2 of evict-upstream-surfaces extends this to 'profile' and 'workflows'.
+const RETIRED_KEYS = ['telemetry'] as const;
+
+function stripRetiredKeys<T extends Record<string, unknown>>(config: T): T {
+  const cleaned = { ...config };
+  for (const key of RETIRED_KEYS) {
+    delete cleaned[key];
+  }
+  return cleaned;
+}
+
 /**
  * Gets the global configuration directory path following XDG Base Directory Specification.
  *
@@ -139,7 +152,7 @@ export function getGlobalConfig(): GlobalConfig {
       merged.profile = DEFAULT_CONFIG.profile;
     }
 
-    return merged;
+    return stripRetiredKeys(merged as Record<string, unknown>) as GlobalConfig;
   } catch (error) {
     // Log warning for parse errors, but not for missing files
     if (error instanceof SyntaxError) {
@@ -162,5 +175,6 @@ export function saveGlobalConfig(config: GlobalConfig): void {
     fs.mkdirSync(configDir, { recursive: true });
   }
 
-  fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n', 'utf-8');
+  const cleaned = stripRetiredKeys(config as Record<string, unknown>);
+  fs.writeFileSync(configPath, JSON.stringify(cleaned, null, 2) + '\n', 'utf-8');
 }
