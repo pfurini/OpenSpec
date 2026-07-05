@@ -75,6 +75,31 @@ async function seedConfigHome(base: string): Promise<{ configHome: string; confi
 }
 
 describe('eviction contract (tracer)', () => {
+  it('running a command creates no telemetry state', async () => {
+    const base = await makeTempBase();
+    const configHome = path.join(base, 'config-home');
+    const configPath = path.join(configHome, 'openspec', 'config.json');
+
+    // Telemetry-enabling env: no CI/DNT/opt-out signals. Before the eviction,
+    // the preAction hook persisted telemetry.anonymousId and printed the
+    // first-run notice; afterwards nothing telemetry-shaped may exist.
+    const result = await runCLI(['config', 'path'], {
+      env: { XDG_CONFIG_HOME: configHome, CI: '', DO_NOT_TRACK: '', OPENSPEC_TELEMETRY: '' },
+    });
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).not.toContain('anonymous usage stats');
+
+    let written: Record<string, unknown> | undefined;
+    try {
+      written = JSON.parse(await fs.readFile(configPath, 'utf-8'));
+    } catch {
+      // No config written at all — that is also telemetry-free.
+    }
+    if (written) {
+      expect(written).not.toHaveProperty('telemetry');
+    }
+  });
+
   it.fails('root help has no feedback entry', async () => {
     const result = await runCLI(['--help']);
     expect(result.exitCode).toBe(0);
