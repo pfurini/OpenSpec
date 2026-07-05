@@ -63,7 +63,7 @@ Transcribed from design.md's Wave Skeleton. Coverage map joins design's Testing 
 
 ## Wave 4
 
-- [ ] Docs tell no lies about removed commands and the contract test is live
+- [x] Docs tell no lies about removed commands and the contract test is live
 - components: C8 docs sweep (`docs/cli.md`, `docs/commands.md`); remove tracer `.fails` markers
 - interfaces: C8 — (docs + test-marker edits only)
 - depends-on: Wave 3
