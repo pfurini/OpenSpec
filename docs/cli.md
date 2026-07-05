@@ -1,6 +1,6 @@
 # CLI Reference
 
-The OpenSpec CLI (`openspec`) provides terminal commands for project setup, validation, status inspection, and management. These commands complement the AI slash commands (like `/openspec-propose`) documented in [Commands](commands.md).
+The OpenSpec CLI (`openspec`) provides terminal commands for project setup, validation, status inspection, and management. These commands complement the AI slash commands (like `/openspec-new-change`) documented in [Commands](commands.md).
 
 ## Summary
 
@@ -17,7 +17,7 @@ The OpenSpec CLI (`openspec`) provides terminal commands for project setup, vali
 | **Workflow** | `new change`, `status`, `instructions`, `templates`, `schemas` | Artifact-driven workflow support |
 | **Schemas** | `schema init`, `schema fork`, `schema validate`, `schema which` | Create and manage custom workflows |
 | **Config** | `config` | View and modify settings |
-| **Utility** | `feedback`, `completion` | Feedback and shell integration |
+| **Utility** | `completion` | Shell integration |
 
 ---
 
@@ -35,7 +35,6 @@ These commands are interactive and designed for terminal use:
 | `openspec view` | Interactive dashboard |
 | `openspec workset open <name>` | Open a saved workset (editor window or terminal agent session) |
 | `openspec config edit` | Open config in editor |
-| `openspec feedback` | Submit feedback via GitHub |
 | `openspec completion install` | Install shell completions |
 
 ### Agent-Compatible Commands
@@ -82,7 +81,7 @@ These options work with all commands:
 
 Initialize OpenSpec in your project. Creates the folder structure and configures AI tool integrations.
 
-Default behavior uses global config defaults: profile `core`, workflows `propose, explore, apply, sync, archive`.
+Init always installs the full bundled workflow skill set for each selected tool; there is no subset selection.
 
 ```
 openspec init [path] [options]
@@ -99,10 +98,7 @@ openspec init [path] [options]
 | Option | Description |
 |--------|-------------|
 | `--tools <list>` | Configure AI tools non-interactively. Use `all`, `none`, or comma-separated list |
-| `--force` | Auto-cleanup legacy files without prompting |
-| `--profile <profile>` | Override global profile for this init run (`core` or `custom`) |
-
-`--profile custom` uses whatever workflows are currently selected in global config (`openspec config profile`).
+| `--force` | No effect (retained for compatibility) |
 
 **Supported tool IDs (`--tools`):** `amazon-q`, `antigravity`, `auggie`, `bob`, `claude`, `cline`, `codex`, `forgecode`, `codebuddy`, `continue`, `costrict`, `crush`, `cursor`, `factory`, `gemini`, `github-copilot`, `iflow`, `junie`, `kilocode`, `kimi`, `kiro`, `lingma`, `vibe`, `opencode`, `pi`, `qoder`, `qwen`, `roocode`, `trae`, `windsurf`
 
@@ -122,12 +118,6 @@ openspec init --tools claude,cursor
 
 # Configure for all supported tools
 openspec init --tools all
-
-# Override profile for this run
-openspec init --profile core
-
-# Skip prompts and auto-cleanup legacy files
-openspec init --force
 ```
 
 **What it creates:**
@@ -147,7 +137,7 @@ openspec/
 
 ### `openspec update`
 
-Update OpenSpec instruction files after upgrading the CLI. Re-generates AI tool configuration files using your current global profile and selected workflows.
+Update OpenSpec instruction files after upgrading the CLI. Converges every configured tool to the full bundled workflow skill set, reinstalling missing or outdated skills.
 
 ```
 openspec update [path] [options]
@@ -1008,7 +998,6 @@ openspec config <subcommand> [options]
 | `unset <key>` | Remove a key |
 | `reset` | Reset to defaults |
 | `edit` | Open in `$EDITOR` |
-| `profile [preset]` | Configure workflow profile interactively or via preset |
 
 **Examples:**
 
@@ -1020,13 +1009,13 @@ openspec config path
 openspec config list
 
 # Get a specific value
-openspec config get telemetry.enabled
+openspec config get featureFlags.someFlag
 
 # Set a value
-openspec config set telemetry.enabled false
+openspec config set featureFlags.someFlag true
 
-# Set a string value explicitly
-openspec config set user.name "My Name" --string
+# Set a string value explicitly (unknown keys need --allow-unknown)
+openspec config set user.name "My Name" --string --allow-unknown
 
 # Remove a custom setting
 openspec config unset user.name
@@ -1036,66 +1025,11 @@ openspec config reset --all --yes
 
 # Edit config in your editor
 openspec config edit
-
-# Configure profile with action-based wizard
-openspec config profile
-
-# Fast preset: switch workflows to core
-openspec config profile core
-```
-
-`openspec config profile` starts with a current-state summary, then lets you choose:
-- Configure workflows
-- Keep current settings (exit)
-
-If you keep current settings, no changes are written and no update prompt is shown.
-If there are no config changes but the current project files are out of sync with your global profile, OpenSpec will show a warning and suggest `openspec update`.
-Pressing `Ctrl+C` also cancels the flow cleanly (no stack trace) and exits with code `130`.
-In the workflow checklist, `[x]` means the workflow is selected in global config. To apply those selections to project files, run `openspec update` (or choose `Apply changes to this project now?` when prompted inside a project).
-
-**Interactive examples:**
-
-```bash
-# Configure workflows
-openspec config profile
-# choose: Configure workflows
-# toggle workflows in the checklist, then confirm
 ```
 
 ---
 
 ## Utility Commands
-
-### `openspec feedback`
-
-Submit feedback about OpenSpec. Creates a GitHub issue.
-
-```
-openspec feedback <message> [options]
-```
-
-**Arguments:**
-
-| Argument | Required | Description |
-|----------|----------|-------------|
-| `message` | Yes | Feedback message |
-
-**Options:**
-
-| Option | Description |
-|--------|-------------|
-| `--body <text>` | Detailed description |
-
-**Requirements:** GitHub CLI (`gh`) must be installed and authenticated.
-
-**Example:**
-
-```bash
-openspec feedback "Add support for custom artifact types" \
-  --body "I'd like to define my own artifact types beyond the built-in ones."
-```
-
----
 
 ### `openspec completion`
 
@@ -1146,8 +1080,6 @@ openspec completion uninstall
 
 | Variable | Description |
 |----------|-------------|
-| `OPENSPEC_TELEMETRY` | Set to `0` to disable telemetry |
-| `DO_NOT_TRACK` | Set to `1` to disable telemetry (standard DNT signal) |
 | `OPENSPEC_CONCURRENCY` | Default concurrency for bulk validation (default: 6) |
 | `EDITOR` or `VISUAL` | Editor for `openspec config edit` |
 | `NO_COLOR` | Disable color output when set |
@@ -1156,7 +1088,7 @@ openspec completion uninstall
 
 ## Related Documentation
 
-- [Commands](commands.md) - AI slash commands (`/openspec-propose`, `/openspec-apply-change`, etc.)
+- [Commands](commands.md) - AI slash commands (`/openspec-new-change`, `/openspec-apply-change`, etc.)
 - [Workflows](workflows.md) - Common patterns and when to use each command
 - [Customization](customization.md) - Create custom schemas and templates
 - [Getting Started](getting-started.md) - First-time setup guide

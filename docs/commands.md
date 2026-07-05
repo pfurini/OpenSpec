@@ -6,73 +6,28 @@ For workflow patterns and when to use each command, see [Workflows](workflows.md
 
 ## Quick Reference
 
-### Default Quick Path (`core` profile)
+Every bundled workflow skill is always installed — there is no configurable subset.
 
 | Command | Purpose |
 |---------|---------|
-| `/openspec-propose` | Create a change and generate planning artifacts in one step |
 | `/openspec-explore` | Think through ideas before committing to a change |
-| `/openspec-apply-change` | Implement tasks from the change |
-| `/openspec-sync-specs` | Merge delta specs into main specs |
-| `/openspec-archive-change` | Archive a completed change |
-
-### Expanded Workflow Commands (custom workflow selection)
-
-| Command | Purpose |
-|---------|---------|
 | `/openspec-new-change` | Start a new change scaffold |
 | `/openspec-continue-change` | Create the next artifact based on dependencies |
-| `/openspec-ff-change` | Fast-forward: create all planning artifacts at once |
+| `/openspec-design` | Interactive HOW-thinking partner; writes design.md + ADRs |
+| `/openspec-apply-change` | Implement tasks from the change |
 | `/openspec-verify-change` | Validate implementation matches artifacts |
+| `/openspec-sync-specs` | Merge delta specs into main specs |
+| `/openspec-archive-change` | Archive a completed change |
 | `/openspec-bulk-archive-change` | Archive multiple changes at once |
-| `/openspec-onboard` | Guided tutorial through the complete workflow |
-
-The default global profile is `core`. To enable expanded workflow commands, run `openspec config profile`, select workflows, then run `openspec update` in your project.
+| `/openspec-reverse` | Reverse-engineer draft specs from an existing codebase |
 
 ---
 
 ## Command Reference
 
-### `/openspec-propose`
-
-Create a new change and generate planning artifacts in one step. This is the default start command in the `core` profile.
-
-**Syntax:**
-```text
-/openspec-propose [change-name-or-description]
-```
-
-**Arguments:**
-| Argument | Required | Description |
-|----------|----------|-------------|
-| `change-name-or-description` | No | Kebab-case name or plain-language change description |
-
-**What it does:**
-- Creates `openspec/changes/<change-name>/`
-- Generates artifacts needed before implementation (for `spec-driven`: proposal, specs, design, tasks)
-- Stops when the change is ready for `/openspec-apply-change`
-
-**Example:**
-```text
-You: /openspec-propose add-dark-mode
-
-AI:  Created openspec/changes/add-dark-mode/
-     ✓ proposal.md
-     ✓ specs/ui/spec.md
-     ✓ design.md
-     ✓ tasks.md
-     Ready for implementation. Run /openspec-apply-change.
-```
-
-**Tips:**
-- Use this for the fastest end-to-end path
-- If you want step-by-step artifact control, enable expanded workflows and use `/openspec-new-change` + `/openspec-continue-change`
-
----
-
 ### `/openspec-explore`
 
-> **Start here when you're unsure.** Explore is a no-stakes thinking partner: it reads your codebase, compares options, and sharpens a fuzzy idea into a concrete plan before any change exists. It ships in the default profile. For the full case and more examples, see the [Explore First](explore.md) guide.
+> **Start here when you're unsure.** Explore is a no-stakes thinking partner: it reads your codebase, compares options, and sharpens a fuzzy idea into a concrete plan before any change exists. For the full case and more examples, see the [Explore First](explore.md) guide.
 
 Think through ideas, investigate problems, and clarify requirements before committing to a change.
 
@@ -91,7 +46,7 @@ Think through ideas, investigate problems, and clarify requirements before commi
 - Investigates the codebase to answer questions
 - Compares options and approaches
 - Creates visual diagrams to clarify thinking
-- Can transition to `/openspec-propose` (default) or `/openspec-new-change` (expanded workflow) when insights crystallize
+- Can transition to `/openspec-new-change` when insights crystallize
 
 **Example:**
 ```text
@@ -115,7 +70,7 @@ AI:  Let me investigate your current auth setup...
 
 You: Let's go with JWT. Can we start a change for that?
 
-AI:  Ready when you are. Run /openspec-propose add-jwt-auth to begin.
+AI:  Ready when you are. Run /openspec-new-change add-jwt-auth to begin.
 ```
 
 **Tips:**
@@ -128,9 +83,7 @@ AI:  Ready when you are. Run /openspec-propose add-jwt-auth to begin.
 
 ### `/openspec-new-change`
 
-Start a new change scaffold. Creates the change folder and waits for you to generate artifacts with `/openspec-continue-change` or `/openspec-ff-change`.
-
-This command is part of the expanded workflow set (not included in the default `core` profile).
+Start a new change scaffold. Creates the change folder and waits for you to generate artifacts with `/openspec-continue-change`.
 
 **Syntax:**
 ```
@@ -163,7 +116,7 @@ AI:  Created openspec/changes/add-dark-mode/
      Schema: spec-driven
 
      Ready to create: proposal
-     Use /openspec-continue-change to create it, or /openspec-ff-change to create all artifacts.
+     Use /openspec-continue-change to create it.
 ```
 
 **Tips:**
@@ -221,49 +174,6 @@ AI:  Change: add-dark-mode
 - Good for complex changes where you want control
 - Multiple artifacts may become ready simultaneously
 - You can edit created artifacts before continuing
-
----
-
-### `/openspec-ff-change`
-
-Fast-forward through artifact creation. Creates all planning artifacts at once.
-
-**Syntax:**
-```
-/openspec-ff-change [change-name]
-```
-
-**Arguments:**
-| Argument | Required | Description |
-|----------|----------|-------------|
-| `change-name` | No | Which change to fast-forward (inferred from context if not provided) |
-
-**What it does:**
-- Creates all artifacts in dependency order
-- Tracks progress via todo list
-- Stops when all `apply-required` artifacts are complete
-- Reads each dependency before creating the next artifact
-
-**Example:**
-```
-You: /openspec-ff-change add-dark-mode
-
-AI:  Fast-forwarding add-dark-mode...
-
-     ✓ Creating proposal.md
-     ✓ Creating specs/ui/spec.md
-     ✓ Creating design.md
-     ✓ Creating tasks.md
-
-     All planning artifacts complete!
-     Ready for implementation. Run /openspec-apply-change to begin.
-```
-
-**Tips:**
-- Use when you have a clear picture of what you're building
-- Faster than `/openspec-continue-change` for straightforward changes
-- You can still edit artifacts afterward
-- Good for small to medium features
 
 ---
 
@@ -550,98 +460,18 @@ AI:  ✓ Archived add-dark-mode
 
 ---
 
-### `/openspec-onboard`
-
-Guided onboarding through the complete OpenSpec workflow. An interactive tutorial using your actual codebase.
-
-**Syntax:**
-```
-/openspec-onboard
-```
-
-**What it does:**
-- Walks through a complete workflow cycle with narration
-- Scans your codebase for real improvement opportunities
-- Creates an actual change with real artifacts
-- Implements actual work (small, safe changes)
-- Archives the completed change
-- Explains each step as it happens
-
-**Phases:**
-1. Welcome and codebase analysis
-2. Finding an improvement opportunity
-3. Creating a change (`/openspec-new-change`)
-4. Writing the proposal
-5. Creating specs
-6. Writing the design
-7. Creating tasks
-8. Implementing tasks (`/openspec-apply-change`)
-9. Verifying implementation
-10. Archiving the change
-11. Summary and next steps
-
-**Example:**
-```
-You: /openspec-onboard
-
-AI:  Welcome to OpenSpec!
-
-     I'll walk you through the complete workflow using your actual codebase.
-     We'll find something small to improve, create a proper change for it,
-     implement it, and archive it.
-
-     Let me scan your codebase for opportunities...
-
-     [Analyzes codebase]
-
-     I found a few things we could work on:
-     1. Add input validation to the contact form
-     2. Improve error messages in the auth flow
-     3. Add loading states to async buttons
-
-     Which interests you? (or suggest something else)
-```
-
-**Tips:**
-- Best for new users learning the workflow
-- Uses real code, not toy examples
-- Creates a real change you can keep or discard
-- Takes 15-30 minutes to complete
-
----
-
 ## Skill Invocation by AI Tool
 
 OpenSpec ships its workflow as skills, invoked by name. Nearly every tool uses the same form — `/openspec-<skill>`:
 
 | Tool | Invocation example |
 |------|--------------------|
-| Most tools (Claude Code, Cursor, Windsurf, Copilot, …) | `/openspec-propose`, `/openspec-apply-change` |
-| Kimi CLI | Skill-prefixed, e.g. `/skill:openspec-propose`, `/skill:openspec-apply-change` |
+| Most tools (Claude Code, Cursor, Windsurf, Copilot, …) | `/openspec-new-change`, `/openspec-apply-change` |
+| Kimi CLI | Skill-prefixed, e.g. `/skill:openspec-new-change`, `/skill:openspec-apply-change` |
 
 The intent is the same across tools; only how each integration *surfaces* the skill differs. There are no per-tool command files — the skills live in one canonical `.agents/skills` store (see [Supported Tools](supported-tools.md)).
 
 > **Note:** GitHub Copilot commands (`.github/prompts/*.prompt.md`) are only available in IDE extensions (VS Code, JetBrains, Visual Studio). GitHub Copilot CLI does not currently support custom prompt files — see [Supported Tools](supported-tools.md) for details and workarounds.
-
----
-
-## Legacy Commands
-
-These commands use the older "all-at-once" workflow. They still work but OPSX commands are recommended.
-
-| Command | What it does |
-|---------|--------------|
-| `/openspec:proposal` | Create all artifacts at once (proposal, specs, design, tasks) |
-| `/openspec:apply` | Implement the change |
-| `/openspec:archive` | Archive the change |
-
-**When to use legacy commands:**
-- Existing projects using the old workflow
-- Simple changes where you don't need incremental artifact creation
-- Preference for the all-or-nothing approach
-
-**Migrating to OPSX:**
-Legacy changes can be continued with OPSX commands. The artifact structure is compatible.
 
 ---
 
@@ -692,7 +522,7 @@ The AI creates incomplete or incorrect artifacts.
 - Add project context in `openspec/config.yaml`
 - Add per-artifact rules for specific guidance
 - Provide more detail in your change description
-- Use `/openspec-continue-change` instead of `/openspec-ff-change` for more control
+- Use `/openspec-continue-change` to create artifacts one at a time for more control
 
 ---
 
