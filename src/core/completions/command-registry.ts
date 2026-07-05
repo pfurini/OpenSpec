@@ -17,12 +17,6 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
         name: 'force',
         description: 'Auto-cleanup legacy files without prompting',
       },
-      {
-        name: 'profile',
-        description: 'Override global config profile (core or custom)',
-        takesValue: true,
-        values: ['core', 'custom'],
-      },
     ],
   },
   {
@@ -661,13 +655,6 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
       {
         name: 'edit',
         description: 'Open config in $EDITOR',
-        flags: [],
-      },
-      {
-        name: 'profile',
-        description: 'Configure workflow profile (interactive picker or preset shortcut)',
-        acceptsPositional: true,
-        positionals: [{ name: 'preset', optional: true }],
         flags: [],
       },
     ],

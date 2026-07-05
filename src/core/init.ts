@@ -35,10 +35,7 @@ import {
   type ToolSkillStatus,
 } from './shared/index.js';
 import { installSkills, SYMLINK_TOOL_IDS } from './shared/skill-install.js';
-import { getGlobalConfig, type Profile } from './global-config.js';
-import { getProfileWorkflows } from './profiles.js';
 import { getAvailableTools } from './available-tools.js';
-import { migrateIfNeeded } from './migration.js';
 
 const require = createRequire(import.meta.url);
 const { version: OPENSPEC_VERSION } = require('../../package.json');
@@ -62,7 +59,6 @@ type InitCommandOptions = {
   tools?: string;
   force?: boolean;
   interactive?: boolean;
-  profile?: string;
 };
 
 // -----------------------------------------------------------------------------
@@ -73,13 +69,11 @@ export class InitCommand {
   private readonly toolsArg?: string;
   private readonly force: boolean;
   private readonly interactiveOption?: boolean;
-  private readonly profileOverride?: string;
 
   constructor(options: InitCommandOptions = {}) {
     this.toolsArg = options.tools;
     this.force = options.force ?? false;
     this.interactiveOption = options.interactive;
-    this.profileOverride = options.profile;
   }
 
   async execute(targetPath: string): Promise<void> {
@@ -123,21 +117,12 @@ export class InitCommand {
     // Detect available tools in the project (task 7.1)
     const detectedTools = getAvailableTools(projectPath);
 
-    // Migration check: migrate existing projects to profile system (task 7.3)
-    if (extendMode) {
-      migrateIfNeeded(projectPath, detectedTools);
-    }
-
     // Show animated welcome screen (interactive mode only)
     const canPrompt = this.canPromptInteractively();
     if (canPrompt) {
       const { showWelcomeScreen } = await import('../ui/welcome-screen.js');
       await showWelcomeScreen();
     }
-
-    // Validate profile override early so invalid values fail before tool setup.
-    // The resolved value is consumed later when generation reads effective config.
-    this.resolveProfileOverride();
 
     // Get tool states before processing
     const toolStates = getToolStates(projectPath);
@@ -182,18 +167,6 @@ export class InitCommand {
     if (this.interactiveOption === false) return false;
     if (this.toolsArg !== undefined) return false;
     return isInteractive({ interactive: this.interactiveOption });
-  }
-
-  private resolveProfileOverride(): Profile | undefined {
-    if (this.profileOverride === undefined) {
-      return undefined;
-    }
-
-    if (this.profileOverride === 'core' || this.profileOverride === 'custom') {
-      return this.profileOverride;
-    }
-
-    throw new Error(`Invalid profile "${this.profileOverride}". Available profiles: core, custom`);
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -510,9 +483,6 @@ export class InitCommand {
     const refreshedTools: typeof tools = [];
     const failedTools: Array<{ name: string; error: Error }> = [];
 
-    // Read global config for profile (use --profile override if set)
-    const globalConfig = getGlobalConfig();
-    const profile: Profile = this.resolveProfileOverride() ?? globalConfig.profile ?? 'core';
     const skillTemplates = getSkillTemplates();
 
     if (tools.length === 0) {
@@ -606,11 +576,9 @@ export class InitCommand {
       console.log(`Refreshed: ${results.refreshedTools.map((t) => t.name).join(', ')}`);
     }
 
-    // Show counts (respecting profile filter)
+    // Show counts
     const successfulTools = [...results.createdTools, ...results.refreshedTools];
     if (successfulTools.length > 0) {
-      const globalConfig = getGlobalConfig();
-      const profile: Profile = (this.profileOverride as Profile) ?? globalConfig.profile ?? 'core';
       const skillCount = getSkillTemplates().length;
       if (skillCount > 0) {
         // Skills live once in the canonical store; symlink-capable tools (Claude)
@@ -645,20 +613,10 @@ export class InitCommand {
       console.log(chalk.dim(`Config: skipped (non-interactive mode)`));
     }
 
-    // Getting started (task 7.6: show propose if in profile)
-    const globalCfg = getGlobalConfig();
-    const activeProfile: Profile = (this.profileOverride as Profile) ?? globalCfg.profile ?? 'core';
-    const activeWorkflows = [...getProfileWorkflows(activeProfile, globalCfg.workflows)];
+    // Getting started
     console.log();
-    if (activeWorkflows.includes('propose')) {
-      console.log(chalk.bold('Getting started:'));
-      console.log('  Start your first change with /openspec-propose: "your idea"');
-    } else if (activeWorkflows.includes('new')) {
-      console.log(chalk.bold('Getting started:'));
-      console.log('  Start your first change with /openspec-new-change: "your idea"');
-    } else {
-      console.log("Done. Run 'openspec config profile' to configure your workflows.");
-    }
+    console.log(chalk.bold('Getting started:'));
+    console.log('  Start your first change with /openspec-new-change: "your idea"');
 
     // Links
     console.log();

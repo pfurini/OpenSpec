@@ -2,10 +2,12 @@
  * Update Command
  *
  * Refreshes OpenSpec skills for configured tools.
- * Supports profile-aware updates, migration, and smart update detection.
+ * Converges every tool to the full bundled workflow skill set, with smart
+ * update detection (version drift or missing skills).
  */
 
 import path from 'path';
+import * as fs from 'fs';
 import chalk from 'chalk';
 import ora from 'ora';
 import { createRequire } from 'module';
@@ -19,10 +21,10 @@ import {
   isCanonicalStorePopulated,
   getCanonicalSkillVersion,
   installSkills,
-  removeSkill,
   SYMLINK_TOOL_IDS,
   type ToolVersionStatus,
 } from './shared/index.js';
+import { getCanonicalSkillsDir } from './shared/skill-install.js';
 import {
   detectLegacyArtifacts,
   cleanupLegacyArtifacts,
@@ -32,22 +34,11 @@ import {
   type LegacyDetectionResult,
 } from './legacy-cleanup.js';
 import { isInteractive } from '../utils/interactive.js';
-import { getGlobalConfig, type Profile } from './global-config.js';
-import { getProfileWorkflows, ALL_WORKFLOWS } from './profiles.js';
 import { getAvailableTools } from './available-tools.js';
-import {
-  WORKFLOW_TO_SKILL_DIR,
-  getToolsNeedingProfileSync,
-  hasCanonicalProfileDrift,
-} from './profile-sync-drift.js';
-import {
-  scanInstalledWorkflows as scanInstalledWorkflowsShared,
-  migrateIfNeeded as migrateIfNeededShared,
-} from './migration.js';
+import { WORKFLOW_SKILLS } from './workflow-skills.js';
 
 const require = createRequire(import.meta.url);
 const { version: OPENSPEC_VERSION } = require('../../package.json');
-const OLD_CORE_WORKFLOWS = ['propose', 'explore', 'apply', 'archive'] as const;
 
 /**
  * Options for the update command.
@@ -58,16 +49,25 @@ export interface UpdateCommandOptions {
 }
 
 /**
- * Scans installed workflow artifacts (skills and managed commands) across all configured tools.
- * Returns the union of detected workflow IDs that match ALL_WORKFLOWS.
- *
- * Wrapper around the shared migration module's scanInstalledWorkflows that accepts tool IDs.
+ * True when the given skills directory is missing any bundled workflow skill.
+ * Unknown (user-authored) directories are never considered — convergence only
+ * installs what the enumeration owns, it never removes.
  */
-export function scanInstalledWorkflows(projectPath: string, toolIds: string[]): string[] {
-  const tools = toolIds
-    .map((id) => AI_TOOLS.find((t) => t.value === id))
-    .filter((t): t is NonNullable<typeof t> => t != null);
-  return scanInstalledWorkflowsShared(projectPath, tools);
+function isMissingWorkflowSkills(skillsDir: string): boolean {
+  return WORKFLOW_SKILLS.some(
+    (dirName) => !fs.existsSync(path.join(skillsDir, dirName, 'SKILL.md'))
+  );
+}
+
+/**
+ * Returns configured tools whose skill directories are missing bundled skills.
+ */
+function getToolsMissingSkills(projectPath: string, configuredTools: readonly string[]): string[] {
+  return [...new Set(configuredTools)].filter((toolId) => {
+    const tool = AI_TOOLS.find((t) => t.value === toolId);
+    if (!tool?.skillsDir) return false;
+    return isMissingWorkflowSkills(path.join(projectPath, tool.skillsDir, 'skills'));
+  });
 }
 
 export class UpdateCommand {
@@ -86,26 +86,10 @@ export class UpdateCommand {
       throw new Error(`No OpenSpec directory found. Run 'openspec init' first.`);
     }
 
-    // 2. Perform one-time migration if needed before any legacy upgrade generation.
-    // Use detected tool directories to preserve existing opsx skills/commands.
-    const detectedTools = getAvailableTools(resolvedProjectPath);
-    migrateIfNeededShared(resolvedProjectPath, detectedTools);
+    // 2. Detect and handle legacy artifacts + upgrade legacy tools
+    const newlyConfiguredTools = await this.handleLegacyCleanup(resolvedProjectPath);
 
-    // 3. Read global config for profile
-    const globalConfig = getGlobalConfig();
-    const profile = globalConfig.profile ?? 'core';
-    const profileWorkflows = getProfileWorkflows(profile, globalConfig.workflows);
-    const desiredWorkflows = profileWorkflows.filter((workflow): workflow is (typeof ALL_WORKFLOWS)[number] =>
-      (ALL_WORKFLOWS as readonly string[]).includes(workflow)
-    );
-
-    // 4. Detect and handle legacy artifacts + upgrade legacy tools using effective config
-    const newlyConfiguredTools = await this.handleLegacyCleanup(
-      resolvedProjectPath,
-      desiredWorkflows
-    );
-
-    // 5. Find configured tools
+    // 3. Find configured tools
     const configuredTools = getConfiguredTools(resolvedProjectPath);
 
     // Most agents read the canonical `.agents/skills` store natively and never
@@ -113,12 +97,7 @@ export class UpdateCommand {
     // OpenSpec is installed. Refresh the canonical store directly in that case.
     if (configuredTools.length === 0 && newlyConfiguredTools.length === 0) {
       if (isCanonicalStorePopulated(resolvedProjectPath)) {
-        await this.updateCanonicalStore(
-          resolvedProjectPath,
-          desiredWorkflows,
-          profile,
-          globalConfig.workflows
-        );
+        await this.updateCanonicalStore(resolvedProjectPath);
         return;
       }
 
@@ -127,24 +106,20 @@ export class UpdateCommand {
       return;
     }
 
-    // 6. Check version status for all configured tools
+    // 4. Check version status for all configured tools
     const toolStatuses = configuredTools.map((toolId) =>
       getToolVersionStatus(resolvedProjectPath, toolId, OPENSPEC_VERSION)
     );
     const statusByTool = new Map(toolStatuses.map((status) => [status.toolId, status] as const));
 
-    // 7. Smart update detection
+    // 5. Smart update detection: version drift or missing bundled skills
     const toolsNeedingVersionUpdate = toolStatuses
       .filter((s) => s.needsUpdate)
       .map((s) => s.toolId);
-    const toolsNeedingConfigSync = getToolsNeedingProfileSync(
-      resolvedProjectPath,
-      desiredWorkflows,
-      configuredTools
-    );
+    const toolsMissingSkills = getToolsMissingSkills(resolvedProjectPath, configuredTools);
     const toolsToUpdateSet = new Set<string>([
       ...toolsNeedingVersionUpdate,
-      ...toolsNeedingConfigSync,
+      ...toolsMissingSkills,
     ]);
     const toolsUpToDate = toolStatuses.filter((s) => !toolsToUpdateSet.has(s.toolId));
 
@@ -152,14 +127,12 @@ export class UpdateCommand {
       // All tools are up to date
       this.displayUpToDateMessage(toolStatuses);
 
-      // Still check for new tool directories and extra workflows
+      // Still check for new tool directories
       this.detectNewTools(resolvedProjectPath, configuredTools);
-      this.displayExtraWorkflowsNote(resolvedProjectPath, configuredTools, desiredWorkflows);
-      this.displayOldCoreCustomProfileNote(profile, globalConfig.workflows);
       return;
     }
 
-    // 8. Display update plan
+    // 6. Display update plan
     if (this.force) {
       console.log(`Force updating ${configuredTools.length} tool(s): ${configuredTools.join(', ')}`);
     } else {
@@ -167,17 +140,14 @@ export class UpdateCommand {
     }
     console.log();
 
-    // 9. Determine skills to generate
-    const skillTemplates = getSkillTemplates();
-
-    // 10. Update tools (all if force, otherwise only those needing update).
+    // 7. Update tools (all if force, otherwise only those needing update).
     // Skills are written once to the canonical `.agents/skills` store and
     // re-symlinked for symlink-capable tools (Claude). Every configured tool
     // consumes that single store, so refreshing it refreshes them all.
+    const skillTemplates = getSkillTemplates();
     const toolsToUpdate = this.force ? configuredTools : [...toolsToUpdateSet];
     const updatedTools: string[] = [];
     const failedTools: Array<{ name: string; error: string }> = [];
-    let removedDeselectedSkillCount = 0;
 
     if (toolsToUpdate.length > 0) {
       const spinner = ora('Updating OpenSpec skills...').start();
@@ -189,12 +159,6 @@ export class UpdateCommand {
           version: OPENSPEC_VERSION,
           onWarn: (message) => warnings.push(message),
         });
-
-        removedDeselectedSkillCount += await this.removeUnselectedSkillDirs(
-          resolvedProjectPath,
-          desiredWorkflows,
-          toolsToUpdate
-        );
 
         spinner.succeed('Updated OpenSpec skills');
         for (const warning of warnings) {
@@ -214,7 +178,7 @@ export class UpdateCommand {
       }
     }
 
-    // 11. Summary
+    // 8. Summary
     console.log();
     if (updatedTools.length > 0) {
       console.log(chalk.green(`✓ Updated: ${updatedTools.join(', ')} (v${OPENSPEC_VERSION})`));
@@ -222,11 +186,8 @@ export class UpdateCommand {
     if (failedTools.length > 0) {
       console.log(chalk.red(`✗ Failed: ${failedTools.map(f => `${f.name} (${f.error})`).join(', ')}`));
     }
-    if (removedDeselectedSkillCount > 0) {
-      console.log(chalk.dim(`Removed: ${removedDeselectedSkillCount} skill directories (deselected workflows)`));
-    }
 
-    // 12. Show onboarding message for newly configured tools from legacy upgrade
+    // 9. Show onboarding message for newly configured tools from legacy upgrade
     if (newlyConfiguredTools.length > 0) {
       console.log();
       console.log(chalk.bold('Getting started:'));
@@ -239,14 +200,10 @@ export class UpdateCommand {
 
     const configuredAndNewTools = [...new Set([...configuredTools, ...newlyConfiguredTools])];
 
-    // 13. Detect new tool directories not currently configured
+    // 10. Detect new tool directories not currently configured
     this.detectNewTools(resolvedProjectPath, configuredAndNewTools);
 
-    // 14. Display note about extra workflows not in profile
-    this.displayExtraWorkflowsNote(resolvedProjectPath, configuredAndNewTools, desiredWorkflows);
-    this.displayOldCoreCustomProfileNote(profile, globalConfig.workflows);
-
-    // 15. List affected tools
+    // 11. List affected tools
     if (updatedTools.length > 0) {
       const toolDisplayNames = updatedTools;
       console.log(chalk.dim(`Tools: ${toolDisplayNames.join(', ')}`));
@@ -281,7 +238,7 @@ export class UpdateCommand {
         const fromVersion = status.generatedByVersion ?? 'unknown';
         return `${status.toolId} (${fromVersion} → ${OPENSPEC_VERSION})`;
       }
-      return `${toolId} (config sync)`;
+      return `${toolId} (missing skills)`;
     });
 
     console.log(`Updating ${toolsToUpdate.length} tool(s): ${updates.join(', ')}`);
@@ -327,93 +284,20 @@ export class UpdateCommand {
   }
 
   /**
-   * Displays a note about extra workflows installed that aren't in the current profile.
-   */
-  private displayExtraWorkflowsNote(
-    projectPath: string,
-    configuredTools: string[],
-    profileWorkflows: readonly string[]
-  ): void {
-    const installedWorkflows = scanInstalledWorkflows(projectPath, configuredTools);
-    const profileSet = new Set(profileWorkflows);
-    const extraWorkflows = installedWorkflows.filter((w) => !profileSet.has(w));
-
-    if (extraWorkflows.length > 0) {
-      console.log(chalk.dim(`Note: ${extraWorkflows.length} extra workflows not in profile (use \`openspec config profile\` to manage)`));
-    }
-  }
-
-  /**
-   * Suggest opting back into core when a custom profile still matches the old
-   * pre-sync core set. Keep custom profiles user-owned; do not mutate them.
-   */
-  private displayOldCoreCustomProfileNote(profile: Profile, workflows?: readonly string[]): void {
-    if (profile !== 'custom' || !workflows) {
-      return;
-    }
-
-    const workflowSet = new Set(workflows);
-    const matchesOldCore =
-      workflowSet.size === OLD_CORE_WORKFLOWS.length &&
-      OLD_CORE_WORKFLOWS.every((workflow) => workflowSet.has(workflow));
-
-    if (!matchesOldCore) {
-      return;
-    }
-
-    console.log(chalk.dim('Note: The core profile now includes sync. Your custom profile is preserving the old core workflow set.'));
-    console.log(chalk.dim('Run `openspec config profile core` and then `openspec update` to add sync.'));
-  }
-
-  /**
-   * Removes skill directories for workflows that are no longer selected in the active profile.
-   * Returns the number of directories removed.
-   */
-  private async removeUnselectedSkillDirs(
-    projectPath: string,
-    desiredWorkflows: readonly (typeof ALL_WORKFLOWS)[number][],
-    symlinkTools: readonly string[]
-  ): Promise<number> {
-    const desiredSet = new Set(desiredWorkflows);
-    let removed = 0;
-
-    for (const workflow of ALL_WORKFLOWS) {
-      if (desiredSet.has(workflow)) continue;
-      const dirName = WORKFLOW_TO_SKILL_DIR[workflow];
-      if (!dirName) continue;
-
-      try {
-        if (await removeSkill(projectPath, dirName, { symlinkTools })) {
-          removed++;
-        }
-      } catch {
-        // Ignore errors
-      }
-    }
-
-    return removed;
-  }
-
-  /**
    * Refreshes the canonical `.agents/skills` store for projects whose agents
    * read it natively (no per-tool directory to key off). Mirrors the per-tool
-   * update flow's version/drift gating and reporting, but at store granularity.
+   * update flow's version/missing-skill gating and reporting, but at store
+   * granularity.
    */
-  private async updateCanonicalStore(
-    projectPath: string,
-    desiredWorkflows: readonly (typeof ALL_WORKFLOWS)[number][],
-    profile: Profile,
-    customWorkflows?: readonly string[]
-  ): Promise<void> {
+  private async updateCanonicalStore(projectPath: string): Promise<void> {
     const currentVersion = getCanonicalSkillVersion(projectPath);
     const needsVersionUpdate = currentVersion === null || currentVersion !== OPENSPEC_VERSION;
-    const needsConfigSync = hasCanonicalProfileDrift(projectPath, desiredWorkflows);
+    const needsMissingSkills = isMissingWorkflowSkills(getCanonicalSkillsDir(projectPath));
 
-    if (!this.force && !needsVersionUpdate && !needsConfigSync) {
+    if (!this.force && !needsVersionUpdate && !needsMissingSkills) {
       console.log(chalk.green(`✓ OpenSpec skills up to date (v${OPENSPEC_VERSION})`));
       console.log();
       console.log(chalk.dim('Use --force to refresh files anyway.'));
-      this.displayOldCoreCustomProfileNote(profile, customWorkflows);
       return;
     }
 
@@ -424,25 +308,19 @@ export class UpdateCommand {
       console.log(
         fromVersion
           ? `Updating OpenSpec skills (${fromVersion} → ${OPENSPEC_VERSION})`
-          : 'Updating OpenSpec skills (config sync)'
+          : 'Updating OpenSpec skills (missing skills)'
       );
     }
     console.log();
 
     const skillTemplates = getSkillTemplates();
     const spinner = ora('Updating OpenSpec skills...').start();
-    let removedDeselectedSkillCount = 0;
 
     try {
       await installSkills(projectPath, skillTemplates, {
         symlinkTools: [],
         version: OPENSPEC_VERSION,
       });
-      removedDeselectedSkillCount = await this.removeUnselectedSkillDirs(
-        projectPath,
-        desiredWorkflows,
-        []
-      );
       spinner.succeed('Updated OpenSpec skills');
     } catch (error) {
       spinner.fail('Failed to update OpenSpec skills');
@@ -452,15 +330,6 @@ export class UpdateCommand {
 
     console.log();
     console.log(chalk.green(`✓ Updated: OpenSpec skills (v${OPENSPEC_VERSION})`));
-    if (removedDeselectedSkillCount > 0) {
-      console.log(
-        chalk.dim(`Removed: ${removedDeselectedSkillCount} skill directories (deselected workflows)`)
-      );
-    }
-
-    this.displayExtraWorkflowsNote(projectPath, [], desiredWorkflows);
-    this.displayOldCoreCustomProfileNote(profile, customWorkflows);
-
     console.log();
     console.log(chalk.dim('Restart your IDE for changes to take effect.'));
   }
@@ -470,10 +339,7 @@ export class UpdateCommand {
    * Unlike init, update warns but continues if legacy files found in non-interactive mode.
    * Returns array of tool IDs that were newly configured during legacy upgrade.
    */
-  private async handleLegacyCleanup(
-    projectPath: string,
-    desiredWorkflows: readonly (typeof ALL_WORKFLOWS)[number][]
-  ): Promise<string[]> {
+  private async handleLegacyCleanup(projectPath: string): Promise<string[]> {
     // Detect legacy artifacts
     const detection = await detectLegacyArtifacts(projectPath);
 
@@ -492,7 +358,7 @@ export class UpdateCommand {
       // --force flag: proceed with cleanup automatically
       await this.performLegacyCleanup(projectPath, detection);
       // Then upgrade legacy tools to new skills
-      return this.upgradeLegacyTools(projectPath, detection, canPrompt, desiredWorkflows);
+      return this.upgradeLegacyTools(projectPath, detection, canPrompt);
     }
 
     if (!canPrompt) {
@@ -513,7 +379,7 @@ export class UpdateCommand {
     if (shouldCleanup) {
       await this.performLegacyCleanup(projectPath, detection);
       // Then upgrade legacy tools to new skills
-      return this.upgradeLegacyTools(projectPath, detection, canPrompt, desiredWorkflows);
+      return this.upgradeLegacyTools(projectPath, detection, canPrompt);
     } else {
       console.log(chalk.dim('Skipping legacy cleanup. Continuing with skill update...'));
       console.log();
@@ -547,8 +413,7 @@ export class UpdateCommand {
   private async upgradeLegacyTools(
     projectPath: string,
     detection: LegacyDetectionResult,
-    canPrompt: boolean,
-    desiredWorkflows: readonly (typeof ALL_WORKFLOWS)[number][]
+    canPrompt: boolean
   ): Promise<string[]> {
     // Get tools that had legacy artifacts
     const legacyTools = getToolsFromLegacyArtifacts(detection);
@@ -618,7 +483,7 @@ export class UpdateCommand {
       }
     }
 
-    // Create skills for selected tools using the effective profile.
+    // Create skills for selected tools — always the full bundled set.
     const newlyConfigured: string[] = [];
     const skillTemplates = getSkillTemplates();
 
