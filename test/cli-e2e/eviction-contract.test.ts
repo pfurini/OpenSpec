@@ -100,7 +100,7 @@ describe('eviction contract (tracer)', () => {
     }
   });
 
-  it.fails('root help has no feedback entry', async () => {
+  it('root help has no feedback entry', async () => {
     const result = await runCLI(['--help']);
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain('Usage: openspec');
