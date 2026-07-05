@@ -1,7 +1,9 @@
 # cli-reverse Specification
 
 ## Purpose
-TBD - created by archiving change add-reverse-baseline-skill. Update Purpose after archive.
+Provide the `openspec reverse` command surface that reverse-engineers a draft spec baseline
+from an existing codebase: a read-only scan that inventories the working tree into a candidate
+capability map, and a scaffold step that creates canonical baseline spec skeletons idempotently.
 ## Requirements
 ### Requirement: Reverse scan inventory
 The system SHALL provide `openspec reverse scan` that produces a read-only inventory of the codebase

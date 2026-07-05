@@ -1,7 +1,9 @@
 # reverse-baseline-skill Specification
 
 ## Purpose
-TBD - created by archiving change add-reverse-baseline-skill. Update Purpose after archive.
+Define the `openspec-reverse` agent skill that drafts baseline specs from an existing codebase:
+inventory-first extraction via `openspec reverse scan`, human-ratified capability boundaries,
+capability-at-a-time drafting with intent-bearing sources leading, and draft-marked output.
 ## Requirements
 ### Requirement: Reverse baseline skill
 The system SHALL provide an `openspec-reverse` skill that drafts baseline specs from an existing
