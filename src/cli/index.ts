@@ -42,7 +42,6 @@ import {
   type SchemasOptions,
   type NewChangeOptions,
 } from '../commands/workflow/index.js';
-import { maybeShowTelemetryNotice, trackCommand, shutdown } from '../telemetry/index.js';
 import { COMMON_FLAGS } from '../core/completions/shared-flags.js';
 
 const STORE_OPTION_DESCRIPTION = COMMON_FLAGS.store.description;
@@ -116,27 +115,12 @@ program
 // Global options
 program.option('--no-color', 'Disable color output');
 
-// Apply global flags and telemetry before any command runs
-// Note: preAction receives (thisCommand, actionCommand) where:
-// - thisCommand: the command where hook was added (root program)
-// - actionCommand: the command actually being executed (subcommand)
-program.hook('preAction', async (thisCommand, actionCommand) => {
+// Apply global flags before any command runs
+program.hook('preAction', async (thisCommand) => {
   const opts = thisCommand.opts();
   if (opts.color === false) {
     process.env.NO_COLOR = '1';
   }
-
-  // Show first-run telemetry notice (if not seen)
-  await maybeShowTelemetryNotice();
-
-  // Track command execution (use actionCommand to get the actual subcommand)
-  const commandPath = getCommandPath(actionCommand);
-  await trackCommand(commandPath, version);
-});
-
-// Shutdown telemetry after command completes
-program.hook('postAction', async () => {
-  await shutdown();
 });
 
 const availableToolIds = AI_TOOLS.filter((tool) => tool.skillsDir).map((tool) => tool.value);
