@@ -53,7 +53,7 @@ Transcribed from design.md's Wave Skeleton. Coverage map joins design's Testing 
 
 ## Wave 3
 
-- [ ] init/update carry no historical-install machinery
+- [x] init/update carry no historical-install machinery
 - components: C6 legacy eviction (delete `legacy-cleanup.ts` + `migration.ts`; trim init/update legacy paths)
 - interfaces: C6 — (deletion)
 - depends-on: Wave 2
