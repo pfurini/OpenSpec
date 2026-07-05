@@ -4,11 +4,17 @@
 harness work on branch `feat/explore-what-brainstorming`. An implementing session should
 read this index, then ONLY the note(s) for its chosen track — not the whole corpus.
 
-Two families of files:
+Three families of files:
 - **Ours (this effort)** — the notes in the table below (the harness track's build contract is
   `task-machinery-and-wave-execution.md`; read its §13–§16 first for current state).
 - **Upstream** (`workspace-*.md`, `explore-workflow-ux.md`) — inherited context; read only
   if a track touches workspaces/initiatives.
+- **Operating docs (`ops/`)** — cross-session working documents, distinct from the design
+  journal: `ops/START-HERE.md` (the ranked backlog — **a session picking up work starts
+  there**), `ops/RECONSTRUCTION.md` (what this fork is and why, reconstructed 2026-06-28),
+  `ops/PLAIN-WORDS.md` (the same story in plain words, for humans), `ops/process-disciplines-handoff.md`
+  (the seam catalog — the earlier falsification brief was folded into it, commit `931c1b6`),
+  and `ops/superpowers-openspec-sync.md` (port/sync verdicts).
 
 ## The notes, by role
 
