@@ -69,7 +69,6 @@ const FUNCTION_FACTORY_NAMES = [
   'getBulkArchiveChangeSkillTemplate',
   'getVerifyChangeSkillTemplate',
   'getOpsxProposeSkillTemplate',
-  'getFeedbackSkillTemplate',
 ];
 
 // [dirName, skill-template factory name] — feeds the generated-content + tree maps.

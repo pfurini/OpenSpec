@@ -16,7 +16,6 @@ import { ChangeCommand } from '../commands/change.js';
 import { ValidateCommand } from '../commands/validate.js';
 import { ShowCommand } from '../commands/show.js';
 import { CompletionCommand } from '../commands/completion.js';
-import { FeedbackCommand } from '../commands/feedback.js';
 import { registerConfigCommand } from '../commands/config.js';
 import { registerSchemaCommand } from '../commands/schema.js';
 import { registerStoreCommand } from '../commands/store.js';
@@ -428,21 +427,6 @@ program
       await showCommand.execute(itemName, options ?? {});
     } catch (error) {
       failWithError(error, { enabled: options?.json, fallbackCode: 'show_error' });
-      process.exit(1);
-    }
-  });
-
-// Feedback command
-program
-  .command('feedback <message>')
-  .description('Submit feedback about OpenSpec')
-  .option('--body <text>', 'Detailed description for the feedback')
-  .action(async (message: string, options?: { body?: string }) => {
-    try {
-      const feedbackCommand = new FeedbackCommand();
-      await feedbackCommand.execute(message, options);
-    } catch (error) {
-      failWithError(error);
       process.exit(1);
     }
   });

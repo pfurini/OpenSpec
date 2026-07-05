@@ -10,7 +10,6 @@ import {
   getExploreSkillTemplate,
   getReverseSkillTemplate,
   getOpsxDesignSkillTemplate,
-  getFeedbackSkillTemplate,
   getFfChangeSkillTemplate,
   getNewChangeSkillTemplate,
   getOnboardSkillTemplate,
@@ -34,7 +33,6 @@ const EXPECTED_FUNCTION_HASHES: Record<string, string> = {
   getBulkArchiveChangeSkillTemplate: '12fbe1b8cac45da6323766d965099fd6ed0f245b596a312b2a1595c238c63dd0',
   getVerifyChangeSkillTemplate: 'd718c79aad649223a73fdb11036c93fb3842ac5a780f4934d50bfa03c9692683',
   getOpsxProposeSkillTemplate: 'ad2aea1a16400c26ecb1845f09555bd0bfb4c7c2876a0835d93ad84060203c08',
-  getFeedbackSkillTemplate: 'd7d83c5f7fc2b92fe8f4588a5bf2d9cb315e4c73ec19bcd5ef28270906319a0d',
 };
 
 const EXPECTED_GENERATED_SKILL_CONTENT_HASHES: Record<string, string> = {
@@ -94,7 +92,6 @@ describe('skill templates split parity', () => {
       getBulkArchiveChangeSkillTemplate,
       getVerifyChangeSkillTemplate,
       getOpsxProposeSkillTemplate,
-      getFeedbackSkillTemplate,
     };
 
     const actualHashes = Object.fromEntries(
@@ -105,8 +102,6 @@ describe('skill templates split parity', () => {
   });
 
   it('preserves generated skill file content exactly', () => {
-    // Intentionally excludes getFeedbackSkillTemplate: skillFactories only models templates
-    // deployed via generateSkillContent, while feedback is covered in function payload parity.
     const skillFactories: Array<[string, () => SkillTemplate]> = [
       ['openspec-explore', getExploreSkillTemplate],
       ['openspec-reverse', getReverseSkillTemplate],
