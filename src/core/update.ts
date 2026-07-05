@@ -16,7 +16,6 @@ import { AI_TOOLS, OPENSPEC_DIR_NAME } from './config.js';
 import {
   getToolVersionStatus,
   getSkillTemplates,
-  getToolsWithSkillsDir,
   getConfiguredTools,
   isCanonicalStorePopulated,
   getCanonicalSkillVersion,
@@ -25,15 +24,6 @@ import {
   type ToolVersionStatus,
 } from './shared/index.js';
 import { getCanonicalSkillsDir } from './shared/skill-install.js';
-import {
-  detectLegacyArtifacts,
-  cleanupLegacyArtifacts,
-  formatCleanupSummary,
-  formatDetectionSummary,
-  getToolsFromLegacyArtifacts,
-  type LegacyDetectionResult,
-} from './legacy-cleanup.js';
-import { isInteractive } from '../utils/interactive.js';
 import { getAvailableTools } from './available-tools.js';
 import { WORKFLOW_SKILLS } from './workflow-skills.js';
 
@@ -86,16 +76,13 @@ export class UpdateCommand {
       throw new Error(`No OpenSpec directory found. Run 'openspec init' first.`);
     }
 
-    // 2. Detect and handle legacy artifacts + upgrade legacy tools
-    const newlyConfiguredTools = await this.handleLegacyCleanup(resolvedProjectPath);
-
-    // 3. Find configured tools
+    // 2. Find configured tools
     const configuredTools = getConfiguredTools(resolvedProjectPath);
 
     // Most agents read the canonical `.agents/skills` store natively and never
     // get a per-tool directory, so `configuredTools` can be empty even though
     // OpenSpec is installed. Refresh the canonical store directly in that case.
-    if (configuredTools.length === 0 && newlyConfiguredTools.length === 0) {
+    if (configuredTools.length === 0) {
       if (isCanonicalStorePopulated(resolvedProjectPath)) {
         await this.updateCanonicalStore(resolvedProjectPath);
         return;
@@ -106,13 +93,13 @@ export class UpdateCommand {
       return;
     }
 
-    // 4. Check version status for all configured tools
+    // 3. Check version status for all configured tools
     const toolStatuses = configuredTools.map((toolId) =>
       getToolVersionStatus(resolvedProjectPath, toolId, OPENSPEC_VERSION)
     );
     const statusByTool = new Map(toolStatuses.map((status) => [status.toolId, status] as const));
 
-    // 5. Smart update detection: version drift or missing bundled skills
+    // 4. Smart update detection: version drift or missing bundled skills
     const toolsNeedingVersionUpdate = toolStatuses
       .filter((s) => s.needsUpdate)
       .map((s) => s.toolId);
@@ -132,7 +119,7 @@ export class UpdateCommand {
       return;
     }
 
-    // 6. Display update plan
+    // 5. Display update plan
     if (this.force) {
       console.log(`Force updating ${configuredTools.length} tool(s): ${configuredTools.join(', ')}`);
     } else {
@@ -140,7 +127,7 @@ export class UpdateCommand {
     }
     console.log();
 
-    // 7. Update tools (all if force, otherwise only those needing update).
+    // 6. Update tools (all if force, otherwise only those needing update).
     // Skills are written once to the canonical `.agents/skills` store and
     // re-symlinked for symlink-capable tools (Claude). Every configured tool
     // consumes that single store, so refreshing it refreshes them all.
@@ -178,7 +165,7 @@ export class UpdateCommand {
       }
     }
 
-    // 8. Summary
+    // 7. Summary
     console.log();
     if (updatedTools.length > 0) {
       console.log(chalk.green(`✓ Updated: ${updatedTools.join(', ')} (v${OPENSPEC_VERSION})`));
@@ -187,23 +174,10 @@ export class UpdateCommand {
       console.log(chalk.red(`✗ Failed: ${failedTools.map(f => `${f.name} (${f.error})`).join(', ')}`));
     }
 
-    // 9. Show onboarding message for newly configured tools from legacy upgrade
-    if (newlyConfiguredTools.length > 0) {
-      console.log();
-      console.log(chalk.bold('Getting started:'));
-      console.log('  /openspec-new-change       Start a new change');
-      console.log('  /openspec-continue-change  Create the next artifact');
-      console.log('  /openspec-apply-change     Implement tasks');
-      console.log();
-      console.log(`Learn more: ${chalk.cyan('https://github.com/Fission-AI/OpenSpec')}`);
-    }
+    // 8. Detect new tool directories not currently configured
+    this.detectNewTools(resolvedProjectPath, configuredTools);
 
-    const configuredAndNewTools = [...new Set([...configuredTools, ...newlyConfiguredTools])];
-
-    // 10. Detect new tool directories not currently configured
-    this.detectNewTools(resolvedProjectPath, configuredAndNewTools);
-
-    // 11. List affected tools
+    // 9. List affected tools
     if (updatedTools.length > 0) {
       const toolDisplayNames = updatedTools;
       console.log(chalk.dim(`Tools: ${toolDisplayNames.join(', ')}`));
@@ -334,183 +308,4 @@ export class UpdateCommand {
     console.log(chalk.dim('Restart your IDE for changes to take effect.'));
   }
 
-  /**
-   * Detect and handle legacy OpenSpec artifacts.
-   * Unlike init, update warns but continues if legacy files found in non-interactive mode.
-   * Returns array of tool IDs that were newly configured during legacy upgrade.
-   */
-  private async handleLegacyCleanup(projectPath: string): Promise<string[]> {
-    // Detect legacy artifacts
-    const detection = await detectLegacyArtifacts(projectPath);
-
-    if (!detection.hasLegacyArtifacts) {
-      return []; // No legacy artifacts found
-    }
-
-    // Show what was detected
-    console.log();
-    console.log(formatDetectionSummary(detection));
-    console.log();
-
-    const canPrompt = isInteractive();
-
-    if (this.force) {
-      // --force flag: proceed with cleanup automatically
-      await this.performLegacyCleanup(projectPath, detection);
-      // Then upgrade legacy tools to new skills
-      return this.upgradeLegacyTools(projectPath, detection, canPrompt);
-    }
-
-    if (!canPrompt) {
-      // Non-interactive mode without --force: warn and continue
-      // (Unlike init, update doesn't abort - user may just want to update skills)
-      console.log(chalk.yellow('⚠ Run with --force to auto-cleanup legacy files, or run interactively.'));
-      console.log();
-      return [];
-    }
-
-    // Interactive mode: prompt for confirmation
-    const { confirm } = await import('@inquirer/prompts');
-    const shouldCleanup = await confirm({
-      message: 'Upgrade and clean up legacy files?',
-      default: true,
-    });
-
-    if (shouldCleanup) {
-      await this.performLegacyCleanup(projectPath, detection);
-      // Then upgrade legacy tools to new skills
-      return this.upgradeLegacyTools(projectPath, detection, canPrompt);
-    } else {
-      console.log(chalk.dim('Skipping legacy cleanup. Continuing with skill update...'));
-      console.log();
-      return [];
-    }
-  }
-
-  /**
-   * Perform cleanup of legacy artifacts.
-   */
-  private async performLegacyCleanup(projectPath: string, detection: LegacyDetectionResult): Promise<void> {
-    const spinner = ora('Cleaning up legacy files...').start();
-
-    const result = await cleanupLegacyArtifacts(projectPath, detection);
-
-    spinner.succeed('Legacy files cleaned up');
-
-    const summary = formatCleanupSummary(result);
-    if (summary) {
-      console.log();
-      console.log(summary);
-    }
-
-    console.log();
-  }
-
-  /**
-   * Upgrade legacy tools to new skills system.
-   * Returns array of tool IDs that were newly configured.
-   */
-  private async upgradeLegacyTools(
-    projectPath: string,
-    detection: LegacyDetectionResult,
-    canPrompt: boolean
-  ): Promise<string[]> {
-    // Get tools that had legacy artifacts
-    const legacyTools = getToolsFromLegacyArtifacts(detection);
-
-    if (legacyTools.length === 0) {
-      return [];
-    }
-
-    // Get currently configured tools
-    const configuredTools = getConfiguredTools(projectPath);
-    const configuredSet = new Set(configuredTools);
-
-    // Filter to tools that aren't already configured
-    const unconfiguredLegacyTools = legacyTools.filter((t) => !configuredSet.has(t));
-
-    if (unconfiguredLegacyTools.length === 0) {
-      return [];
-    }
-
-    // Get valid tools (those with skillsDir)
-    const validToolIds = new Set(getToolsWithSkillsDir());
-    const validUnconfiguredTools = unconfiguredLegacyTools.filter((t) => validToolIds.has(t));
-
-    if (validUnconfiguredTools.length === 0) {
-      return [];
-    }
-
-    // Show what tools were detected from legacy artifacts
-    console.log(chalk.bold('Tools detected from legacy artifacts:'));
-    for (const toolId of validUnconfiguredTools) {
-      const tool = AI_TOOLS.find((t) => t.value === toolId);
-      console.log(`  • ${tool?.name || toolId}`);
-    }
-    console.log();
-
-    let selectedTools: string[];
-
-    if (this.force || !canPrompt) {
-      // Non-interactive with --force: auto-select detected tools
-      selectedTools = validUnconfiguredTools;
-      console.log(`Setting up skills for: ${selectedTools.join(', ')}`);
-    } else {
-      // Interactive mode: prompt for tool selection with detected tools pre-selected
-      const { searchableMultiSelect } = await import('../prompts/searchable-multi-select.js');
-
-      const sortedChoices = validUnconfiguredTools.map((toolId) => {
-        const tool = AI_TOOLS.find((t) => t.value === toolId);
-        return {
-          name: tool?.name || toolId,
-          value: toolId,
-          configured: false,
-          preSelected: true, // Pre-select all detected legacy tools
-        };
-      });
-
-      selectedTools = await searchableMultiSelect({
-        message: 'Select tools to set up with the new skill system:',
-        pageSize: 15,
-        choices: sortedChoices,
-        validate: (_selected: string[]) => true, // Allow empty selection (user can skip)
-      });
-
-      if (selectedTools.length === 0) {
-        console.log(chalk.dim('Skipping tool setup.'));
-        console.log();
-        return [];
-      }
-    }
-
-    // Create skills for selected tools — always the full bundled set.
-    const newlyConfigured: string[] = [];
-    const skillTemplates = getSkillTemplates();
-
-    for (const toolId of selectedTools) {
-      const tool = AI_TOOLS.find((t) => t.value === toolId);
-      if (!tool?.skillsDir) continue;
-
-      const spinner = ora(`Setting up ${tool.name}...`).start();
-
-      try {
-        await installSkills(projectPath, skillTemplates, {
-          symlinkTools: [toolId],
-          version: OPENSPEC_VERSION,
-        });
-
-        spinner.succeed(`Setup complete for ${tool.name}`);
-        newlyConfigured.push(toolId);
-      } catch (error) {
-        spinner.fail(`Failed to set up ${tool.name}`);
-        console.log(chalk.red(`  ${error instanceof Error ? error.message : String(error)}`));
-      }
-    }
-
-    if (newlyConfigured.length > 0) {
-      console.log();
-    }
-
-    return newlyConfigured;
-  }
 }

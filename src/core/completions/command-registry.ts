@@ -15,7 +15,7 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
       },
       {
         name: 'force',
-        description: 'Auto-cleanup legacy files without prompting',
+        description: 'No effect (retained for compatibility)',
       },
     ],
   },

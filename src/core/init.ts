@@ -22,13 +22,6 @@ import { PALETTE } from './styles/palette.js';
 import { isInteractive } from '../utils/interactive.js';
 import { serializeConfig } from './config-prompts.js';
 import {
-  detectLegacyArtifacts,
-  cleanupLegacyArtifacts,
-  formatCleanupSummary,
-  formatDetectionSummary,
-  type LegacyDetectionResult,
-} from './legacy-cleanup.js';
-import {
   getToolsWithSkillsDir,
   getToolStates,
   getSkillTemplates,
@@ -111,9 +104,6 @@ export class InitCommand {
       }
     }
 
-    // Check for legacy artifacts and handle cleanup
-    await this.handleLegacyCleanup(projectPath, extendMode);
-
     // Detect available tools in the project (task 7.1)
     const detectedTools = getAvailableTools(projectPath);
 
@@ -167,65 +157,6 @@ export class InitCommand {
     if (this.interactiveOption === false) return false;
     if (this.toolsArg !== undefined) return false;
     return isInteractive({ interactive: this.interactiveOption });
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // LEGACY CLEANUP
-  // ═══════════════════════════════════════════════════════════
-
-  private async handleLegacyCleanup(projectPath: string, extendMode: boolean): Promise<void> {
-    // Detect legacy artifacts
-    const detection = await detectLegacyArtifacts(projectPath);
-
-    if (!detection.hasLegacyArtifacts) {
-      return; // No legacy artifacts found
-    }
-
-    // Show what was detected
-    console.log();
-    console.log(formatDetectionSummary(detection));
-    console.log();
-
-    const canPrompt = this.canPromptInteractively();
-
-    if (this.force || !canPrompt) {
-      // --force flag or non-interactive mode: proceed with cleanup automatically.
-      // Legacy slash commands are 100% OpenSpec-managed, and config file cleanup
-      // only removes markers (never deletes files), so auto-cleanup is safe.
-      await this.performLegacyCleanup(projectPath, detection);
-      return;
-    }
-
-    // Interactive mode: prompt for confirmation
-    const { confirm } = await import('@inquirer/prompts');
-    const shouldCleanup = await confirm({
-      message: 'Upgrade and clean up legacy files?',
-      default: true,
-    });
-
-    if (!shouldCleanup) {
-      console.log(chalk.dim('Initialization cancelled.'));
-      console.log(chalk.dim('Run with --force to skip this prompt, or manually remove legacy files.'));
-      process.exit(0);
-    }
-
-    await this.performLegacyCleanup(projectPath, detection);
-  }
-
-  private async performLegacyCleanup(projectPath: string, detection: LegacyDetectionResult): Promise<void> {
-    const spinner = ora('Cleaning up legacy files...').start();
-
-    const result = await cleanupLegacyArtifacts(projectPath, detection);
-
-    spinner.succeed('Legacy files cleaned up');
-
-    const summary = formatCleanupSummary(result);
-    if (summary) {
-      console.log();
-      console.log(summary);
-    }
-
-    console.log();
   }
 
   // ═══════════════════════════════════════════════════════════
