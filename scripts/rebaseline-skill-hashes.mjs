@@ -62,13 +62,10 @@ const FUNCTION_FACTORY_NAMES = [
   'getNewChangeSkillTemplate',
   'getContinueChangeSkillTemplate',
   'getApplyChangeSkillTemplate',
-  'getFfChangeSkillTemplate',
   'getSyncSpecsSkillTemplate',
-  'getOnboardSkillTemplate',
   'getArchiveChangeSkillTemplate',
   'getBulkArchiveChangeSkillTemplate',
   'getVerifyChangeSkillTemplate',
-  'getOpsxProposeSkillTemplate',
 ];
 
 // [dirName, skill-template factory name] — feeds the generated-content + tree maps.
@@ -79,13 +76,10 @@ const SKILL_FACTORY_ENTRIES = [
   ['openspec-new-change', 'getNewChangeSkillTemplate'],
   ['openspec-continue-change', 'getContinueChangeSkillTemplate'],
   ['openspec-apply-change', 'getApplyChangeSkillTemplate'],
-  ['openspec-ff-change', 'getFfChangeSkillTemplate'],
   ['openspec-sync-specs', 'getSyncSpecsSkillTemplate'],
   ['openspec-archive-change', 'getArchiveChangeSkillTemplate'],
   ['openspec-bulk-archive-change', 'getBulkArchiveChangeSkillTemplate'],
   ['openspec-verify-change', 'getVerifyChangeSkillTemplate'],
-  ['openspec-onboard', 'getOnboardSkillTemplate'],
-  ['openspec-propose', 'getOpsxProposeSkillTemplate'],
 ];
 
 const BUNDLED_SKILL_ENTRIES = [['openspec-design', 'getOpsxDesignSkillTemplate']];

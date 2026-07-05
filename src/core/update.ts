@@ -168,7 +168,7 @@ export class UpdateCommand {
     console.log();
 
     // 9. Determine skills to generate
-    const skillTemplates = getSkillTemplates(desiredWorkflows);
+    const skillTemplates = getSkillTemplates();
 
     // 10. Update tools (all if force, otherwise only those needing update).
     // Skills are written once to the canonical `.agents/skills` store and
@@ -429,7 +429,7 @@ export class UpdateCommand {
     }
     console.log();
 
-    const skillTemplates = getSkillTemplates(desiredWorkflows);
+    const skillTemplates = getSkillTemplates();
     const spinner = ora('Updating OpenSpec skills...').start();
     let removedDeselectedSkillCount = 0;
 
@@ -620,7 +620,7 @@ export class UpdateCommand {
 
     // Create skills for selected tools using the effective profile.
     const newlyConfigured: string[] = [];
-    const skillTemplates = getSkillTemplates(desiredWorkflows);
+    const skillTemplates = getSkillTemplates();
 
     for (const toolId of selectedTools) {
       const tool = AI_TOOLS.find((t) => t.value === toolId);

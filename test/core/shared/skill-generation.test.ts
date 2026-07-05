@@ -6,9 +6,9 @@ import {
 
 describe('skill-generation', () => {
   describe('getSkillTemplates', () => {
-    it('should return all 13 skill templates', () => {
+    it('should return all 10 skill templates', () => {
       const templates = getSkillTemplates();
-      expect(templates).toHaveLength(13);
+      expect(templates).toHaveLength(10);
     });
 
     it('should have unique directory names', () => {
@@ -24,16 +24,14 @@ describe('skill-generation', () => {
 
       expect(dirNames).toContain('openspec-explore');
       expect(dirNames).toContain('openspec-reverse');
+      expect(dirNames).toContain('openspec-design');
       expect(dirNames).toContain('openspec-new-change');
       expect(dirNames).toContain('openspec-continue-change');
       expect(dirNames).toContain('openspec-apply-change');
-      expect(dirNames).toContain('openspec-ff-change');
       expect(dirNames).toContain('openspec-sync-specs');
       expect(dirNames).toContain('openspec-archive-change');
       expect(dirNames).toContain('openspec-bulk-archive-change');
       expect(dirNames).toContain('openspec-verify-change');
-      expect(dirNames).toContain('openspec-onboard');
-      expect(dirNames).toContain('openspec-propose');
     });
 
     it('should have valid template structure', () => {
@@ -55,35 +53,6 @@ describe('skill-generation', () => {
       expect(uniqueIds.size).toBe(templates.length);
     });
 
-    it('should filter by workflow IDs when provided', () => {
-      const filtered = getSkillTemplates(['propose', 'explore', 'apply', 'archive']);
-      expect(filtered).toHaveLength(4);
-      const ids = filtered.map(t => t.workflowId);
-      expect(ids).toContain('propose');
-      expect(ids).toContain('explore');
-      expect(ids).toContain('apply');
-      expect(ids).toContain('archive');
-      expect(ids).not.toContain('new');
-      expect(ids).not.toContain('ff');
-    });
-
-    it('should return all templates when filter is undefined', () => {
-      const all = getSkillTemplates();
-      const noFilter = getSkillTemplates(undefined);
-      expect(noFilter).toHaveLength(all.length);
-    });
-
-    it('should return empty array when filter matches nothing', () => {
-      const filtered = getSkillTemplates(['nonexistent']);
-      expect(filtered).toHaveLength(0);
-    });
-
-    it('should return single template when filter has one workflow', () => {
-      const filtered = getSkillTemplates(['propose']);
-      expect(filtered).toHaveLength(1);
-      expect(filtered[0].workflowId).toBe('propose');
-      expect(filtered[0].dirName).toBe('openspec-propose');
-    });
   });
 
   describe('generateSkillContent', () => {

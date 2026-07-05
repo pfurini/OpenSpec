@@ -206,7 +206,7 @@ When the WHAT crystallizes, you hold the raw material for a proposal and specs. 
   - **Open Questions** — what's still undecided; for each, note who'd likely know and the impact of getting it wrong. (None at all? You haven't looked hard enough — write your least-sure assumption as a question.)
   - **Parked Design Seeds** — the HOW ideas surfaced but deferred, held for the HOW phase
 - **Offer to seed the glossary.** If the session named or sharpened a domain term others will reuse, offer to add it to the project glossary (a root `GLOSSARY.md`, created at the repo root if none exists). One line, append don't clobber. The glossary is the canonical vocabulary — explore is where it gets seeded. Offer, don't auto-write.
-- **Hand off to propose.** When the user is ready, `openspec-propose` reads that note as its input and transcribes it into `proposal.md` + `specs/` — it doesn't re-think the WHAT, you already did. The parked design seeds travel with the note for the HOW phase to pick up before `design.md`.
+- **Hand off to a change.** When the user is ready, `openspec-new-change` starts the change and the note travels as its input — the proposal transcribes the WHAT you already settled, it doesn't re-think it. The parked design seeds travel with the note for the HOW phase to pick up before `design.md`.
 
 ---
 
@@ -318,7 +318,7 @@ You: That's a WHAT question, and the answer is already half-written in
 
 There's no required ending. Discovery might:
 
-- **Flow into a proposal**: "Ready to start? I can save this as an exploration note and run `openspec-propose` from it."
+- **Flow into a change**: "Ready to start? I can save this as an exploration note and start a change with `openspec-new-change` from it."
 - **Result in artifact updates**: "Updated specs with these requirements"
 - **Just provide clarity**: User has what they need, moves on
 - **Continue later**: "We can pick this up anytime — want me to save the note so it's not lost?"

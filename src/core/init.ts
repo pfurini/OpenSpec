@@ -513,8 +513,7 @@ export class InitCommand {
     // Read global config for profile (use --profile override if set)
     const globalConfig = getGlobalConfig();
     const profile: Profile = this.resolveProfileOverride() ?? globalConfig.profile ?? 'core';
-    const workflows = getProfileWorkflows(profile, globalConfig.workflows);
-    const skillTemplates = getSkillTemplates(workflows);
+    const skillTemplates = getSkillTemplates();
 
     if (tools.length === 0) {
       return { createdTools, refreshedTools, failedTools };
@@ -612,8 +611,7 @@ export class InitCommand {
     if (successfulTools.length > 0) {
       const globalConfig = getGlobalConfig();
       const profile: Profile = (this.profileOverride as Profile) ?? globalConfig.profile ?? 'core';
-      const workflows = getProfileWorkflows(profile, globalConfig.workflows);
-      const skillCount = getSkillTemplates(workflows).length;
+      const skillCount = getSkillTemplates().length;
       if (skillCount > 0) {
         // Skills live once in the canonical store; symlink-capable tools (Claude)
         // also get a per-tool link the user can find them under.
