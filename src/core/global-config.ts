@@ -7,27 +7,20 @@ export const GLOBAL_CONFIG_DIR_NAME = 'openspec';
 export const GLOBAL_CONFIG_FILE_NAME = 'config.json';
 export const GLOBAL_DATA_DIR_NAME = 'openspec';
 
-// TypeScript types
-export type Profile = 'core' | 'custom';
-
 // TypeScript interfaces
 export interface GlobalConfig {
   featureFlags?: Record<string, boolean>;
-  profile?: Profile;
-  workflows?: string[];
   /** Workset opener rows (slice 7.1); hand-edited, validated on use. */
   openers?: unknown;
 }
 
 const DEFAULT_CONFIG: GlobalConfig = {
   featureFlags: {},
-  profile: 'core',
 };
 
 // Retired keys are ignored on read and removed on write. Matched by this
 // explicit list, not by pattern (spec: global-config "Retired key cleanup").
-// Wave 2 of evict-upstream-surfaces extends this to 'profile' and 'workflows'.
-const RETIRED_KEYS = ['telemetry'] as const;
+const RETIRED_KEYS = ['telemetry', 'profile', 'workflows'] as const;
 
 function stripRetiredKeys<T extends Record<string, unknown>>(config: T): T {
   const cleaned = { ...config };
@@ -146,11 +139,6 @@ export function getGlobalConfig(): GlobalConfig {
         ...(parsed.featureFlags || {})
       }
     };
-
-    // Schema evolution: apply defaults for new fields if not present in loaded config
-    if (parsed.profile === undefined) {
-      merged.profile = DEFAULT_CONFIG.profile;
-    }
 
     return stripRetiredKeys(merged as Record<string, unknown>) as GlobalConfig;
   } catch (error) {

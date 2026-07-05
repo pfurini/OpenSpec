@@ -10,13 +10,6 @@ export const GlobalConfigSchema = z
       .record(z.string(), z.boolean())
       .optional()
       .default({}),
-    profile: z
-      .enum(['core', 'custom'])
-      .optional()
-      .default('core'),
-    workflows: z
-      .array(z.string())
-      .optional(),
   })
   .passthrough();
 
@@ -27,10 +20,9 @@ export type GlobalConfigType = z.infer<typeof GlobalConfigSchema>;
  */
 export const DEFAULT_CONFIG: GlobalConfigType = {
   featureFlags: {},
-  profile: 'core',
 };
 
-const KNOWN_TOP_LEVEL_KEYS = new Set([...Object.keys(DEFAULT_CONFIG), 'workflows']);
+const KNOWN_TOP_LEVEL_KEYS = new Set(Object.keys(DEFAULT_CONFIG));
 
 /**
  * Validate a config key path for CLI set operations.
