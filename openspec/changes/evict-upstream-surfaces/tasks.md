@@ -33,7 +33,7 @@ Transcribed from design.md's Wave Skeleton. Coverage map joins design's Testing 
 
 ## Wave 1
 
-- [ ] The CLI stops phoning home and the feedback command is gone
+- [x] The CLI stops phoning home and the feedback command is gone
 - components: C2 telemetry eviction (delete `src/telemetry/` + CLI entry call sites); C3 feedback eviction (delete `src/commands/feedback.ts`, CLI registration, `schemas/skills/feedback/`); C5 global-config cleanup (telemetry key only)
 - interfaces: C2 — (deletion); C3 — (deletion); C5 `getGlobalConfig()` / `saveGlobalConfig()` unchanged signatures
 - depends-on: Wave 0
