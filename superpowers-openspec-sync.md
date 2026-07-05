@@ -58,11 +58,11 @@ sharpen superpowers' *own* skills without importing any OpenSpec-novel machinery
 
 | # | OpenSpec-side discipline (origin) | superpowers state | Destination (superpowers) | Verdict |
 |---|---|---|---|---|
-| A | **Entity-state checklist `[RETRO #5b]`** — nullable? unique? empty? duplicate? missing? stale? per external entity, before the lookup/guard (provisioner Phase-3) | absent — `brainstorming` falsification verifies *shape*, not *state* | `brainstorming` (falsification) + `executing-plans` (Step 2 self-review) | **SYNC BACK — strong.** Directly sharpens the discipline superpowers itself authored; "verify the contract" was too soft. |
-| B | **General retro guards** — parity → round-trip property test; mechanical guard for invariants no behavioral gate sees + **fire-the-guard test**; complete-the-sweep → **enumeration guard**; blast-radius (rename spans tiers / new-guard false-positive) (provisioner retro) | partial — `executing-plans` has done=exercised + no-oracle; lacks the four guard patterns | `executing-plans` (done-check) + `writing-plans` (Risks/spike) | **SYNC BACK.** Generic engineering disciplines, zero-dependency. |
-| C | **code-complete ≠ proven** — "unproven until executed" branch state + runbook + flagged PR (provisioner #9) | partial — superpowers has no-oracle "unproven until run"; not the close-out state/runbook | `finishing-a-development-branch` | **SYNC BACK (light).** |
-| D | **Maturity-tiered research-gating** — gray-area enumeration (≥2 viable options) → research at a depth tier (full / standard / minimal_decisive); conditional recs (GSD) | partial — `grilling` interviews, but no explicit research-depth dial | `brainstorming` (grilling) | **SYNC BACK (optional).** Fits grilling; medium value. |
-| E | **Bias-accounting tail** — terminate on *adjudicated* severity not raw count; union-for-recall / consensus-for-precision; per-lens precision tracking (§2.F.6) | **partially synced** in `060b2dd` (loop + adjudication core); the precision-ledger / union-vs-consensus framing not yet | `requesting-code-review` / `review-loop.md` | **MOSTLY DONE; remainder optional.** |
+| A | **Entity-state checklist `[RETRO #5b]`** — nullable? unique? empty? duplicate? missing? stale? per external entity, before the lookup/guard (provisioner Phase-3) | absent — `brainstorming` falsification verifies *shape*, not *state* | `brainstorming` (falsification) + `executing-plans` (Step 2 self-review) | **✅ DONE 2026-07-05** — superpowers `fe82fba` (falsification-table row + Boundary-assumptions row requirement + per-entity self-review check). |
+| B | **General retro guards** — parity → round-trip property test; mechanical guard for invariants no behavioral gate sees + **fire-the-guard test**; complete-the-sweep → **enumeration guard**; blast-radius (rename spans tiers / new-guard false-positive) (provisioner retro) | partial — `executing-plans` has done=exercised + no-oracle; lacks the four guard patterns | `executing-plans` (done-check) + `writing-plans` (Risks/spike) | **✅ DONE 2026-07-05** — superpowers `7b8ef0b` ("Guard Patterns" section in writing-plans + execution-time halves in executing-plans' done-check). |
+| C | **code-complete ≠ proven** — "unproven until executed" branch state + runbook + flagged PR (provisioner #9) | partial — superpowers has no-oracle "unproven until run"; not the close-out state/runbook | `finishing-a-development-branch` | **✅ DONE 2026-07-05** — superpowers `8f9b163` (Step 1b proof-state classification + runbook + `capstone-pending` PR flag). |
+| D | **Maturity-tiered research-gating** — gray-area enumeration (≥2 viable options) → research at a depth tier (full / standard / minimal_decisive); conditional recs (GSD) | partial — `grilling` interviews, but no explicit research-depth dial | `brainstorming` (grilling) | **✅ DONE 2026-07-05** — superpowers `5a07122` ("When a fork deserves research" in grilling.md + SKILL.md hook). |
+| E | **Bias-accounting tail** — terminate on *adjudicated* severity not raw count; union-for-recall / consensus-for-precision; per-lens precision tracking (§2.F.6) | **partially synced** in `060b2dd` (loop + adjudication core); the precision-ledger / union-vs-consensus framing not yet | `requesting-code-review` / `review-loop.md` | **✅ DONE 2026-07-05** — superpowers `351a1db` (union/consensus rule + per-lens precision tally in review-loop.md Rules). |
 
 ---
 
@@ -102,6 +102,8 @@ These look like gaps but are **deliberate** — porting them would fight each fr
 6. **#9 base-ref freshness** — harness worktree node.
 
 **Reverse (OpenSpec → superpowers), by leverage:**
+✅ **All five landed 2026-07-05** (superpowers `personal`, one commit per item:
+`fe82fba` A · `7b8ef0b` B · `8f9b163` C · `5a07122` D · `351a1db` E).
 1. **A — entity-state checklist** (sharpens superpowers' own falsification).
 2. **B — the four guard patterns** into executing-plans/writing-plans.
 3. **C / D / E** — light / optional.
