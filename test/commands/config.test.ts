@@ -173,14 +173,14 @@ describe('config key validation', () => {
     expect(validateConfigKeyPath('featureFlags.someFlag.extra').valid).toBe(false);
   });
 
-  it('allows profile key', async () => {
+  it('rejects the retired profile key', async () => {
     const { validateConfigKeyPath } = await import('../../src/core/config-schema.js');
-    expect(validateConfigKeyPath('profile').valid).toBe(true);
+    expect(validateConfigKeyPath('profile').valid).toBe(false);
   });
 
-  it('allows workflows key', async () => {
+  it('rejects the retired workflows key', async () => {
     const { validateConfigKeyPath } = await import('../../src/core/config-schema.js');
-    expect(validateConfigKeyPath('workflows').valid).toBe(true);
+    expect(validateConfigKeyPath('workflows').valid).toBe(false);
   });
 });
 

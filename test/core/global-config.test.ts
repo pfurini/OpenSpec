@@ -12,7 +12,6 @@ import {
   GLOBAL_CONFIG_DIR_NAME,
   GLOBAL_CONFIG_FILE_NAME
 } from '../../src/core/global-config.js';
-import type { Profile } from '../../src/core/global-config.js';
 
 describe('global-config', () => {
   let tempDir: string;
@@ -140,7 +139,7 @@ describe('global-config', () => {
 
       const config = getGlobalConfig();
 
-      expect(config).toEqual({ featureFlags: {}, profile: 'core' });
+      expect(config).toEqual({ featureFlags: {} });
     });
 
     it('should not create directory when reading non-existent config', () => {
@@ -177,7 +176,7 @@ describe('global-config', () => {
 
       const config = getGlobalConfig();
 
-      expect(config).toEqual({ featureFlags: {}, profile: 'core' });
+      expect(config).toEqual({ featureFlags: {} });
     });
 
     it('should log warning for invalid JSON', () => {
@@ -231,7 +230,7 @@ describe('global-config', () => {
     });
 
     describe('schema evolution', () => {
-      it('should add default profile when loading old config without it', () => {
+      it('should load a minimal pre-existing config unchanged', () => {
         process.env.XDG_CONFIG_HOME = tempDir;
         const configDir = path.join(tempDir, 'openspec');
         const configPath = path.join(configDir, 'config.json');
@@ -244,71 +243,27 @@ describe('global-config', () => {
 
         const config = getGlobalConfig();
 
-        expect(config.profile).toBe('core');
-        expect(config.workflows).toBeUndefined();
         expect(config.featureFlags?.existingFlag).toBe(true);
-      });
-
-      it('should preserve explicit profile values from config', () => {
-        process.env.XDG_CONFIG_HOME = tempDir;
-        const configDir = path.join(tempDir, 'openspec');
-        const configPath = path.join(configDir, 'config.json');
-
-        fs.mkdirSync(configDir, { recursive: true });
-        fs.writeFileSync(configPath, JSON.stringify({
-          featureFlags: {},
-          profile: 'custom',
-          workflows: ['propose', 'review']
-        }));
-
-        const config = getGlobalConfig();
-
-        expect(config.profile).toBe('custom');
-        expect(config.workflows).toEqual(['propose', 'review']);
-      });
-
-      it('should round-trip new fields correctly', () => {
-        process.env.XDG_CONFIG_HOME = tempDir;
-        const originalConfig = {
-          featureFlags: { flag1: true },
-          profile: 'custom' as Profile,
-          workflows: ['propose']
-        };
-
-        saveGlobalConfig(originalConfig);
-        const loadedConfig = getGlobalConfig();
-
-        expect(loadedConfig.profile).toBe('custom');
-        expect(loadedConfig.workflows).toEqual(['propose']);
-      });
-
-      it('should default workflows to undefined when not in config', () => {
-        process.env.XDG_CONFIG_HOME = tempDir;
-        const configDir = path.join(tempDir, 'openspec');
-        const configPath = path.join(configDir, 'config.json');
-
-        fs.mkdirSync(configDir, { recursive: true });
-        fs.writeFileSync(configPath, JSON.stringify({
-          featureFlags: {},
-          profile: 'core'
-        }));
-
-        const config = getGlobalConfig();
-
-        expect(config.workflows).toBeUndefined();
+        expect(config).not.toHaveProperty('profile');
       });
     });
   });
 
   describe('retired keys', () => {
-    it('should ignore the telemetry key on read, without warning', () => {
+    const RETIRED_SEED = {
+      telemetry: { anonymousId: 'abc', noticeSeen: true },
+      profile: 'core',
+      workflows: ['explore'],
+    };
+
+    it('should ignore all retired keys on read, without warning', () => {
       process.env.XDG_CONFIG_HOME = tempDir;
       const configDir = path.join(tempDir, 'openspec');
       const configPath = path.join(configDir, 'config.json');
 
       fs.mkdirSync(configDir, { recursive: true });
       fs.writeFileSync(configPath, JSON.stringify({
-        telemetry: { anonymousId: 'abc', noticeSeen: true },
+        ...RETIRED_SEED,
         featureFlags: { keep: true },
         keeper: 'stays'
       }));
@@ -316,25 +271,49 @@ describe('global-config', () => {
       const config = getGlobalConfig();
 
       expect(config).not.toHaveProperty('telemetry');
+      expect(config).not.toHaveProperty('profile');
+      expect(config).not.toHaveProperty('workflows');
       expect(config.featureFlags?.keep).toBe(true);
       expect((config as any).keeper).toBe('stays');
       expect(consoleErrorSpy).not.toHaveBeenCalled();
     });
 
-    it('should drop the telemetry key on write and preserve other fields', () => {
+    it('should drop all retired keys on write and preserve other fields', () => {
       process.env.XDG_CONFIG_HOME = tempDir;
       const configPath = path.join(tempDir, 'openspec', 'config.json');
 
       saveGlobalConfig({
-        telemetry: { anonymousId: 'abc' },
+        ...RETIRED_SEED,
         featureFlags: { keep: true },
         keeper: 'stays'
       } as any);
 
       const written = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
       expect(written).not.toHaveProperty('telemetry');
+      expect(written).not.toHaveProperty('profile');
+      expect(written).not.toHaveProperty('workflows');
       expect(written.featureFlags.keep).toBe(true);
       expect(written.keeper).toBe('stays');
+    });
+
+    it('should preserve unknown-but-not-retired keys across a read/write round trip', () => {
+      process.env.XDG_CONFIG_HOME = tempDir;
+      const configDir = path.join(tempDir, 'openspec');
+      const configPath = path.join(configDir, 'config.json');
+
+      fs.mkdirSync(configDir, { recursive: true });
+      fs.writeFileSync(configPath, JSON.stringify({
+        ...RETIRED_SEED,
+        futureOption: 123
+      }));
+
+      saveGlobalConfig(getGlobalConfig());
+
+      const written = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+      expect(written.futureOption).toBe(123);
+      expect(written).not.toHaveProperty('telemetry');
+      expect(written).not.toHaveProperty('profile');
+      expect(written).not.toHaveProperty('workflows');
     });
   });
 

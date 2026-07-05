@@ -337,14 +337,14 @@ describe('config-schema', () => {
       expect((config.featureFlags as Record<string, unknown>).experimental).toBe(false);
     });
 
-    it('should accept setting workflows from JSON array syntax', () => {
-      const config: Record<string, unknown> = { featureFlags: {}, profile: 'custom' };
-      const value = coerceValue('["new","ff","apply","archive"]');
-      setNestedValue(config, 'workflows', value);
+    it('should accept setting an unknown key from JSON array syntax (passthrough)', () => {
+      const config: Record<string, unknown> = { featureFlags: {} };
+      const value = coerceValue('["a","b"]');
+      setNestedValue(config, 'futureList', value);
 
       const result = validateConfig(config);
       expect(result.success).toBe(true);
-      expect(config.workflows).toEqual(['new', 'ff', 'apply', 'archive']);
+      expect(config.futureList).toEqual(['a', 'b']);
     });
   });
 

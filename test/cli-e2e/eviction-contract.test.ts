@@ -117,7 +117,7 @@ describe('eviction contract (tracer)', () => {
     expect(initHelp.stdout).not.toContain('--profile');
   });
 
-  it.fails('global config with retired keys loads silently and clean', async () => {
+  it('global config with retired keys loads silently and clean', async () => {
     const base = await makeTempBase();
     const { configHome } = await seedConfigHome(base);
 
@@ -135,7 +135,7 @@ describe('eviction contract (tracer)', () => {
     expect(config.tracerKeeper).toBe('stays');
   });
 
-  it.fails('retired keys are dropped on the next config write', async () => {
+  it('retired keys are dropped on the next config write', async () => {
     const base = await makeTempBase();
     const { configHome, configPath } = await seedConfigHome(base);
 
