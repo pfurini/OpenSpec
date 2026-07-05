@@ -106,7 +106,7 @@ wave acceptance + tracer, not by new suites):
 
 **W0 — tracer (RED)** · size S · risk low · planner=large, impl=medium
 - Value: the end-state contract exists as one executable test, committed expected-fail.
-- Builds: `tests/eviction-contract.test.ts` (vitest `.fails` markers): help contains no
+- Builds: `test/cli-e2e/eviction-contract.test.ts` (vitest `.fails` markers): help contains no
   `feedback`/profile entries; global config with all three retired keys loads silently and
   writes clean; init installs exactly `WORKFLOW_SKILLS`.
 - Proves: nothing yet (tracer). Depends on: —.
