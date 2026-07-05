@@ -1,4 +1,4 @@
-schema: spec-driven
+schema: deep-planning
 
 context: |
   Tech stack: TypeScript, Node.js (≥20.19.0), ESM modules
