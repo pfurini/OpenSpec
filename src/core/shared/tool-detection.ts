@@ -8,25 +8,13 @@ import path from 'path';
 import * as fs from 'fs';
 import { AI_TOOLS } from '../config.js';
 import { getCanonicalSkillsDir } from './skill-install.js';
+import { WORKFLOW_SKILLS } from '../workflow-skills.js';
 
 /**
  * Names of skill directories created by openspec init.
+ * Alias of the owned enumeration — detection and installation must never drift.
  */
-export const SKILL_NAMES = [
-  'openspec-explore',
-  'openspec-reverse',
-  'openspec-design',
-  'openspec-new-change',
-  'openspec-continue-change',
-  'openspec-apply-change',
-  'openspec-ff-change',
-  'openspec-sync-specs',
-  'openspec-archive-change',
-  'openspec-bulk-archive-change',
-  'openspec-verify-change',
-  'openspec-onboard',
-  'openspec-propose',
-] as const;
+export const SKILL_NAMES = WORKFLOW_SKILLS;
 
 export type SkillName = (typeof SKILL_NAMES)[number];
 

@@ -13,6 +13,7 @@ import {
   getConfiguredTools,
   getAllToolVersionStatus,
 } from '../../../src/core/shared/tool-detection.js';
+import { WORKFLOW_SKILLS } from '../../../src/core/workflow-skills.js';
 
 describe('tool-detection', () => {
   let testDir: string;
@@ -27,21 +28,13 @@ describe('tool-detection', () => {
   });
 
   describe('SKILL_NAMES', () => {
-    it('should contain all skill names', () => {
-      expect(SKILL_NAMES).toHaveLength(13);
-      expect(SKILL_NAMES).toContain('openspec-explore');
-      expect(SKILL_NAMES).toContain('openspec-reverse');
-      expect(SKILL_NAMES).toContain('openspec-design');
-      expect(SKILL_NAMES).toContain('openspec-new-change');
-      expect(SKILL_NAMES).toContain('openspec-continue-change');
-      expect(SKILL_NAMES).toContain('openspec-apply-change');
-      expect(SKILL_NAMES).toContain('openspec-ff-change');
-      expect(SKILL_NAMES).toContain('openspec-sync-specs');
-      expect(SKILL_NAMES).toContain('openspec-archive-change');
-      expect(SKILL_NAMES).toContain('openspec-bulk-archive-change');
-      expect(SKILL_NAMES).toContain('openspec-verify-change');
-      expect(SKILL_NAMES).toContain('openspec-onboard');
-      expect(SKILL_NAMES).toContain('openspec-propose');
+    it('is the owned workflow skill enumeration, with no retired skills', () => {
+      expect(SKILL_NAMES).toEqual(WORKFLOW_SKILLS);
+      expect(SKILL_NAMES).toHaveLength(10);
+      expect(SKILL_NAMES).not.toContain('openspec-ff-change');
+      expect(SKILL_NAMES).not.toContain('openspec-onboard');
+      expect(SKILL_NAMES).not.toContain('openspec-propose');
+      expect(SKILL_NAMES).not.toContain('feedback');
     });
   });
 

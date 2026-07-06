@@ -221,7 +221,9 @@ Old instructions content
       await initCommand.execute(testDir);
 
       // Sanity: skills exist in the canonical store, not under .cursor.
-      const canonical = path.join(testDir, '.agents', 'skills', 'openspec-explore', 'SKILL.md');
+      // Stale the first enumerated skill — the version probe reads the first
+      // existing entry in WORKFLOW_SKILLS order.
+      const canonical = path.join(testDir, '.agents', 'skills', WORKFLOW_SKILLS[0], 'SKILL.md');
       expect(await FileSystemUtils.fileExists(canonical)).toBe(true);
       expect(await FileSystemUtils.directoryExists(path.join(testDir, '.cursor'))).toBe(false);
 
@@ -731,7 +733,8 @@ metadata:
       await initCommand.execute(testDir);
 
       // Make the canonical store stale (via Claude's symlink) to force an update.
-      const claudeSkillFile = path.join(testDir, '.claude', 'skills', 'openspec-explore', 'SKILL.md');
+      // The version probe reads the first existing entry in WORKFLOW_SKILLS order.
+      const claudeSkillFile = path.join(testDir, '.claude', 'skills', WORKFLOW_SKILLS[0], 'SKILL.md');
       const claudeContent = await fs.readFile(claudeSkillFile, 'utf-8');
       await fs.writeFile(
         claudeSkillFile,
