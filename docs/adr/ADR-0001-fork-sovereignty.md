@@ -1,8 +1,9 @@
 ---
 id: ADR-0001
 title: Fork sovereignty — adopt upstream ideas by re-implementation, never by merge
-status: proposed
+status: accepted
 date: 2026-07-05
+accepted: 2026-08-13
 change: evict-upstream-surfaces
 ---
 

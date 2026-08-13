@@ -3,4 +3,4 @@
 
 | ID | Status | Title | Date | Change | Superseded by |
 | --- | --- | --- | --- | --- | --- |
-| [ADR-0001](./ADR-0001-fork-sovereignty.md) | proposed | Fork sovereignty — adopt upstream ideas by re-implementation, never by merge | 2026-07-05 | evict-upstream-surfaces | — |
+| [ADR-0001](./ADR-0001-fork-sovereignty.md) | accepted | Fork sovereignty — adopt upstream ideas by re-implementation, never by merge | 2026-07-05 | evict-upstream-surfaces | — |

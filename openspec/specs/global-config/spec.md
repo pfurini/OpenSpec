@@ -5,24 +5,15 @@
 This spec defines how OpenSpec resolves, reads, and writes user-level global configuration. It governs the `src/core/global-config.ts` module, which provides the foundation for storing user preferences, feature flags, and settings that persist across projects. The spec ensures cross-platform compatibility by following XDG Base Directory Specification with platform-specific fallbacks, and guarantees forward/backward compatibility through schema evolution rules.
 ## Requirements
 ### Requirement: Global configuration storage
-The system SHALL store global configuration in `~/.config/openspec/config.json`, including telemetry state with `anonymousId` and `noticeSeen` fields.
-
-#### Scenario: Initial config creation
-- **WHEN** no global config file exists
-- **AND** the first telemetry event is about to be sent
-- **THEN** the system creates `~/.config/openspec/config.json` with telemetry configuration
-
-#### Scenario: Telemetry config structure
-- **WHEN** reading or writing telemetry configuration
-- **THEN** the config contains a `telemetry` object with `anonymousId` (string UUID) and `noticeSeen` (boolean) fields
+The system SHALL store global configuration in `~/.config/openspec/config.json` as valid JSON that users can read and modify.
 
 #### Scenario: Config file format
 - **WHEN** storing configuration
 - **THEN** the system writes valid JSON that can be read and modified by users
 
 #### Scenario: Existing config preservation
-- **WHEN** adding telemetry fields to an existing config file
-- **THEN** the system preserves all existing configuration fields
+- **WHEN** writing configuration to an existing config file
+- **THEN** the system preserves all existing fields of the current schema
 
 ### Requirement: Global Config Directory Path
 
@@ -98,4 +89,22 @@ The system SHALL merge loaded configuration with default values to ensure new co
 - **WHEN** `config.json` contains fields not in the current schema
 - **THEN** the unknown fields are preserved in the returned configuration
 - **AND** no error or warning is raised
+
+### Requirement: Retired key cleanup
+The system SHALL ignore the retired keys `telemetry`, `profile`, and `workflows` when reading global configuration, and SHALL remove exactly those keys on the next configuration write. Retired keys are matched by this explicit list, not by pattern.
+
+#### Scenario: Config with retired keys loads silently
+- **WHEN** `config.json` contains any of `telemetry`, `profile`, or `workflows`
+- **THEN** `getGlobalConfig()` returns the configuration without error, warning, or prompt
+- **AND** the retired keys are absent from the returned configuration
+
+#### Scenario: Retired keys dropped on write
+- **WHEN** the system writes the global configuration
+- **AND** the file on disk contains `telemetry`, `profile`, or `workflows`
+- **THEN** the written file contains none of those three keys
+- **AND** all other existing fields are preserved
+
+#### Scenario: Unknown-but-not-retired keys still preserved
+- **WHEN** `config.json` contains a field that is neither in the current schema nor in the retired-key list
+- **THEN** the field is preserved on read and write (per Config Schema Evolution)
 
