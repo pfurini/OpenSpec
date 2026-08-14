@@ -225,13 +225,6 @@ We collect only command names and version to understand usage patterns. No argum
 
 </details>
 
-<details>
-<summary><strong>Maintainers & Advisors</strong></summary>
-
-See [MAINTAINERS.md](MAINTAINERS.md) for the list of core maintainers and advisors who help guide the project.
-
-</details>
-
 
 
 ## License

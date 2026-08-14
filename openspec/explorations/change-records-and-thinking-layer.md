@@ -110,7 +110,6 @@ Still deferred (revisit only if drift/scale bites):
   existing-change overlap detection; `new` got it. Add when touching propose.
 
 ## Related
-- `openspec/explorations/explore-workflow-ux.md`
 - `schemas/deep-planning/schema.yaml`
 - `src/core/templates/workflows/design.ts`
 - `src/core/templates/workflows/explore.ts`

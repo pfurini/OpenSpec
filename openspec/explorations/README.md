@@ -4,11 +4,9 @@
 harness work on branch `feat/explore-what-brainstorming`. An implementing session should
 read this index, then ONLY the note(s) for its chosen track — not the whole corpus.
 
-Three families of files:
+Two families of files:
 - **Ours (this effort)** — the notes in the table below (the harness track's build contract is
   `task-machinery-and-wave-execution.md`; read its §13–§16 first for current state).
-- **Upstream** (`workspace-*.md`, `explore-workflow-ux.md`) — inherited context; read only
-  if a track touches workspaces/initiatives.
 - **Operating docs (`ops/`)** — cross-session working documents, distinct from the design
   journal: `ops/START-HERE.md` (the ranked backlog — **a session picking up work starts
   there**), `ops/RECONSTRUCTION.md` (what this fork is and why, reconstructed 2026-06-28),
@@ -32,7 +30,6 @@ Three families of files:
 | `research-grounding-capability.md` | Parallel specialized research (external + codebase) at grounding points | Deferred; next priority after v1 harness |
 | `product-discovery-prd-phase.md` | Problem-first discovery → real PRD, BEFORE explore | Deferred; out of scope for this initiative |
 | `linear-github-sync.md` | v1: outbound push to Linear (configurable mapping, ids in metadata). Future vision: Linear as driver (Agents API = protocol-not-runtime; all compute on own hardware) | Buildable later; out of scope for this initiative |
-| `explore-workflow-ux.md` | Earlier explore UX thinking (pre-dates this effort) | Historical |
 
 ## Current state (2026-06-15)
 
