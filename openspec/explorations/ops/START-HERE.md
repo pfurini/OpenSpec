@@ -6,17 +6,15 @@ independently-shippable units. Pick one, ship it, tick it, repeat.
 **Reference (read one row's source, not the whole doc):**
 - `RECONSTRUCTION.md` — what the deep-planning fork is and why (history, 17 decisions, current state).
 - `process-disciplines-handoff.md` — the seam catalog (§2.A–I) + acceptance criteria (§4) + file map (§5).
-- `superpowers-openspec-sync.md` — the bidirectional port/sync verdicts (which way each item flows, and why some don't).
+- `superpowers-openspec-sync.md` — which Superpowers disciplines to adopt here, and which not to.
 
 **The loop:** pick one unit below → paste its source row as a one-paragraph proposal → ship it →
 check its "Done when" → move on. One seam is a task; the catalog is a backlog. Don't try to do the catalog.
 
-**Two edit surfaces, different friction:**
-- **superpowers** = plain markdown skills, no build gate. Cheapest to change.
-- **openspec** = authored `schemas/skills/**` behind a **parity wall**: after any edit run
-  `pnpm run rebaseline:skills && pnpm test` and commit the regenerated parity test with it (see
-  `process-disciplines-handoff.md` §7). `schema.yaml` edits skip the parity wall but change served
-  output — cover with the artifact-workflow tests.
+**Edit surface:** authored `schemas/skills/**` behind a **parity wall**. After any skill edit run
+`pnpm run rebaseline:skills && pnpm test` and commit the regenerated parity test with it (see
+`process-disciplines-handoff.md` §7). `schema.yaml` edits skip the parity wall but change served
+output — cover with the artifact-workflow tests.
 
 ---
 
@@ -56,15 +54,15 @@ that drive the new order:
 | 2 | **Retro phase**: per-change retro at archive (reads transcripts, deviation log, adjudicated findings → emits regret events with blame class WHAT/HOW/exec/process + lesson entries); per-milestone UAT retro emitting seam-catalog-format findings | session 2026-07-05; mechanizes the provisioner-retro method | new retro skill + hook in `openspec-archive-change` | M | Archiving offers/requires the retro; regrets land in the ledger, lessons in the project store; output validates against a schema. Part of ledger v0 in spirit — without back-fill the ledger is just a spend tracker. |
 | 3 | **Compensator annotations**: every gate/ritual/discipline in ported skills states the model failure mode it compensates + retirement condition; rule recorded for all future ports | session 2026-07-05 | authoring rule + one-line sweep over existing skills | S | Each discipline in the skill suite carries the annotation; the rule is written where future ports will see it. |
 | 4 | Receiving-review **adjudication** (verify-don't-perform) + severity-gated convergence (adjudicated P0/P1→0, cap, stall-escalate) — **now also classifies each finding by originating phase and logs to ledger** | sync §1.6, proc §2.F.6 + lens #2 | openspec `verify-change` (+ review loop) | M | verify-change triages confirmed/refuted/already-fixed/wont-fix, converges on adjudicated severity, and every confirmed finding carries an origin class feeding the ledger. |
-| 5 | code-complete ≠ proven: "unproven until executed" state + runbook + flagged PR | sync §2.C | superpowers `finishing-a-development-branch` | S | Gated-proof branches close as code-complete/capstone-UNPROVEN with a runbook. (Same insight as regret events, applied to branches — cheap, aligned.) |
-| 6 | **Falsification content pass** (merges old #1 + the content of old #3): entity-state checklist (`#5b`), claim-type→falsifier routing table, cold-start, de-risk-wave-before-dependents, oracle-per-wave, "review is not the falsifier" — **as skill/schema text, no `shared-prime.ts` seam** | sync §2.A, proc §2.A/C/D/F, trimmed per lens #1 | openspec `design`/`apply`/`verify` skill text + `schema.yaml`; superpowers `brainstorming` | M | The routing table + checklist appear in the relevant skills; design.md requires register/cold-start/de-risk/oracle-per-wave; each addition carries its compensator annotation; no new TS plumbing. |
+| 5 | code-complete ≠ proven: "unproven until executed" state + runbook + flagged close-out | proc §2.G | openspec `archive-change` (+ `verify-change` status line) | S | Gated-proof changes close as code-complete/capstone-UNPROVEN with a runbook. (Same insight as regret events, applied to changes.) |
+| 6 | **Falsification content pass** (merges old #1 + the content of old #3): entity-state checklist (`#5b`), claim-type→falsifier routing table, cold-start, de-risk-wave-before-dependents, oracle-per-wave, "review is not the falsifier" — **as skill/schema text, no `shared-prime.ts` seam** | sync §1.1, proc §2.A/C/D/F, trimmed per lens #1 | openspec `design`/`apply`/`verify` skill text + `schema.yaml` | M | The routing table + checklist appear in the relevant skills; design.md requires register/cold-start/de-risk/oracle-per-wave; each addition carries its compensator annotation; no new TS plumbing. |
 | 7 | Multi-lens **independent** design review (coverage / architecture / experience / codex), scored, `[both]`-consensus, skip-with-rationale — findings logged by origin; ≥2 model families | sync §1.2 + lens #6 | openspec `design` (review gate) | M | Independent multi-lens review before handoff; lenses selected by change shape; findings consolidated, ranked, origin-logged. |
 | 8 | Per-wave rollback + irreversible→flag; one-pass confidence score — score recorded to ledger as a leading proxy, validated against regrets at retro | sync §1.4/1.5 + lens #2 | openspec `design` self-review | S | Design self-review emits a confidence score into the ledger; risky waves carry rollback or flagged reshape. |
 | 9 | **First instrumented dogfood**: GH issue #1 spec-baseline reconciliation driven through the full workflow (`/openspec-new-change` → … → archive + retro) with ledger v0 live — may double as the owed 4/4 clean-run proof | GH issue #1 + session 2026-07-05 | openspec `openspec/specs/` + `changes/` | M | Issue #1 acceptance criteria checked; `openspec validate --all` clean; the change has a complete ledger trail incl. retro. |
 | 10 | `apply-change` enrichment: self-review + done=exercised + falsification self-check | sync §1.7 | openspec `apply-change` | S | Manual apply carries the self-review checklist, negative-path/outside-harness check, boundary self-check. |
 | 11 | **Inception diagnostic import**: office-hours-style forcing-questions skill (anti-sycophancy rules, premise gate, pushback patterns), schema-gated output feeding a PRD seed. Opens with the #18 blind-spot inversion. | session 2026-07-05; mine gstack `office-hours` | new openspec inception skill + schema | M | Runs as an interactive studio phase; output validates against a schema the PRD step consumes. Schedule by need: next project inception. |
-| 12 | Four guard patterns: parity→round-trip · fire-the-guard · complete-sweep→enumeration · blast-radius | sync §2.B | superpowers `executing-plans` + `writing-plans` | S | Each pattern named in the relevant self-review/done-check. (Filler-sized; do anytime.) |
-| 13 | GSD maturity-tiered research-gating (gray-area enumeration → depth tier) | sync §2.D | superpowers `brainstorming` grilling | S | *(optional)* Grilling gates a research pass by gray-area maturity. |
+| 12 | Four guard patterns: parity→round-trip · fire-the-guard · complete-sweep→enumeration · blast-radius | proc §2.C.4, §2.I.5c | openspec `apply-change` + `design` | S | Each pattern named in the relevant self-review/done-check. (Filler-sized; do anytime.) |
+| 13 | GSD maturity-tiered research-gating (gray-area enumeration → depth tier) | proc §2.B | openspec `design` interview (+ optional `explore`) | S | *(optional)* Grilling gates a research pass by gray-area maturity. |
 | 14 | **Workflow tiers**: `light` schema (proposal-with-tasks, 2 artifacts) + `logbook` path (zero upfront ceremony — post-hoc ledger event + record entry + spec/doc reconciliation check, for just-do-it work like UI fixes in Cursor) + triage rule in `openspec-new-change` (contract-touch → ≥light; multi-session/irreversible → deep-planning; else logbook). Misclassification is measurable: retro traces regrets to tier-too-light → rule tightens. Extends decision 17's classification muscle to workflow selection. Fast-forward for `light` comes free from `flow-to-gate` with no gated artifacts — no bypass skill (the pruned `ff-change`/`propose` are NOT the model; see evict-upstream-surfaces design, Parked Seeds). | session 2026-07-06 | two new schemas + `openspec-new-change` skill text + ledger conventions | M | All three tiers exist; the triage rule lives in the skill; a logbook entry costs <1 min and still lands a ledger event. |
 
 | 15 | **Wave-mode apply skill**: `openspec-apply-change` has zero wave awareness (verified 2026-07-05 — installed AND authored source; the wave driver only exists in the lexup Archon workflow). Teach it: detect wave-map tasks.md → per wave run `openspec instructions wave-plan` → write `plans/wave-N.md` → implement cycles red-green-refactor, commit per cycle → tick wave checkbox → one wave per session. Interim: supply the driver in the fresh-session kickoff prompt. Patch AFTER observing 1–2 manual wave runs (evidence-first). | session 2026-07-05, evict-upstream-surfaces handoff check | authored `schemas/skills/openspec-apply-change/SKILL.md` + parity rebaseline | S | A fresh session given only "apply change X wave N" drives the JIT wave flow correctly; merges with #10's enrichment when both land. |
@@ -92,7 +90,7 @@ content-only ownership floor for no measured benefit. Old #1 is absorbed into #6
 "#1/#2 first to learn the loop" rationale is superseded: the loop to learn now is
 *instrument → run → retro*, not *port → rebaseline*.
 
-**Don't port (settled — see sync §3):** superpowers' single-main-agent doctrine, its thick per-step
-plan format, its per-task manual review gate onto the harness, and any CLI-coupled OpenSpec feature
-into superpowers. These are deliberate divergences, not gaps. **Added:** don't deepen fork code
-where content suffices; don't let price-routing drop review loops below two model families.
+**Don't port (settled — see sync §2):** superpowers' single-main-agent doctrine, its thick per-step
+plan format, or its per-task manual review gate onto the harness. These are deliberate OpenSpec
+choices, not gaps. **Also:** don't deepen fork code where content suffices; don't let
+price-routing drop review loops below two model families.

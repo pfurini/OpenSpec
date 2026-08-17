@@ -12,7 +12,7 @@ Two families of files:
   there**), `ops/RECONSTRUCTION.md` (what this fork is and why, reconstructed 2026-06-28),
   `ops/PLAIN-WORDS.md` (the same story in plain words, for humans), `ops/process-disciplines-handoff.md`
   (the seam catalog — the earlier falsification brief was folded into it, commit `931c1b6`),
-  and `ops/superpowers-openspec-sync.md` (port/sync verdicts).
+  and `ops/superpowers-openspec-sync.md` (one-way Superpowers → OpenSpec port verdicts).
 
 ## The notes, by role
 

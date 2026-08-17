@@ -259,7 +259,7 @@ canonicalizing the harness workflow into OpenSpec as a CLI-installed artifact.
 | Spec-baseline reconciliation tracker | GitHub `pfurini/OpenSpec#1` | — |
 | The operating index (ranked backlog) | `openspec/explorations/ops/START-HERE.md` | `personal` |
 | The next-session brief (umbrella — process disciplines) | `openspec/explorations/ops/process-disciplines-handoff.md` (absorbs the falsification brief) | `personal` |
-| The bidirectional port/sync map | `openspec/explorations/ops/superpowers-openspec-sync.md` | `personal` |
+| The Superpowers → OpenSpec port map | `openspec/explorations/ops/superpowers-openspec-sync.md` | `personal` |
 | The provisioner execution retro (a mined source) | `…/lexup-new/docs/superpowers/retros/2026-06-28-provisioner-process-learnings.md` | lexup repo |
 | This reconstruction | `openspec/explorations/ops/RECONSTRUCTION.md` | `personal` |
 | The plain-words explainer (for humans) | `openspec/explorations/ops/PLAIN-WORDS.md` | `personal` |

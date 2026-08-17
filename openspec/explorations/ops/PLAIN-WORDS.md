@@ -99,7 +99,7 @@ build it big only if the numbers say so".
   the upstream storm and the port.
 - `process-disciplines-handoff.md` (this folder) — the catalog of hard-won lessons waiting
   to be ported (it absorbed the earlier falsification brief, which no longer exists as a
-  separate file). `superpowers-openspec-sync.md` maps which ideas flow which way.
+  separate file). `superpowers-openspec-sync.md` maps which Superpowers ideas to adopt here.
 - `../` (the explorations journal) — the deep design notes, one per topic; `../README.md`
   is the index.
 - `schemas/` and `schemas/skills/` (repo root) — the recipe book itself: the thing we own.
