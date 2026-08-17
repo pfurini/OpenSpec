@@ -75,7 +75,7 @@ Evidence (grounded in the prompts, this session):
 
 Touch points (prompts + schema, not just the skill):
 - **`design.ts`** (the multi-file `/opsx:design` skill — already multi-file as of the §8 work in
-  `multi-file-skill-generation.md`): make it (a) interview the **wave skeleton** as part of the HOW,
+  `archived/multi-file-skill-generation.md`): make it (a) interview the **wave skeleton** as part of the HOW,
   (b) write `design.md` directly at its write step, (c) end with a **hard schema-completeness
   self-review** (it now owns the artifact, so it owns the gate the transcription pass used to provide),
   (d) add the parked-seeds destination. The borrowed-depth restructure (the original "design.ts
@@ -119,7 +119,7 @@ Touch points (prompts + schema, not just the skill):
   this is the structural half (where the decision is made).
 - `plan-validation-and-recovery.md` — anti-brittleness; collapsing the lossy hop reduces one class of
   brittleness this note also targets. Cross-pollinate.
-- `multi-file-skill-generation.md` §8 — the now-built mechanism that lets design.ts carry restructured
+- `archived/multi-file-skill-generation.md` §8 — the now-built mechanism that lets design.ts carry restructured
   depth as `references/`.
 - `prompt-adherence-and-design-rewrite.md` §1–§2 — the under-reading diagnosis (structure > content)
   and the original rewrite ask, now subsumed here.

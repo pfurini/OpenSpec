@@ -42,7 +42,7 @@ claudekit, PRP interview) → table of *present / thin / missing / bloated*.
 
 **Constraints on the rewrite [CONFIRMED]:** restore the dropped borrows **AND** restructure for
 adherence (don't just add content — see §1). **Dependency:** **multi-file skill generation**
-(`multi-file-skill-generation.md`) is a prerequisite/enabler — with `references/`, the borrowed
+(`archived/multi-file-skill-generation.md`) is a prerequisite/enabler — with `references/`, the borrowed
 depth lands as reference files instead of a flattened sentence. **Sequence: multi-file gen →
 design.ts rewrite.** ✅ **multi-file gen mechanism BUILT 2026-06-15** — the prereq is satisfied
 (`references/` available). The rewrite is now reframed as the **design→tasks pipeline collapse**
@@ -66,6 +66,6 @@ design.ts rewrite.** ✅ **multi-file gen mechanism BUILT 2026-06-15** — the p
 
 ## Relation to other notes
 
-- Prereq chain: `multi-file-skill-generation.md` → §2 design.ts rewrite.
+- Prereq chain: `archived/multi-file-skill-generation.md` → §2 design.ts rewrite.
 - The adherence fixes (§1) are partially shipped (registry / lint / forcing-function); the rest is
   enforcement wiring (§3).
