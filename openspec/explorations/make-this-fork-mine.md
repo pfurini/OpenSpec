@@ -1,81 +1,85 @@
 # Make this fork mine — ownership map
 
-**Status:** first-pass audit, 2026-07-05. Verdict per subsystem: **MINE** (built by us) /
-**KEEP** (upstream code that earns its place) / **EVICT** / **CONTESTED** (needs a decision or
-deeper look). Ratified up front by the user: evict `spec-driven` entirely; rename the package to
-an owned scope; keep the stores architecture but audit subcommand depth; evict telemetry and the
-profile machinery. Upstream strategy: **no more merge/rebase — periodic shopping trips,
-re-implement ideas, never pull diffs** (to be recorded as an ADR).
+**Status:** living eviction ledger. First-pass audit 2026-07-05; **refreshed 2026-08-17**.
+Verdict per subsystem: **MINE** (built by us) / **KEEP** (upstream code that earns its
+place) / **EVICT** / **CONTESTED**. Row 1 (`evict-upstream-surfaces`) **LANDED** 2026-08-13
+(`openspec/changes/archive/2026-08-13-evict-upstream-surfaces/`). ADR-0001 is **accepted**.
+
+Ratified direction (unchanged): evict `spec-driven` entirely; rename the package to an owned
+scope; keep the stores architecture but audit subcommand depth. Telemetry and profile
+machinery are **gone**. Upstream strategy is law: **no merge/rebase — periodic shopping
+trips, re-implement ideas, never pull diffs** (`docs/adr/ADR-0001-fork-sovereignty.md`).
 
 ## Why
 
-The fork is now the product (see `ops/START-HERE.md` lens). Everything in the tree should be
+The fork is the product (see `ops/START-HERE.md` lens). Everything in the tree should be
 here because *we* chose it. This map is the eviction/adoption ledger for that claim.
+
+**The product lie still in the tree:** the CLI still hardcodes `spec-driven` as the default
+schema and the README still sells Fission-AI OpenSpec. Deep-planning is the owned workflow;
+it is not yet the default. That is row 2.
 
 ## The verdicts
 
+Status is **LANDED** (code matches the verdict) or **OPEN** (verdict stands, work remains).
+
 ### Workflow layer
 
-| Area | Verdict | Notes |
-|---|---|---|
-| `schemas/deep-planning/` | **MINE** | The spine. Becomes the only built-in schema and the hardcoded default (init, `--schema` flags, docs). |
-| `schemas/skills/` (14 authored SKILL.md dirs) | **MINE** | The skill suite + multi-file authoring model. |
-| `schemas/spec-driven/` | **EVICT** (ratified) | Upstream's standard workflow. Delete schema, templates, its tests, and every doc that presents it as "the" workflow. Default constant flips to `deep-planning`. |
-| Schema resolution (`src/core/schemas/`, project-local → user-override → built-in) | **KEEP** | Good design; serves project-local schema experiments and client guest-mode. |
-| `openspec schema` command (fork/inspect/which, 29.7K) | **KEEP** | Owning schemas is the point; these are the tools for it. |
+| Area | Verdict | Status | Notes |
+|---|---|---|---|
+| `schemas/deep-planning/` | **MINE** | present, not default | The spine. Must become the only built-in schema and the hardcoded default (init, `--schema` flags, docs). |
+| `schemas/skills/` (10 dirs) | **MINE** | LANDED | Was 14; eviction pruned `onboard`, `propose`, `ff-change`. `bulk-archive-change` stayed. Init/update install `WORKFLOW_SKILLS` in `src/core/workflow-skills.ts`. Multi-file authoring shipped (`archived/multi-file-skill-generation.md`). |
+| `schemas/spec-driven/` | **EVICT** (ratified) | **OPEN** | Still on disk. Still the runtime default (`src/core/planning-home.ts`, `init.ts`, `openspec-root.ts`, `change-utils.ts`, …). Delete schema, templates, its tests, and every doc that presents it as "the" workflow. Default constant flips to `deep-planning`. |
+| Schema resolution (`src/core/schemas/`) | **KEEP** | LANDED | Project-local → user-override → built-in. Serves guest-mode and local schema experiments. |
+| `openspec schema` command | **KEEP** | LANDED | fork / inspect / which. |
 
 ### Engine (src/core)
 
-| Area | Verdict | Notes |
-|---|---|---|
-| `reverse/`, `adr/`, `lint/` | **MINE** | Ported from feat; complete change trails. |
-| `artifact-graph/`, `validation/`, `parsers/`, instruction loading | **KEEP** | The chat→schema seam's enforcement machinery — the part of the engine that serves the owned content. |
-| `store/` + `workset.ts` + `context.ts` + `doctor.ts` commands | **KEEP, audit depth** (ratified) | Store = standalone planning repo = the client-sidecar story. TODO: check which workset/context/doctor subcommands we actually use; candidates for trimming, not for wholesale eviction. |
-| `init.ts` (25K), `update.ts` (22.7K) | **KEEP, trim** | Needed, but carry profile/spec-driven/telemetry branches that die with their masters. |
-| `legacy-cleanup.ts` (23.2K), `migration.ts` | **EVICT** | Migration paths for upstream's historical installs. A personal fork has no legacy users. Verify nothing in init/update hard-requires them, then delete. |
-| `profiles.ts`, `profile-sync-drift.ts`, profile branches in config | **EVICT** (ratified) | Skill-gating for upstream's onboarding concern. Always install all nine workflow skills. Global config's `profile`/`workflows` keys become inert → remove. |
-| `completions/` + `completion.ts` (shell completions) | **KEEP** | Cheap, useful, no upstream coupling. |
-| `converters/`, `templates/`, `styles/`, `ui/` | **KEEP** | Plumbing serving kept commands. Audit only if something above drags them. |
-| `global-config.ts`, `config-schema.ts` | **KEEP, trim** | Loses telemetry + profile fields. |
+| Area | Verdict | Status | Notes |
+|---|---|---|---|
+| `reverse/`, `adr/`, `lint/` | **MINE** | LANDED | ADR registry + `openspec lint --adr` (ADR-registry rule only). |
+| `artifact-graph/`, `validation/`, `parsers/`, instruction loading | **KEEP** | LANDED | Chat→schema enforcement. |
+| `store/` + `workset.ts` + `context.ts` + `doctor.ts` | **KEEP, audit depth** | **OPEN** | Full surface intact. Usage pass still owed before trimming. |
+| `init.ts`, `update.ts` | **KEEP, trim** | partial | Profile/telemetry/legacy branches died with row 1. Spec-driven default remains until row 2. |
+| `legacy-cleanup.ts`, `migration.ts` | **EVICT** | **LANDED** | Files gone. |
+| `profiles.ts`, `profile-sync-drift.ts` | **EVICT** | **LANDED** | Files gone. Global config `profile` / `workflows` are retired keys (ignored on read, stripped on write). Init always installs the full skill set. |
+| `completions/` + `completion.ts` | **KEEP** | LANDED | |
+| `converters/`, `templates/`, `styles/`, `ui/` | **KEEP** | LANDED | Audit only if something above drags them. |
+| `global-config.ts`, `config-schema.ts` | **KEEP, trim** | LANDED | `RETIRED_KEYS = ['telemetry','profile','workflows']`. |
 
 ### Upstream-facing surfaces
 
-| Area | Verdict | Notes |
-|---|---|---|
-| `src/telemetry/` + `telemetry` config + anonymousId | **EVICT** (ratified) | A personal fork phoning upstream analytics is absurd. Also retire `openspec/specs/telemetry/`. |
-| `src/commands/feedback.ts` | **EVICT** | Sends feedback to upstream's channel. Not our channel. |
-| `docs/` (33K `opsx.md`, `how-commands-work.md`, `migration-guide.md`, `stores-beta/`, marketing README) | **EVICT most, rewrite rest** | Upstream's user docs describe a product we're no longer shipping to anyone. Keep: `agent-contract.md`, `concepts.md`, `glossary.md` as seeds; rewrite README as the fork's own front page (deep-planning first). Low urgency — docs lie quietly. |
-| `CHANGELOG.md`, `MAINTAINERS.md`, `.github/` release machinery | **EVICT/replace** | Upstream release history and CI for npm publishing we don't do. Keep test CI, drop publish/release workflows. |
-| Package identity `@fission-ai/openspec` | **RENAME** (ratified) | Proposal: npm name → own scope (e.g. `@pfurini/openspec`), **bin stays `openspec`** — every skill invokes `openspec <cmd>`; keeping the bin name makes the rename a one-file change instead of a skill-suite sweep. Full product rebrand (new bin/name) possible later, priced separately. **Open: pick the scope/name.** |
+| Area | Verdict | Status | Notes |
+|---|---|---|---|
+| `src/telemetry/` + anonymousId | **EVICT** | **LANDED** | Code gone. `openspec/specs/telemetry/` retired. Root README still documents anonymous usage — docs lie until row 5. |
+| `src/commands/feedback.ts` | **EVICT** | **LANDED** | Command gone. |
+| `docs/` + marketing README | **EVICT most, rewrite rest** | **OPEN** | Partial sweep in `docs/cli.md` / `docs/commands.md`. README, `docs/opsx.md`, `docs/concepts.md`, `docs/glossary.md`, `docs/migration-guide.md`, `docs/stores-beta/` still upstream / spec-driven-first. Keep `agent-contract.md` as a seed; rewrite README as the fork's front page (deep-planning first). Low urgency — docs lie quietly. |
+| `CHANGELOG.md`, `MAINTAINERS.md`, `.github/` release | **EVICT/replace** | partial | `MAINTAINERS.md` gone. `CHANGELOG.md` remains. CI kept (`ci.yml`). `deploy-docs.yml` remains. No npm publish workflow. |
+| Package identity `@fission-ai/openspec` | **RENAME** (ratified) | **OPEN** | npm name → owned scope; **bin stays `openspec`**. Homepage/repo URLs still Fission-AI. **Open: pick the scope/name.** |
 
-### Specs baseline (openspec/specs — 38 specs)
+### Specs baseline (`openspec/specs/` — 35 specs)
 
-Already tracked as GH#1, now **bigger**: beyond the port's deletions (`command-generation/`,
-`opsx-*-skill/`, `ai-tool-paths/`…), every spec for an evicted feature dies with it
-(`telemetry/`, spec-driven-specific scenarios in `cli-artifact-workflow/`, profile scenarios in
-`global-config/`/`cli-config/`, `ci-nix-validation/`). GH#1 remains the instrumented dogfood;
-each eviction change below retires its own specs as it lands, shrinking GH#1's residue.
+GH#1 (`pfurini/OpenSpec#1`) is still **OPEN**. Residue shrank with row 1 (`telemetry` gone) and will shrink again with each eviction. Leftovers that should die with later rows: `command-generation/`, `opsx-onboard-skill/`, spec-driven-specific scenarios, profile leftovers in `global-config/` / `cli-config/`, `ci-nix-validation/`. No active changes — only `openspec/changes/archive/`. GH#1 remains the instrumented dogfood (`ops/START-HERE.md` #9).
 
-### Tests (~1693)
+### Tests
 
-**KEEP infra, prune with each eviction.** The parity-wall machinery (rebaseline) is **MINE** and
-stays. Each eviction change deletes the tests of what it evicts — never before.
+**KEEP infra, prune with each eviction.** Parity-wall (`pnpm run rebaseline:skills`) is **MINE** and stays. Each eviction change deletes the tests of what it evicts — never before.
 
 ## Execution plan — each row = one deep-planning change (dogfood)
 
-1. `evict-upstream-surfaces` — telemetry, feedback, profiles, legacy-cleanup (+ their specs/tests/config keys). Independent, well-bounded, high identity value. **First.**
-2. `adopt-deep-planning-as-default` — flip default constant, evict `schemas/spec-driven/` + its docs/tests/specs.
-3. `rename-package-identity` — npm scope rename, bin unchanged; update lexup + global install. Needs the name decision.
-4. `trim-stores-surface` — the "audit depth" verdict on workset/context/doctor, informed by a quick which-subcommands-do-I-use pass.
-5. Docs rewrite — lowest urgency, can trail everything.
+| # | Change | Status | Notes |
+|---|---|---|---|
+| 1 | `evict-upstream-surfaces` | **LANDED** 2026-08-13 | Telemetry, feedback, profiles, legacy-cleanup, three skills. ADR-0001 accepted. |
+| 2 | `adopt-deep-planning-as-default` | **OPEN — next eviction** | Flip default constant; evict `schemas/spec-driven/` + its docs/tests/specs. This is the gap. |
+| 3 | `rename-package-identity` | **OPEN** | npm scope rename, bin unchanged; update installs. Blocked on the name decision. |
+| 4 | `trim-stores-surface` | **OPEN** | Audit which workset/context/doctor subcommands we actually use. |
+| 5 | Docs rewrite | **OPEN** | Lowest urgency. Can trail 2–4. README is the loudest lie. |
 
-Then: **the ledger change** (`ops/START-HERE.md` #1) — unchanged, next in line after 1–2.
+Then: **the ledger change** (`ops/START-HERE.md` #1). Originally "after 1–2"; row 1 is done, so ledger can start after row 2 (or in parallel — they don't share files). START-HERE is the ranked process backlog; this file is only the eviction track.
 
-## The ADR to write
+## ADR
 
-`fork-sovereignty`: this repo is a hard fork. Upstream is a parts catalog: periodic review of
-its releases; adopt by re-implementation only; never merge, never rebase. Divergence is the
-point, not a cost. (Write via the fork's own ADR machinery once change 1 lands.)
+`docs/adr/ADR-0001-fork-sovereignty.md` — **accepted** 2026-08-13, change `evict-upstream-surfaces`. Do not re-propose it.
 
 ## Open decisions
 
