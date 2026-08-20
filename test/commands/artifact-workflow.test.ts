@@ -93,7 +93,7 @@ describe('artifact-workflow CLI commands', () => {
       const result = await runCLI(['status', '--change', 'minimal-change'], { cwd: tempDir });
       expect(result.exitCode).toBe(0);
       expect(result.stdout).toContain('minimal-change');
-      expect(result.stdout).toContain('spec-driven');
+      expect(result.stdout).toContain('deep-planning');
       expect(result.stdout).toContain('1/4 artifacts complete');
     });
 
@@ -117,7 +117,7 @@ describe('artifact-workflow CLI commands', () => {
 
       const json = JSON.parse(result.stdout);
       expect(json.changeName).toBe('json-change');
-      expect(json.schemaName).toBe('spec-driven');
+      expect(json.schemaName).toBe('deep-planning');
       expect(json.isComplete).toBe(false);
       expect(Array.isArray(json.artifacts)).toBe(true);
       expect(json.artifacts).toHaveLength(4);
@@ -174,11 +174,11 @@ describe('artifact-workflow CLI commands', () => {
     it('supports --schema option', async () => {
       await createTestChange('schema-change');
 
-      const result = await runCLI(['status', '--change', 'schema-change', '--schema', 'spec-driven'], {
+      const result = await runCLI(['status', '--change', 'schema-change', '--schema', 'deep-planning'], {
         cwd: tempDir,
       });
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('spec-driven');
+      expect(result.stdout).toContain('deep-planning');
     });
 
     it('errors for unknown schema', async () => {
@@ -296,7 +296,7 @@ describe('artifact-workflow CLI commands', () => {
     it('shows template paths for default schema', async () => {
       const result = await runCLI(['templates'], { cwd: tempDir });
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('Schema: spec-driven');
+      expect(result.stdout).toContain('Schema: deep-planning');
       expect(result.stdout).toContain('proposal:');
       expect(result.stdout).toContain('design:');
       expect(result.stdout).toContain('specs:');
@@ -304,9 +304,9 @@ describe('artifact-workflow CLI commands', () => {
     });
 
     it('shows template paths for specified schema', async () => {
-      const result = await runCLI(['templates', '--schema', 'spec-driven'], { cwd: tempDir });
+      const result = await runCLI(['templates', '--schema', 'deep-planning'], { cwd: tempDir });
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('Schema: spec-driven');
+      expect(result.stdout).toContain('Schema: deep-planning');
       expect(result.stdout).toContain('proposal:');
       expect(result.stdout).toContain('design:');
     });
@@ -378,7 +378,7 @@ describe('artifact-workflow CLI commands', () => {
         path.join(changesDir, 'goal-change', '.openspec.yaml'),
         'utf-8'
       );
-      expect(metadata).toContain('schema: spec-driven');
+      expect(metadata).toContain('schema: deep-planning');
       expect(metadata).toContain('goal: Improve billing');
       expect(metadata).not.toContain('affected_areas');
       expect(metadata).not.toContain('initiative');
@@ -420,7 +420,7 @@ describe('artifact-workflow CLI commands', () => {
   });
 
   describe('instructions apply command', () => {
-    it('shows apply instructions for spec-driven schema with tasks', async () => {
+    it('shows apply instructions for deep-planning schema with tasks', async () => {
       await createTestChange('apply-change', ['proposal', 'design', 'specs', 'tasks']);
 
       const result = await runCLI(['instructions', 'apply', '--change', 'apply-change'], {
@@ -428,13 +428,13 @@ describe('artifact-workflow CLI commands', () => {
       });
       expect(result.exitCode).toBe(0);
       expect(result.stdout).toContain('## Apply: apply-change');
-      expect(result.stdout).toContain('Schema: spec-driven');
+      expect(result.stdout).toContain('Schema: deep-planning');
       expect(result.stdout).toContain('### Context Files');
       expect(result.stdout).toContain('### Instruction');
     });
 
     it('shows blocked state when required artifacts are missing', async () => {
-      // Only create proposal - missing tasks (required by spec-driven apply block)
+      // Only create proposal - missing tasks (required by deep-planning apply block)
       await createTestChange('blocked-apply', ['proposal']);
 
       const result = await runCLI(['instructions', 'apply', '--change', 'blocked-apply'], {
@@ -459,7 +459,7 @@ describe('artifact-workflow CLI commands', () => {
       const expectedProposalPath = canonical(path.join(changesDir, 'json-apply', 'proposal.md'));
       const expectedSpecPath = canonical(path.join(changesDir, 'json-apply', 'specs', 'test-spec.md'));
       expect(json.changeName).toBe('json-apply');
-      expect(json.schemaName).toBe('spec-driven');
+      expect(json.schemaName).toBe('deep-planning');
       expect(json.state).toBe('ready');
       expect(json.contextFiles).toBeDefined();
       expect(typeof json.contextFiles).toBe('object');
@@ -530,8 +530,8 @@ apply:
         cwd: tempDir,
       });
       expect(result.exitCode).toBe(0);
-      // Should show the instruction from spec-driven schema apply block
-      expect(result.stdout).toContain('work through pending tasks');
+      // Should show the instruction from deep-planning schema apply block
+      expect(result.stdout).toContain('Work through the waves in order');
     });
 
     it('shows all_done state when all tasks are complete', async () => {
@@ -555,20 +555,20 @@ apply:
       expect(result.stdout).toContain('ready to be archived');
     });
 
-    it('uses spec-driven schema apply configuration', async () => {
-      // Create a spec-driven style change with all artifacts
+    it('uses deep-planning schema apply configuration', async () => {
+      // Create a deep-planning style change with all artifacts
       await createTestChange('apply-schema-test', ['proposal', 'design', 'specs', 'tasks']);
 
       const result = await runCLI(
-        ['instructions', 'apply', '--change', 'apply-schema-test', '--schema', 'spec-driven'],
+        ['instructions', 'apply', '--change', 'apply-schema-test', '--schema', 'deep-planning'],
         { cwd: tempDir }
       );
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('Schema: spec-driven');
+      expect(result.stdout).toContain('Schema: deep-planning');
     });
 
-    it('spec-driven schema uses apply block configuration', async () => {
-      // Verify that spec-driven schema uses its apply block (requires: [tasks])
+    it('deep-planning schema uses apply block configuration', async () => {
+      // Verify that deep-planning schema uses its apply block (requires: [tasks])
       await createTestChange('apply-config-test', ['proposal', 'design', 'specs', 'tasks']);
 
       const result = await runCLI(
@@ -578,8 +578,8 @@ apply:
       expect(result.exitCode).toBe(0);
 
       const json = JSON.parse(result.stdout);
-      // spec-driven schema has apply block with requires: [tasks], so should be ready
-      expect(json.schemaName).toBe('spec-driven');
+      // deep-planning schema has apply block with requires: [tasks], so should be ready
+      expect(json.schemaName).toBe('deep-planning');
       expect(json.state).toBe('ready');
     });
 
@@ -809,9 +809,36 @@ artifacts:
       expect(getOutput(result)).toContain('non-negative integer');
     });
 
-    it('errors when the schema has no wavePlan block (spec-driven)', async () => {
-      // spec-driven has an apply block but no wavePlan block.
-      await createTestChange('wave-no-block', ['proposal', 'design', 'specs', 'tasks']);
+    it('errors when the schema has no wavePlan block', async () => {
+      // Local minimal schema: an apply block but no wavePlan block.
+      const schemaDir = path.join(tempDir, 'openspec', 'schemas', 'no-waveplan');
+      const templatesDir = path.join(schemaDir, 'templates');
+      await fs.mkdir(templatesDir, { recursive: true });
+      await fs.writeFile(
+        path.join(schemaDir, 'schema.yaml'),
+        `name: no-waveplan
+version: 1
+description: Test schema without a wavePlan block
+artifacts:
+  - id: proposal
+    generates: proposal.md
+    description: Proposal
+    template: proposal.md
+    requires: []
+apply:
+  requires: [proposal]
+  instruction: Apply once the proposal exists.
+`
+      );
+      await fs.writeFile(path.join(templatesDir, 'proposal.md'), '# Proposal\n');
+
+      const changeDir = path.join(changesDir, 'wave-no-block');
+      await fs.mkdir(changeDir, { recursive: true });
+      await fs.writeFile(path.join(changeDir, '.openspec.yaml'), 'schema: no-waveplan\n');
+      await fs.writeFile(
+        path.join(changeDir, 'proposal.md'),
+        '## Why\nNo wave plan here.\n\n## What Changes\n- **test:** Nothing'
+      );
 
       const result = await runCLI(
         ['instructions', 'wave-plan', '--change', 'wave-no-block', '--wave', '0'],
@@ -944,34 +971,34 @@ artifacts:
   describe('project config integration', () => {
     describe('new change uses config schema', () => {
       it('creates change with schema from project config', async () => {
-        // Create project config with spec-driven schema
+        // Create project config with deep-planning schema
         // Note: changesDir is already at tempDir/openspec/changes (created in beforeEach)
         await fs.writeFile(
           path.join(tempDir, 'openspec', 'config.yaml'),
-          'schema: spec-driven\n'
+          'schema: deep-planning\n'
         );
 
         // Create a new change without specifying schema
         const result = await runCLI(['new', 'change', 'test-change'], { cwd: tempDir, timeoutMs: 30000 });
         expect(result.exitCode).toBe(0);
 
-        // Verify the change was created with spec-driven schema
+        // Verify the change was created with deep-planning schema
         const metadataPath = path.join(changesDir, 'test-change', '.openspec.yaml');
         const metadata = await fs.readFile(metadataPath, 'utf-8');
-        expect(metadata).toContain('schema: spec-driven');
+        expect(metadata).toContain('schema: deep-planning');
       }, 60000);
 
       it('CLI schema overrides config schema', async () => {
-        // Create project config with spec-driven schema
+        // Create project config with deep-planning schema
         // Note: openspec directory already exists (from changesDir creation in beforeEach)
         await fs.writeFile(
           path.join(tempDir, 'openspec', 'config.yaml'),
-          'schema: spec-driven\n'
+          'schema: deep-planning\n'
         );
 
         // Create change with explicit schema
         const result = await runCLI(
-          ['new', 'change', 'override-test', '--schema', 'spec-driven'],
+          ['new', 'change', 'override-test', '--schema', 'deep-planning'],
           { cwd: tempDir, timeoutMs: 30000 }
         );
         expect(result.exitCode).toBe(0);
@@ -979,7 +1006,7 @@ artifacts:
         // Verify the change uses the CLI-specified schema
         const metadataPath = path.join(changesDir, 'override-test', '.openspec.yaml');
         const metadata = await fs.readFile(metadataPath, 'utf-8');
-        expect(metadata).toContain('schema: spec-driven');
+        expect(metadata).toContain('schema: deep-planning');
       }, 60000);
     });
 
@@ -989,7 +1016,7 @@ artifacts:
         // Note: openspec directory already exists (from changesDir creation in beforeEach)
         await fs.writeFile(
           path.join(tempDir, 'openspec', 'config.yaml'),
-          `schema: spec-driven
+          `schema: deep-planning
 context: |
   Tech stack: TypeScript, React
   API style: RESTful
@@ -1024,7 +1051,7 @@ rules:
         // Note: openspec directory already exists (from changesDir creation in beforeEach)
         await fs.writeFile(
           path.join(tempDir, 'openspec', 'config.yaml'),
-          `schema: spec-driven
+          `schema: deep-planning
 rules:
   proposal:
     - Include rollback plan
@@ -1058,7 +1085,7 @@ rules:
         );
         expect(statusResult.exitCode).toBe(0);
         expect(statusResult.stdout).toContain('no-config-change');
-        expect(statusResult.stdout).toContain('spec-driven'); // Default schema
+        expect(statusResult.stdout).toContain('deep-planning'); // Default schema
 
         // Instructions command should work
         const instrResult = await runCLI(
@@ -1074,7 +1101,7 @@ rules:
         const changeDir = await createTestChange('metadata-only-change');
         await fs.writeFile(
           path.join(changeDir, '.openspec.yaml'),
-          'schema: spec-driven\ncreated: "2025-01-05"\n'
+          'schema: deep-planning\ncreated: "2025-01-05"\n'
         );
 
         // Status should use schema from metadata
@@ -1083,7 +1110,7 @@ rules:
           { cwd: tempDir, timeoutMs: 30000 }
         );
         expect(result.exitCode).toBe(0);
-        expect(result.stdout).toContain('spec-driven');
+        expect(result.stdout).toContain('deep-planning');
       }, 60000);
     });
 
@@ -1093,7 +1120,7 @@ rules:
         // Note: openspec directory already exists (from changesDir creation in beforeEach)
         await fs.writeFile(
           path.join(tempDir, 'openspec', 'config.yaml'),
-          `schema: spec-driven
+          `schema: deep-planning
 context: Initial context
 `
         );
@@ -1112,7 +1139,7 @@ context: Initial context
         // Update config
         await fs.writeFile(
           path.join(tempDir, 'openspec', 'config.yaml'),
-          `schema: spec-driven
+          `schema: deep-planning
 context: Updated context
 `
         );

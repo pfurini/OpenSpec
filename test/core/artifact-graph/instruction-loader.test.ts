@@ -13,15 +13,15 @@ import {
 describe('instruction-loader', () => {
   describe('loadTemplate', () => {
     it('should load template from schema directory', () => {
-      // Uses built-in spec-driven schema
-      const template = loadTemplate('spec-driven', 'proposal.md');
+      // Uses built-in deep-planning schema
+      const template = loadTemplate('deep-planning', 'proposal.md');
 
       expect(template).toContain('## Why');
       expect(template).toContain('## What Changes');
     });
 
     it('should throw TemplateLoadError for non-existent template', () => {
-      expect(() => loadTemplate('spec-driven', 'nonexistent.md')).toThrow(
+      expect(() => loadTemplate('deep-planning', 'nonexistent.md')).toThrow(
         TemplateLoadError
       );
     });
@@ -34,7 +34,7 @@ describe('instruction-loader', () => {
 
     it('should include template path in error', () => {
       try {
-        loadTemplate('spec-driven', 'nonexistent.md');
+        loadTemplate('deep-planning', 'nonexistent.md');
         expect.fail('Should have thrown');
       } catch (err) {
         expect(err).toBeInstanceOf(TemplateLoadError);
@@ -57,17 +57,17 @@ describe('instruction-loader', () => {
     it('should load context with default schema', () => {
       const context = loadChangeContext(tempDir, 'my-change');
 
-      expect(context.schemaName).toBe('spec-driven');
+      expect(context.schemaName).toBe('deep-planning');
       expect(context.changeName).toBe('my-change');
-      expect(context.graph.getName()).toBe('spec-driven');
+      expect(context.graph.getName()).toBe('deep-planning');
       expect(context.completed.size).toBe(0);
     });
 
     it('should load context with explicit schema', () => {
-      const context = loadChangeContext(tempDir, 'my-change', 'spec-driven');
+      const context = loadChangeContext(tempDir, 'my-change', 'deep-planning');
 
-      expect(context.schemaName).toBe('spec-driven');
-      expect(context.graph.getName()).toBe('spec-driven');
+      expect(context.schemaName).toBe('deep-planning');
+      expect(context.graph.getName()).toBe('deep-planning');
     });
 
     it('should detect completed artifacts', () => {
@@ -91,26 +91,26 @@ describe('instruction-loader', () => {
       // Create change directory with metadata file
       const changeDir = path.join(tempDir, 'openspec', 'changes', 'my-change');
       fs.mkdirSync(changeDir, { recursive: true });
-      fs.writeFileSync(path.join(changeDir, '.openspec.yaml'), 'schema: spec-driven\ncreated: "2025-01-05"\n');
+      fs.writeFileSync(path.join(changeDir, '.openspec.yaml'), 'schema: deep-planning\ncreated: "2025-01-05"\n');
 
       // Load without explicit schema - should detect from metadata
       const context = loadChangeContext(tempDir, 'my-change');
 
-      expect(context.schemaName).toBe('spec-driven');
-      expect(context.graph.getName()).toBe('spec-driven');
+      expect(context.schemaName).toBe('deep-planning');
+      expect(context.graph.getName()).toBe('deep-planning');
     });
 
     it('should use explicit schema over metadata schema', () => {
-      // Create change directory with metadata file using spec-driven
+      // Create change directory with metadata file using deep-planning
       const changeDir = path.join(tempDir, 'openspec', 'changes', 'my-change');
       fs.mkdirSync(changeDir, { recursive: true });
-      fs.writeFileSync(path.join(changeDir, '.openspec.yaml'), 'schema: spec-driven\n');
+      fs.writeFileSync(path.join(changeDir, '.openspec.yaml'), 'schema: deep-planning\n');
 
       // Load with explicit schema - should override metadata
-      const context = loadChangeContext(tempDir, 'my-change', 'spec-driven');
+      const context = loadChangeContext(tempDir, 'my-change', 'deep-planning');
 
-      expect(context.schemaName).toBe('spec-driven');
-      expect(context.graph.getName()).toBe('spec-driven');
+      expect(context.schemaName).toBe('deep-planning');
+      expect(context.graph.getName()).toBe('deep-planning');
     });
 
     it('should fall back to default when no metadata and no explicit schema', () => {
@@ -120,7 +120,7 @@ describe('instruction-loader', () => {
 
       const context = loadChangeContext(tempDir, 'my-change');
 
-      expect(context.schemaName).toBe('spec-driven');
+      expect(context.schemaName).toBe('deep-planning');
     });
   });
 
@@ -141,7 +141,7 @@ describe('instruction-loader', () => {
 
       expect(instructions.changeName).toBe('my-change');
       expect(instructions.artifactId).toBe('proposal');
-      expect(instructions.schemaName).toBe('spec-driven');
+      expect(instructions.schemaName).toBe('deep-planning');
       expect(instructions.outputPath).toBe('proposal.md');
     });
 
@@ -204,7 +204,7 @@ describe('instruction-loader', () => {
         fs.mkdirSync(configDir, { recursive: true });
         fs.writeFileSync(
           path.join(configDir, 'config.yaml'),
-          `schema: spec-driven
+          `schema: deep-planning
 context: |
   Tech stack: TypeScript, React
   API style: RESTful
@@ -236,7 +236,7 @@ context: |
         fs.mkdirSync(configDir, { recursive: true });
         fs.writeFileSync(
           path.join(configDir, 'config.yaml'),
-          `schema: spec-driven
+          `schema: deep-planning
 context: |
   Line 1
   Line 2
@@ -256,7 +256,7 @@ context: |
         fs.mkdirSync(configDir, { recursive: true });
         fs.writeFileSync(
           path.join(configDir, 'config.yaml'),
-          `schema: spec-driven
+          `schema: deep-planning
 context: |
   Special: < > & " ' @ # $ % [ ] { }
 `
@@ -274,7 +274,7 @@ context: |
         fs.mkdirSync(configDir, { recursive: true });
         fs.writeFileSync(
           path.join(configDir, 'config.yaml'),
-          `schema: spec-driven
+          `schema: deep-planning
 rules:
   proposal:
     - Include rollback plan
@@ -303,7 +303,7 @@ rules:
         fs.mkdirSync(configDir, { recursive: true });
         fs.writeFileSync(
           path.join(configDir, 'config.yaml'),
-          `schema: spec-driven
+          `schema: deep-planning
 rules:
   proposal:
     - Include rollback plan
@@ -323,7 +323,7 @@ rules:
         fs.mkdirSync(configDir, { recursive: true });
         fs.writeFileSync(
           path.join(configDir, 'config.yaml'),
-          `schema: spec-driven
+          `schema: deep-planning
 context: Some context
 rules:
   proposal: []
@@ -343,7 +343,7 @@ rules:
         fs.mkdirSync(configDir, { recursive: true });
         fs.writeFileSync(
           path.join(configDir, 'config.yaml'),
-          `schema: spec-driven
+          `schema: deep-planning
 context: Project context here
 rules:
   proposal:
@@ -369,7 +369,7 @@ rules:
         fs.mkdirSync(configDir, { recursive: true });
         fs.writeFileSync(
           path.join(configDir, 'config.yaml'),
-          `schema: spec-driven
+          `schema: deep-planning
 context: Project context only
 `
         );
@@ -388,7 +388,7 @@ context: Project context only
         fs.mkdirSync(configDir, { recursive: true });
         fs.writeFileSync(
           path.join(configDir, 'config.yaml'),
-          `schema: spec-driven
+          `schema: deep-planning
 rules:
   proposal:
     - Rule only
@@ -430,7 +430,7 @@ rules:
         fs.mkdirSync(configDir, { recursive: true });
         fs.writeFileSync(
           path.join(configDir, 'config.yaml'),
-          `schema: spec-driven
+          `schema: deep-planning
 rules:
   proposal:
     - Valid rule
@@ -457,7 +457,7 @@ rules:
           fs.mkdirSync(configDir, { recursive: true });
           fs.writeFileSync(
             path.join(configDir, 'config.yaml'),
-            `schema: spec-driven
+            `schema: deep-planning
 rules:
   unique-invalid-artifact-${Date.now()}:
     - Invalid rule
@@ -490,7 +490,7 @@ rules:
         fs.mkdirSync(configDir, { recursive: true });
         fs.writeFileSync(
           path.join(configDir, 'config.yaml'),
-          `schema: spec-driven
+          `schema: deep-planning
 rules:
   proposal:
     - Rule 1
@@ -523,7 +523,7 @@ rules:
       const status = formatChangeStatus(context);
 
       expect(status.changeName).toBe('my-change');
-      expect(status.schemaName).toBe('spec-driven');
+      expect(status.schemaName).toBe('deep-planning');
       expect(status.isComplete).toBe(false);
 
       // proposal has no deps, should be ready
@@ -568,7 +568,7 @@ rules:
       fs.mkdirSync(changeDir, { recursive: true });
       fs.mkdirSync(path.join(changeDir, 'specs'), { recursive: true });
 
-      // Create all required files for spec-driven schema
+      // Create all required files for deep-planning schema
       fs.writeFileSync(path.join(changeDir, 'proposal.md'), '# Proposal');
       fs.writeFileSync(path.join(changeDir, 'specs', 'test.md'), '# Spec');
       fs.writeFileSync(path.join(changeDir, 'design.md'), '# Design');

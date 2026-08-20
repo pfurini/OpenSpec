@@ -56,7 +56,7 @@ export function getProjectSchemasDir(projectRoot: string): string {
  * When projectRoot is not provided, only user override and package built-in are checked
  * (backward compatible behavior).
  *
- * @param name - Schema name (e.g., "spec-driven")
+ * @param name - Schema name (e.g., "deep-planning")
  * @param projectRoot - Optional project root directory for project-local schema resolution
  * @returns The path to the schema directory, or null if not found
  */
@@ -101,7 +101,7 @@ export function getSchemaDir(
  * When projectRoot is not provided, only user override and package built-in are checked
  * (backward compatible behavior).
  *
- * @param name - Schema name (e.g., "spec-driven")
+ * @param name - Schema name (e.g., "deep-planning")
  * @param projectRoot - Optional project root directory for project-local schema resolution
  * @returns The resolved schema object
  * @throws Error if schema is not found in any location

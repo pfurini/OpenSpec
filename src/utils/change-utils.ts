@@ -4,13 +4,13 @@ import { writeChangeMetadata, validateSchemaName } from './change-metadata.js';
 import { readProjectConfig } from '../core/project-config.js';
 import type { ChangeMetadata } from '../core/change-metadata/index.js';
 
-const DEFAULT_SCHEMA = 'spec-driven';
+const DEFAULT_SCHEMA = 'deep-planning';
 
 /**
  * Options for creating a change.
  */
 export interface CreateChangeOptions {
-  /** The workflow schema to use (default: 'spec-driven') */
+  /** The workflow schema to use (default: 'deep-planning') */
   schema?: string;
   /** Default schema to use when no explicit schema or project config is present */
   defaultSchema?: string;
@@ -97,6 +97,29 @@ export function validateChangeName(name: string): ValidationResult {
 }
 
 /**
+ * Resolves the schema for a new change: explicit option, then project config,
+ * then the supplied machine default, then the built-in default. Shared by
+ * createChange and command-layer output so what is announced matches what is
+ * written.
+ */
+export function resolveChangeSchema(
+  projectRoot: string,
+  options: { schema?: string; defaultSchema?: string } = {}
+): string {
+  const defaultSchema = options.defaultSchema ?? DEFAULT_SCHEMA;
+  if (options.schema) {
+    return options.schema;
+  }
+  try {
+    const config = readProjectConfig(projectRoot);
+    return config?.schema ?? defaultSchema;
+  } catch {
+    // If config read fails, use default
+    return defaultSchema;
+  }
+}
+
+/**
  * Creates a new change directory with metadata file.
  *
  * @param projectRoot - The root directory of the project (where `openspec/` lives)
@@ -111,7 +134,7 @@ export function validateChangeName(name: string): ValidationResult {
  * @example
  * // Creates openspec/changes/add-auth/ with default schema
  * const result = await createChange('/path/to/project', 'add-auth')
- * console.log(result.schema) // 'spec-driven' or value from config
+ * console.log(result.schema) // 'deep-planning' or value from config
  *
  * @example
  * // Creates openspec/changes/add-auth/ with custom schema
@@ -130,21 +153,10 @@ export async function createChange(
   }
 
   const defaultSchema = options.defaultSchema ?? DEFAULT_SCHEMA;
-
-  // Determine schema: explicit option → project config → supplied default
-  let schemaName: string;
-  if (options.schema) {
-    schemaName = options.schema;
-  } else {
-    // Try to read from project config
-    try {
-      const config = readProjectConfig(projectRoot);
-      schemaName = config?.schema ?? defaultSchema;
-    } catch {
-      // If config read fails, use default
-      schemaName = defaultSchema;
-    }
-  }
+  const schemaName = resolveChangeSchema(projectRoot, {
+    schema: options.schema,
+    defaultSchema,
+  });
 
   // Validate the resolved schema
   validateSchemaName(schemaName, projectRoot);

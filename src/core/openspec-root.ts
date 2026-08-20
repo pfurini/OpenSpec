@@ -14,7 +14,7 @@ export const OPENSPEC_CONFIG_YML = 'openspec/config.yml';
 export const OPENSPEC_SPECS_DIR = 'openspec/specs';
 export const OPENSPEC_CHANGES_DIR = 'openspec/changes';
 export const OPENSPEC_ARCHIVE_DIR = 'openspec/changes/archive';
-export const DEFAULT_OPENSPEC_SCHEMA = 'spec-driven';
+export const DEFAULT_OPENSPEC_SCHEMA = 'deep-planning';
 export const DIRECTORY_ANCHOR_FILE_NAME = '.gitkeep';
 
 // Git cannot track empty directories, so clones of a fresh store would lose

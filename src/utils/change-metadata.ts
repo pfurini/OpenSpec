@@ -157,7 +157,7 @@ export interface ResolveSchemaForChangeOptions {
  * 1. Explicit schema (if provided)
  * 2. Schema from .openspec.yaml metadata (if exists)
  * 3. Schema from openspec/config.yaml (if exists)
- * 4. Default 'spec-driven'
+ * 4. Default 'deep-planning'
  *
  * @param changeDir - The path to the change directory
  * @param explicitSchema - Optional explicit schema override
@@ -194,5 +194,5 @@ export function resolveSchemaForChange(
   }
 
   // 4. Default
-  return 'spec-driven';
+  return 'deep-planning';
 }

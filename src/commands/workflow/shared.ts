@@ -68,7 +68,7 @@ export interface WaveInstructions {
 // Constants
 // -----------------------------------------------------------------------------
 
-export const DEFAULT_SCHEMA = 'spec-driven';
+export const DEFAULT_SCHEMA = 'deep-planning';
 
 // -----------------------------------------------------------------------------
 // Utility Functions

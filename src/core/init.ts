@@ -37,7 +37,7 @@ const { version: OPENSPEC_VERSION } = require('../../package.json');
 // Constants
 // -----------------------------------------------------------------------------
 
-const DEFAULT_SCHEMA = 'spec-driven';
+const DEFAULT_SCHEMA = 'deep-planning';
 
 const PROGRESS_SPINNER = {
   interval: 80,

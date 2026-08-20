@@ -9,7 +9,7 @@
 
 import ora from 'ora';
 import path from 'path';
-import { createChange, validateChangeName } from '../../utils/change-utils.js';
+import { createChange, resolveChangeSchema, validateChangeName } from '../../utils/change-utils.js';
 import { formatChangeLocation } from '../../core/planning-home.js';
 import {
   resolveRootForCommand,
@@ -115,7 +115,10 @@ export async function newChangeCommand(name: string | undefined, options: NewCha
       validateSchemaExists(options.schema, projectRoot);
     }
 
-    const resolvedSchema = options.schema ?? root.defaultSchema;
+    const resolvedSchema = resolveChangeSchema(projectRoot, {
+      schema: options.schema,
+      defaultSchema: root.defaultSchema,
+    });
     if (spinner) {
       spinner.start(`Creating change '${name}' with schema '${resolvedSchema}'...`);
     }
