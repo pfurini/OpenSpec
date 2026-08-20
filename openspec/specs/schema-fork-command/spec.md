@@ -2,46 +2,53 @@
 
 ## Purpose
 Define `openspec schema fork` behavior for cloning existing schemas into project-local schemas with safe overwrite controls.
-
 ## Requirements
 ### Requirement: Schema fork copies existing schema
+
 The CLI SHALL provide an `openspec schema fork <source> [name]` command that copies an existing schema to the project's `openspec/schemas/` directory.
 
 #### Scenario: Fork with explicit name
-- **WHEN** user runs `openspec schema fork spec-driven my-custom`
-- **THEN** system locates `spec-driven` schema using resolution order (project → user → package)
+
+- **WHEN** user runs `openspec schema fork deep-planning my-custom`
+- **THEN** system locates `deep-planning` schema using resolution order (project → user → package)
 - **AND** copies all files to `openspec/schemas/my-custom/`
 - **AND** updates `name` field in `schema.yaml` to `my-custom`
 - **AND** displays success message with source and destination paths
 
 #### Scenario: Fork with default name
-- **WHEN** user runs `openspec schema fork spec-driven` without specifying a name
-- **THEN** system copies to `openspec/schemas/spec-driven-custom/`
-- **AND** updates `name` field in `schema.yaml` to `spec-driven-custom`
+
+- **WHEN** user runs `openspec schema fork deep-planning` without specifying a name
+- **THEN** system copies to `openspec/schemas/deep-planning-custom/`
+- **AND** updates `name` field in `schema.yaml` to `deep-planning-custom`
 
 #### Scenario: Source schema not found
+
 - **WHEN** user runs `openspec schema fork nonexistent`
 - **THEN** system displays error that schema was not found
 - **AND** lists available schemas
 - **AND** exits with non-zero code
 
 ### Requirement: Schema fork prevents accidental overwrites
+
 The CLI SHALL require confirmation or `--force` flag when the destination schema already exists.
 
 #### Scenario: Destination exists without force
-- **WHEN** user runs `openspec schema fork spec-driven my-custom` and `openspec/schemas/my-custom/` exists
+
+- **WHEN** user runs `openspec schema fork deep-planning my-custom` and `openspec/schemas/my-custom/` exists
 - **THEN** system displays error that destination already exists
 - **AND** suggests using `--force` to overwrite
 - **AND** exits with non-zero code
 
 #### Scenario: Destination exists with force flag
-- **WHEN** user runs `openspec schema fork spec-driven my-custom --force` and destination exists
+
+- **WHEN** user runs `openspec schema fork deep-planning my-custom --force` and destination exists
 - **THEN** system removes existing destination directory
 - **AND** copies source schema to destination
 - **AND** displays success message
 
 #### Scenario: Interactive confirmation for overwrite
-- **WHEN** user runs `openspec schema fork spec-driven my-custom` in interactive mode and destination exists
+
+- **WHEN** user runs `openspec schema fork deep-planning my-custom` in interactive mode and destination exists
 - **THEN** system prompts for confirmation to overwrite
 - **AND** proceeds based on user response
 
@@ -59,13 +66,16 @@ The CLI SHALL copy the complete schema directory including templates, configurat
 - **AND** all nested files are copied
 
 ### Requirement: Schema fork outputs JSON format
+
 The CLI SHALL support `--json` flag for machine-readable output.
 
 #### Scenario: JSON output on success
-- **WHEN** user runs `openspec schema fork spec-driven my-custom --json`
+
+- **WHEN** user runs `openspec schema fork deep-planning my-custom --json`
 - **THEN** system outputs JSON with `forked: true`, `source`, `destination`, and `sourcePath` fields
 
 #### Scenario: JSON output shows source location
-- **WHEN** user runs `openspec schema fork spec-driven --json`
+
+- **WHEN** user runs `openspec schema fork deep-planning --json`
 - **THEN** JSON output includes `sourceLocation` field indicating "project", "user", or "package"
 

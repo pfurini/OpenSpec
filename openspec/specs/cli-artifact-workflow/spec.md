@@ -136,17 +136,21 @@ The system SHALL create new change directories with validation.
 - **THEN** the system creates the change directory with description in README.md
 
 ### Requirement: Schema Selection
+
 The system SHALL support custom schema selection for workflow commands.
 
 #### Scenario: Default schema
+
 - **WHEN** user runs workflow commands without `--schema`
-- **THEN** the system uses the "spec-driven" schema
+- **THEN** the system uses the "deep-planning" schema
 
 #### Scenario: Custom schema
+
 - **WHEN** user runs `openspec status --change <id> --schema tdd`
 - **THEN** the system uses the specified schema for artifact graph
 
 #### Scenario: Unknown schema
+
 - **WHEN** user specifies an unknown schema
 - **THEN** the system displays an error listing available schemas
 
@@ -312,3 +316,4 @@ Generated workflow skills SHALL use OpenSpec CLI output as the source of truth f
 - **WHEN** a generated workflow skill is about to create or update an artifact
 - **THEN** it SHALL instruct the agent to run `openspec instructions <artifact> --change <id> --json`
 - **AND** it SHALL write to the resolved artifact path returned by the command
+

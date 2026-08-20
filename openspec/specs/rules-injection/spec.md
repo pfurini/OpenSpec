@@ -2,7 +2,6 @@
 
 ## Purpose
 Define how per-artifact rules from project config are injected into generated instructions with deterministic formatting and validation.
-
 ## Requirements
 ### Requirement: Inject rules only for matching artifact
 
@@ -85,18 +84,22 @@ The system SHALL add config rules to the schema's built-in artifact instruction,
 The system SHALL validate artifact IDs in rules against the schema when instructions are loaded and emit warnings for unknown IDs.
 
 #### Scenario: All artifact IDs are valid
+
 - **WHEN** instructions loaded and config has `rules: { proposal: [...], specs: [...] }` for schema with those artifacts
 - **THEN** no validation warnings are emitted
 
 #### Scenario: Unknown artifact ID in rules
+
 - **WHEN** instructions loaded and config has `rules: { unknownartifact: [...] }`
-- **THEN** warning emitted: "Unknown artifact ID in rules: 'unknownartifact'. Valid IDs for schema 'spec-driven': design, proposal, specs, tasks"
+- **THEN** warning emitted: "Unknown artifact ID in rules: 'unknownartifact'. Valid IDs for schema 'deep-planning': design, proposal, specs, tasks"
 
 #### Scenario: Multiple unknown artifact IDs
+
 - **WHEN** instructions loaded and config has multiple unknown artifact IDs
 - **THEN** separate warning emitted for each unknown artifact ID
 
 #### Scenario: Validation warnings shown once per session
+
 - **WHEN** instructions loaded multiple times in same CLI session
 - **THEN** each unique validation warning is shown only once (cached)
 
