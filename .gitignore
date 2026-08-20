@@ -163,3 +163,6 @@ opencode.json
 # Generated OpenSpec skill store (canonical; authored source lives in schemas/skills/)
 .agents/
 .tokensave
+
+# Local symlinks to sibling repos, for porting reference material (never committed)
+.refs/
