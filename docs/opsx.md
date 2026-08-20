@@ -79,7 +79,7 @@ Config is created during `openspec init`, or manually:
 
 ```yaml
 # openspec/config.yaml
-schema: spec-driven
+schema: deep-planning
 
 context: |
   Tech stack: TypeScript, React, Node.js
@@ -101,7 +101,7 @@ rules:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `schema` | string | Default schema for new changes (e.g., `spec-driven`) |
+| `schema` | string | Default schema for new changes (e.g., `deep-planning`) |
 | `context` | string | Project context injected into all artifact instructions |
 | `rules` | object | Per-artifact rules, keyed by artifact ID |
 
@@ -111,7 +111,7 @@ rules:
 1. CLI flag (`--schema <name>`)
 2. Change metadata (`.openspec.yaml` in change directory)
 3. Project config (`openspec/config.yaml`)
-4. Default (`spec-driven`)
+4. Default (`deep-planning`)
 
 **Context injection:**
 - Context is prepended to every artifact's instructions
@@ -125,7 +125,7 @@ rules:
 
 ### Artifact IDs by Schema
 
-**spec-driven** (default):
+**deep-planning** (default):
 - `proposal` — Change proposal
 - `specs` — Specifications
 - `design` — Technical design
@@ -391,7 +391,7 @@ Examples in this section use the expanded command set (`new`, `continue`, etc.);
 │                                                                             │
 │   Schema Definitions (YAML)                                                 │
 │   ┌─────────────────────────────────────────────────────────────────────┐   │
-│   │  name: spec-driven                                                  │   │
+│   │  name: deep-planning                                                  │   │
 │   │  artifacts:                                                         │   │
 │   │    - id: proposal                                                   │   │
 │   │      generates: proposal.md                                         │   │
@@ -567,7 +567,7 @@ Create custom workflows using the schema management commands:
 openspec schema init my-workflow
 
 # Or fork an existing schema as a starting point
-openspec schema fork spec-driven my-workflow
+openspec schema fork deep-planning my-workflow
 
 # Validate your schema structure
 openspec schema validate my-workflow
@@ -625,7 +625,7 @@ artifacts:
 
 Schemas define what artifacts exist and their dependencies. Currently available:
 
-- **spec-driven** (default): proposal → specs → design → tasks
+- **deep-planning** (default): proposal → specs → design → tasks
 
 ```bash
 # List available schemas
@@ -638,7 +638,7 @@ openspec schema which --all
 openspec schema init my-workflow
 
 # Fork an existing schema for customization
-openspec schema fork spec-driven my-workflow
+openspec schema fork deep-planning my-workflow
 
 # Validate schema structure before use
 openspec schema validate my-workflow

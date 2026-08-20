@@ -15,9 +15,9 @@ trips, re-implement ideas, never pull diffs** (`docs/adr/ADR-0001-fork-sovereign
 The fork is the product (see `ops/START-HERE.md` lens). Everything in the tree should be
 here because *we* chose it. This map is the eviction/adoption ledger for that claim.
 
-**The product lie still in the tree:** the CLI still hardcodes `spec-driven` as the default
-schema and the README still sells Fission-AI OpenSpec. Deep-planning is the owned workflow;
-it is not yet the default. That is row 2.
+**The remaining product lie in the tree:** the README still sells Fission-AI OpenSpec (row 5).
+The default-schema half was evicted in row 2: deep-planning is now the only built-in
+schema and the default everywhere.
 
 ## The verdicts
 
@@ -27,9 +27,9 @@ Status is **LANDED** (code matches the verdict) or **OPEN** (verdict stands, wor
 
 | Area | Verdict | Status | Notes |
 |---|---|---|---|
-| `schemas/deep-planning/` | **MINE** | present, not default | The spine. Must become the only built-in schema and the hardcoded default (init, `--schema` flags, docs). |
+| `schemas/deep-planning/` | **MINE** | LANDED (default) | The spine. Only built-in schema and the hardcoded default (init, `--schema` flags, docs) as of change `adopt-deep-planning-as-default`. |
 | `schemas/skills/` (10 dirs) | **MINE** | LANDED | Was 14; eviction pruned `onboard`, `propose`, `ff-change`. `bulk-archive-change` stayed. Init/update install `WORKFLOW_SKILLS` in `src/core/workflow-skills.ts`. Multi-file authoring shipped (`archived/multi-file-skill-generation.md`). |
-| `schemas/spec-driven/` | **EVICT** (ratified) | **OPEN** | Still on disk. Still the runtime default (`src/core/planning-home.ts`, `init.ts`, `openspec-root.ts`, `change-utils.ts`, …). Delete schema, templates, its tests, and every doc that presents it as "the" workflow. Default constant flips to `deep-planning`. |
+| `schemas/spec-driven/` | **EVICT** (ratified) | **LANDED** | Gone from disk and from every default-resolution point; naming it fails with the available-schemas error. Docs no longer present it as the workflow (change `adopt-deep-planning-as-default`, 2026-08-20). |
 | Schema resolution (`src/core/schemas/`) | **KEEP** | LANDED | Project-local → user-override → built-in. Serves guest-mode and local schema experiments. |
 | `openspec schema` command | **KEEP** | LANDED | fork / inspect / which. |
 
@@ -70,7 +70,7 @@ GH#1 (`pfurini/OpenSpec#1`) is still **OPEN**. Residue shrank with row 1 (`telem
 | # | Change | Status | Notes |
 |---|---|---|---|
 | 1 | `evict-upstream-surfaces` | **LANDED** 2026-08-13 | Telemetry, feedback, profiles, legacy-cleanup, three skills. ADR-0001 accepted. |
-| 2 | `adopt-deep-planning-as-default` | **OPEN — next eviction** | Flip default constant; evict `schemas/spec-driven/` + its docs/tests/specs. This is the gap. |
+| 2 | `adopt-deep-planning-as-default` | **LANDED** 2026-08-20 | Default flipped to `deep-planning`; `schemas/spec-driven/` + its docs/tests/specs evicted. Also fixed the `new change` spinner announcing the machine default instead of the resolved schema. |
 | 3 | `rename-package-identity` | **OPEN** | npm scope rename, bin unchanged; update installs. Blocked on the name decision. |
 | 4 | `trim-stores-surface` | **OPEN** | Audit which workset/context/doctor subcommands we actually use. |
 | 5 | Docs rewrite | **OPEN** | Lowest urgency. Can trail 2–4. README is the loudest lie. |

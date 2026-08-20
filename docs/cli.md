@@ -266,7 +266,7 @@ Doctor is diagnostic-only; it reports missing roots, metadata mismatches, and in
 A project repo can declare which stores its work draws on in `openspec/config.yaml`:
 
 ```yaml
-schema: spec-driven
+schema: deep-planning
 references:
   - team-context
 ```
@@ -659,7 +659,7 @@ openspec status --change add-dark-mode --json
 
 ```
 Change: add-dark-mode
-Schema: spec-driven
+Schema: deep-planning
 Progress: 2/4 artifacts complete
 
 [x] proposal
@@ -673,7 +673,7 @@ Progress: 2/4 artifacts complete
 ```json
 {
   "changeName": "add-dark-mode",
-  "schemaName": "spec-driven",
+  "schemaName": "deep-planning",
   "isComplete": false,
   "applyRequires": ["tasks"],
   "artifacts": [
@@ -748,7 +748,7 @@ openspec templates [options]
 
 | Option | Description |
 |--------|-------------|
-| `--schema <name>` | Schema to inspect (default: `spec-driven`) |
+| `--schema <name>` | Schema to inspect (default: `deep-planning`) |
 | `--json` | Output as JSON |
 
 **Examples:**
@@ -767,13 +767,13 @@ openspec templates --json
 **Output (text):**
 
 ```
-Schema: spec-driven
+Schema: deep-planning
 
 Templates:
-  proposal  → ~/.openspec/schemas/spec-driven/templates/proposal.md
-  specs     → ~/.openspec/schemas/spec-driven/templates/specs.md
-  design    → ~/.openspec/schemas/spec-driven/templates/design.md
-  tasks     → ~/.openspec/schemas/spec-driven/templates/tasks.md
+  proposal  → ~/.openspec/schemas/deep-planning/templates/proposal.md
+  specs     → ~/.openspec/schemas/deep-planning/templates/spec.md
+  design    → ~/.openspec/schemas/deep-planning/templates/design.md
+  tasks     → ~/.openspec/schemas/deep-planning/templates/tasks.md
 ```
 
 ---
@@ -803,8 +803,8 @@ openspec schemas
 ```
 Available schemas:
 
-  spec-driven (package)
-    The default spec-driven development workflow
+  deep-planning (package)
+    The default deep-planning workflow
     Flow: proposal → specs → design → tasks
 
   my-custom (project)
@@ -895,8 +895,8 @@ openspec schema fork <source> [name] [options]
 **Example:**
 
 ```bash
-# Fork the built-in spec-driven schema
-openspec schema fork spec-driven my-workflow
+# Fork the built-in deep-planning schema
+openspec schema fork deep-planning my-workflow
 ```
 
 ---
@@ -959,14 +959,14 @@ openspec schema which [name] [options]
 
 ```bash
 # Check where a schema comes from
-openspec schema which spec-driven
+openspec schema which deep-planning
 ```
 
 **Output:**
 
 ```
-spec-driven resolves from: package
-  Source: /usr/local/lib/node_modules/@fission-ai/openspec/schemas/spec-driven
+deep-planning resolves from: package
+  Source: /usr/local/lib/node_modules/@fission-ai/openspec/schemas/deep-planning
 ```
 
 **Schema precedence:**

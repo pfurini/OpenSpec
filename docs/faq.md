@@ -122,7 +122,7 @@ Yes. Add a language instruction to your config's `context:`. [Multi-Language](mu
 
 ### Can I change the workflow itself?
 
-Yes, with custom schemas. A schema defines which artifacts exist and how they depend on each other. Fork the default with `openspec schema fork spec-driven my-workflow`, then edit it. See [Customization](customization.md#custom-schemas).
+Yes, with custom schemas. A schema defines which artifacts exist and how they depend on each other. Fork the default with `openspec schema fork deep-planning my-workflow`, then edit it. See [Customization](customization.md#custom-schemas).
 
 ## Models, privacy, and upgrades
 

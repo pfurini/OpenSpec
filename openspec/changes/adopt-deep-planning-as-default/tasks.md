@@ -40,7 +40,7 @@ Each `## Wave N` is one fresh-session vertical slice, proven test-first. The sin
 
 ## Wave 2
 
-- [ ] spec-driven evicted from the package; naming it fails with available-schemas error
+- [x] spec-driven evicted from the package; naming it fails with available-schemas error
 - components: Schema eviction (`git rm -r schemas/spec-driven/`; new not-found test proving a config/`--schema` naming spec-driven errors listing available schemas)
 - interfaces: unchanged
 - depends-on: Wave 1

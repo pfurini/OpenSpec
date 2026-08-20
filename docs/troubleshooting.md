@@ -117,7 +117,7 @@ Three usual suspects:
 
 ### "Unknown artifact ID in rules: X"
 
-A key under `rules:` doesn't match any artifact in your schema. For the default `spec-driven` schema the valid IDs are `proposal`, `specs`, `design`, `tasks`. To see the IDs for any schema:
+A key under `rules:` doesn't match any artifact in your schema. For the default `deep-planning` schema the valid IDs are `proposal`, `specs`, `design`, `tasks`. To see the IDs for any schema:
 
 ```bash
 openspec schemas --json

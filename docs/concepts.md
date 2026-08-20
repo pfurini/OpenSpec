@@ -411,8 +411,8 @@ Schemas define the artifact types and their dependencies for a workflow.
 ### How Schemas Work
 
 ```yaml
-# openspec/schemas/spec-driven/schema.yaml
-name: spec-driven
+# openspec/schemas/deep-planning/schema.yaml
+name: deep-planning
 artifacts:
   - id: proposal
     generates: proposal.md
@@ -424,7 +424,7 @@ artifacts:
 
   - id: design
     generates: design.md
-    requires: [proposal]      # Can create in parallel with specs
+    requires: [proposal, specs] # Needs proposal and specs before creating
 
   - id: tasks
     generates: tasks.md
@@ -434,31 +434,32 @@ artifacts:
 **Artifacts form a dependency graph:**
 
 ```
-                    proposal
-                   (root node)
-                       │
-         ┌─────────────┴─────────────┐
-         │                           │
-         ▼                           ▼
-      specs                       design
-   (requires:                  (requires:
-    proposal)                   proposal)
-         │                           │
-         └─────────────┬─────────────┘
-                       │
-                       ▼
-                    tasks
-                (requires:
-                specs, design)
+  proposal
+ (root node)
+     │
+     ▼
+   specs
+(requires:
+ proposal)
+     │
+     ▼
+   design
+(requires: proposal,
+ specs)
+     │
+     ▼
+   tasks
+(requires:
+ specs, design)
 ```
 
-**Dependencies are enablers, not gates.** They show what's possible to create, not what you must create next. You can skip design if you don't need it. You can create specs before or after design — both depend only on proposal.
+**Dependencies are enablers, not gates.** They show what's possible to create, not what you must create next. In the default workflow each artifact builds on the previous one: proposal → specs → design → tasks.
 
 ### Built-in Schemas
 
-**spec-driven** (default)
+**deep-planning** (default)
 
-The standard workflow for spec-driven development:
+The default deep-planning workflow:
 
 ```
 proposal → specs → design → tasks → implement
@@ -475,7 +476,7 @@ Create custom schemas for your team's workflow:
 openspec schema init research-first
 
 # Or fork an existing one
-openspec schema fork spec-driven research-first
+openspec schema fork deep-planning research-first
 ```
 
 **Example custom schema:**

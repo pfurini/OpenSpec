@@ -94,7 +94,7 @@ Start a new change scaffold. Creates the change folder and waits for you to gene
 | Argument | Required | Description |
 |----------|----------|-------------|
 | `change-name` | No | Name for the change folder (prompted if not provided) |
-| `--schema` | No | Workflow schema to use (default: from config or `spec-driven`) |
+| `--schema` | No | Workflow schema to use (default: from config or `deep-planning`) |
 
 **What it does:**
 - Creates `openspec/changes/<change-name>/` directory
@@ -113,7 +113,7 @@ openspec/changes/<change-name>/
 You: /openspec-new-change add-dark-mode
 
 AI:  Created openspec/changes/add-dark-mode/
-     Schema: spec-driven
+     Schema: deep-planning
 
      Ready to create: proposal
      Use /openspec-continue-change to create it.
