@@ -50,7 +50,7 @@ Each `## Wave N` is one fresh-session vertical slice, proven test-first. The sin
 
 ## Wave 3
 
-- [ ] specs and docs stop asserting the old default
+- [x] specs and docs stop asserting the old default
 - components: Truth sweep (delta specs already authored in this change; minimal docs pass over `docs/cli.md`, `docs/opsx.md`, `docs/concepts.md`, `docs/customization.md`, `docs/migration-guide.md`, `docs/glossary.md`, `docs/faq.md`, `docs/multi-language.md`, `docs/troubleshooting.md`, `docs/commands.md`; update ownership map row 2 status)
 - interfaces: unchanged
 - depends-on: Wave 2
