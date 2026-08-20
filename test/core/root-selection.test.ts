@@ -115,7 +115,7 @@ describe('resolveOpenSpecRoot', () => {
     expect(root.changesDir).toBe(path.join(storeRoot, 'openspec', 'changes'));
     expect(root.specsDir).toBe(path.join(storeRoot, 'openspec', 'specs'));
     expect(root.archiveDir).toBe(path.join(storeRoot, 'openspec', 'changes', 'archive'));
-    expect(root.defaultSchema).toBe('spec-driven');
+    expect(root.defaultSchema).toBe('deep-planning');
   });
 
   it('rejects an unknown store id and lists registered ids', async () => {
@@ -217,7 +217,7 @@ describe('resolveOpenSpecRoot', () => {
     expect(root.source).toBe('nearest');
     expect(root.path).toBe(repoRoot);
     expect(root.changesDir).toBe(path.join(repoRoot, 'openspec', 'changes'));
-    expect(root.defaultSchema).toBe('spec-driven');
+    expect(root.defaultSchema).toBe('deep-planning');
   });
 
   it('treats workspace state alone as no root at all', async () => {

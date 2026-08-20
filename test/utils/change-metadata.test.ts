@@ -266,7 +266,7 @@ describe('resolveSchemaForChange', () => {
 
   it('should return default when no metadata and no explicit schema', () => {
     const result = resolveSchemaForChange(changeDir);
-    expect(result).toBe('spec-driven');
+    expect(result).toBe('deep-planning');
   });
 
   it('should fail when metadata exists but cannot be read', async () => {
@@ -351,7 +351,7 @@ describe('resolveSchemaForChange', () => {
 
     // Remove config, default should win
     await fs.unlink(path.join(configDir, 'config.yaml'));
-    expect(resolveSchemaForChange(changeDir)).toBe('spec-driven'); // Default wins
+    expect(resolveSchemaForChange(changeDir)).toBe('deep-planning'); // Default wins
   });
 });
 

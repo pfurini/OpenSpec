@@ -3,7 +3,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';
 import { randomUUID } from 'crypto';
-import { validateChangeName, createChange } from '../../src/utils/change-utils.js';
+import { validateChangeName, createChange, resolveChangeSchema } from '../../src/utils/change-utils.js';
 
 describe('validateChangeName', () => {
   describe('valid names', () => {
@@ -134,7 +134,7 @@ describe('createChange', () => {
 
       const metaPath = path.join(testDir, 'openspec', 'changes', 'add-auth', '.openspec.yaml');
       const content = await fs.readFile(metaPath, 'utf-8');
-      expect(content).toContain('schema: spec-driven');
+      expect(content).toContain('schema: deep-planning');
       expect(content).toMatch(/created: \d{4}-\d{2}-\d{2}/);
     });
 
@@ -197,5 +197,40 @@ describe('createChange', () => {
       const stats = await fs.stat(changeDir);
       expect(stats.isDirectory()).toBe(true);
     });
+  });
+});
+
+describe('resolveChangeSchema', () => {
+  let testDir: string;
+
+  beforeEach(async () => {
+    testDir = path.join(os.tmpdir(), `openspec-resolve-schema-${randomUUID()}`);
+    await fs.mkdir(testDir, { recursive: true });
+  });
+
+  afterEach(async () => {
+    await fs.rm(testDir, { recursive: true, force: true });
+  });
+
+  it('returns the explicit schema when provided', async () => {
+    await fs.mkdir(path.join(testDir, 'openspec'), { recursive: true });
+    await fs.writeFile(path.join(testDir, 'openspec', 'config.yaml'), 'schema: deep-planning\n');
+
+    expect(resolveChangeSchema(testDir, { schema: 'custom', defaultSchema: 'machine-default' })).toBe('custom');
+  });
+
+  it('prefers project config over the machine default', async () => {
+    await fs.mkdir(path.join(testDir, 'openspec'), { recursive: true });
+    await fs.writeFile(path.join(testDir, 'openspec', 'config.yaml'), 'schema: deep-planning\n');
+
+    expect(resolveChangeSchema(testDir, { defaultSchema: 'machine-default' })).toBe('deep-planning');
+  });
+
+  it('falls back to the machine default when no config exists', () => {
+    expect(resolveChangeSchema(testDir, { defaultSchema: 'machine-default' })).toBe('machine-default');
+  });
+
+  it('falls back to the built-in default when neither config nor machine default exists', () => {
+    expect(resolveChangeSchema(testDir)).toBe('deep-planning');
   });
 });
