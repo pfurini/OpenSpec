@@ -30,9 +30,9 @@ ${STORE_SELECTION_GUIDANCE}
    openspec status --change "<name>" --json
    ```
    Parse the JSON to understand:
-   - `schemaName`: The workflow being used (e.g., "spec-driven")
+   - `schemaName`: The workflow being used (e.g., "deep-planning")
    - `planningHome`, `changeRoot`, and `actionContext`: planning scope and edit constraints
-   - Which artifact contains the tasks (typically "tasks" for spec-driven, check status for others)
+   - Which artifact contains the tasks (typically "tasks" for deep-planning, check status for others)
 
 3. **Get apply instructions**
 
@@ -55,7 +55,7 @@ ${STORE_SELECTION_GUIDANCE}
 
    Read every file path listed under `contextFiles` from the apply instructions output.
    The files depend on the schema being used:
-   - **spec-driven**: proposal, specs, design, tasks
+   - **deep-planning**: proposal, specs, design, tasks
    - Other schemas: follow the contextFiles from CLI output
 
 5. **Show current progress**

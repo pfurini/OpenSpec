@@ -22,7 +22,7 @@ ${STORE_SELECTION_GUIDANCE}
 
    Present the top 3-4 most recently modified changes as options, showing:
    - Change name
-   - Schema (from `schema` field if present, otherwise "spec-driven")
+   - Schema (from `schema` field if present, otherwise "deep-planning")
    - Status (e.g., "0/5 tasks", "complete", "no tasks")
    - How recently it was modified (from `lastModified` field)
 
@@ -35,7 +35,7 @@ ${STORE_SELECTION_GUIDANCE}
    openspec status --change "<name>" --json
    ```
    Parse the JSON to understand current state. The response includes:
-   - `schemaName`: The workflow schema being used (e.g., "spec-driven")
+   - `schemaName`: The workflow schema being used (e.g., "deep-planning")
    - `artifacts`: Array of artifacts with their status ("done", "ready", "blocked")
    - `isComplete`: Boolean indicating if all artifacts are complete
    - `continueMode`: How to advance — `"step"` (one artifact per invocation, default) or `"flow-to-gate"` (draft consecutive ungated artifacts, stop at a gate)
@@ -102,7 +102,7 @@ The artifact types and their purpose depend on the schema. Use the `instruction`
 
 Common artifact patterns:
 
-**spec-driven schema** (proposal → specs → design → tasks):
+**deep-planning schema** (proposal → specs → design → tasks):
 - **proposal.md**: Ask user about the change if not clear. Fill in Why, What Changes, Capabilities, Impact.
   - The Capabilities section is critical - each capability listed will need a spec file.
 - **specs/<capability>/spec.md**: Create one spec per capability listed in the proposal's Capabilities section (use the capability name, not the change name).
