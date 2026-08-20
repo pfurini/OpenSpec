@@ -153,6 +153,12 @@ describe('createChange', () => {
         /Unknown schema/
       );
     });
+
+    it('should reject the evicted spec-driven schema and list available schemas', async () => {
+      await expect(createChange(testDir, 'add-auth', { schema: 'spec-driven' })).rejects.toThrow(
+        /Unknown schema 'spec-driven'\. Available: .*deep-planning/
+      );
+    });
   });
 
   describe('duplicate change throws error', () => {
