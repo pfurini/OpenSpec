@@ -1,0 +1,53 @@
+{
+  "nextId": 5,
+  "tasks": [
+    {
+      "id": "1",
+      "subject": "Wave 0: flip default schema to deep-planning + spinner fix",
+      "description": "RED: update default-asserting tests to expect deep-planning. GREEN: flip constants in shared.ts, change-metadata.ts, change-utils.ts, root-selection.ts, init.ts, planning-home.ts, openspec-root.ts; fix new-change.ts spinner to announce resolved schema. Acceptance: build + full suite green with schemas/spec-driven still on disk.",
+      "status": "completed",
+      "activeForm": "Flipping default schema to deep-planning",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1787247901102,
+      "updatedAt": 1787249379129
+    },
+    {
+      "id": "2",
+      "subject": "Wave 1: repoint test suite off spec-driven",
+      "description": "Repoint name-only spec-driven usages in test/** (fixtures helper, schema.test.ts, resolver.test.ts, instruction-loader.test.ts, etc.) to deep-planning or test-local names. Acceptance: suite green; grep -rn \"spec-driven\" test/ yields zero (or documented intentional) matches.",
+      "status": "completed",
+      "activeForm": "Repointing tests off spec-driven",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1787247901102,
+      "updatedAt": 1787249835920
+    },
+    {
+      "id": "3",
+      "subject": "Wave 2: evict schemas/spec-driven + not-found coverage",
+      "description": "git rm -r schemas/spec-driven/; add test proving a config/--schema naming spec-driven fails with available-schemas error. Acceptance: suite green; openspec schemas lists only deep-planning.",
+      "status": "in_progress",
+      "activeForm": "Evicting schemas/spec-driven",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1787247901103,
+      "updatedAt": 1787249856675
+    },
+    {
+      "id": "4",
+      "subject": "Wave 3: docs truth sweep + ownership map update",
+      "description": "Minimal docs pass removing spec-driven-as-default/the-workflow statements in docs/*.md; update make-this-fork-mine.md row 2 status. Acceptance: openspec validate --all clean; grep docs/ yields only historical/generic mentions.",
+      "status": "pending",
+      "activeForm": "Sweeping docs for spec-driven default claims",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1787247901103,
+      "updatedAt": 1787247901103
+    }
+  ]
+}

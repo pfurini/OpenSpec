@@ -20,7 +20,7 @@ Each `## Wave N` is one fresh-session vertical slice, proven test-first. The sin
 
 ## Wave 0
 
-- [ ] deep-planning is the resolved default everywhere; new-change spinner tells the truth
+- [x] deep-planning is the resolved default everywhere; new-change spinner tells the truth
 - components: Default flip (`src/commands/workflow/shared.ts`, `src/utils/change-metadata.ts`, `src/utils/change-utils.ts`, `src/core/root-selection.ts`, `src/core/init.ts`, `src/core/planning-home.ts`, `src/core/openspec-root.ts`, `src/commands/workflow/new-change.ts`; comment strings in `src/core/artifact-graph/instruction-loader.ts`, `src/core/artifact-graph/resolver.ts`, `src/core/project-config.ts`)
 - interfaces: unchanged — only default string values flip
 - depends-on: —
@@ -30,7 +30,7 @@ Each `## Wave N` is one fresh-session vertical slice, proven test-first. The sin
 
 ## Wave 1
 
-- [ ] test suite no longer references spec-driven unintentionally
+- [x] test suite no longer references spec-driven unintentionally
 - components: Test repoint (`test/helpers/openspec-fixtures.ts` + all `test/**` files referencing spec-driven: repoint name-only usages to deep-planning or test-local names)
 - interfaces: unchanged
 - depends-on: Wave 0
