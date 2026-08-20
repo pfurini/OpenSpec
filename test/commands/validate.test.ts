@@ -148,7 +148,7 @@ describe('top-level validate command', () => {
     const changeDir = path.join(changesDir, 'scaffolded');
     const deltaDir = path.join(changeDir, 'specs', 'alpha');
     await fs.mkdir(deltaDir, { recursive: true });
-    await fs.writeFile(path.join(changeDir, '.openspec.yaml'), 'schema: spec-driven\n', 'utf-8');
+    await fs.writeFile(path.join(changeDir, '.openspec.yaml'), 'schema: deep-planning\n', 'utf-8');
     await fs.writeFile(path.join(deltaDir, 'spec.md'), validDelta, 'utf-8');
 
     const result = await runCLI(['validate', 'scaffolded'], { cwd: testDir });
@@ -160,7 +160,7 @@ describe('top-level validate command', () => {
     // Resolves by directory existence, then fails validation (no deltas).
     const changeDir = path.join(changesDir, 'scaffolded-empty');
     await fs.mkdir(changeDir, { recursive: true });
-    await fs.writeFile(path.join(changeDir, '.openspec.yaml'), 'schema: spec-driven\n', 'utf-8');
+    await fs.writeFile(path.join(changeDir, '.openspec.yaml'), 'schema: deep-planning\n', 'utf-8');
 
     const result = await runCLI(['validate', 'scaffolded-empty'], { cwd: testDir });
     expect(result.stderr).not.toContain('Unknown item');
@@ -173,7 +173,7 @@ describe('top-level validate command', () => {
     const deltaDir = path.join(isoChanges, 'only', 'specs', 'alpha');
     await fs.mkdir(deltaDir, { recursive: true });
     try {
-      await fs.writeFile(path.join(isoChanges, 'only', '.openspec.yaml'), 'schema: spec-driven\n', 'utf-8');
+      await fs.writeFile(path.join(isoChanges, 'only', '.openspec.yaml'), 'schema: deep-planning\n', 'utf-8');
       await fs.writeFile(path.join(deltaDir, 'spec.md'), validDelta, 'utf-8');
 
       const result = await runCLI(['validate', '--all'], { cwd: isoRoot });

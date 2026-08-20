@@ -34,14 +34,14 @@ describe('artifact-graph workflow integration', () => {
     }
   });
 
-  describe('spec-driven workflow', () => {
+  describe('deep-planning workflow', () => {
     it('should progress through complete workflow', () => {
       // 1. Resolve the real built-in schema
-      const schema = resolveSchema('spec-driven');
+      const schema = resolveSchema('deep-planning');
       const graph = ArtifactGraph.fromSchema(schema);
 
       // Verify schema structure
-      expect(graph.getName()).toBe('spec-driven');
+      expect(graph.getName()).toBe('deep-planning');
       expect(graph.getAllArtifacts()).toHaveLength(4);
 
       // 2. Initial state - nothing complete, only proposal is ready
@@ -51,34 +51,35 @@ describe('artifact-graph workflow integration', () => {
       expect(graph.isComplete(completed)).toBe(false);
       expect(normalizeBlocked(graph.getBlocked(completed))).toEqual({
         specs: ['proposal'],
-        design: ['proposal'],
+        design: ['proposal', 'specs'],
         tasks: ['design', 'specs'],
       });
 
-      // 3. Create proposal.md - now specs and design become ready
+      // 3. Create proposal.md - specs becomes ready (deep-planning is a linear chain)
       fs.writeFileSync(path.join(tempDir, 'proposal.md'), '# Proposal\n\nInitial proposal content.');
       completed = detectCompleted(graph, tempDir);
       expect(completed).toEqual(new Set(['proposal']));
-      expect(graph.getNextArtifacts(completed).sort()).toEqual(['design', 'specs']);
+      expect(graph.getNextArtifacts(completed)).toEqual(['specs']);
       expect(normalizeBlocked(graph.getBlocked(completed))).toEqual({
+        design: ['specs'],
         tasks: ['design', 'specs'],
       });
 
-      // 4. Create design.md - specs still needed for tasks
-      fs.writeFileSync(path.join(tempDir, 'design.md'), '# Design\n\nTechnical design content.');
-      completed = detectCompleted(graph, tempDir);
-      expect(completed).toEqual(new Set(['proposal', 'design']));
-      expect(graph.getNextArtifacts(completed)).toEqual(['specs']);
-      expect(graph.getBlocked(completed)).toEqual({
-        tasks: ['specs'],
-      });
-
-      // 5. Create specs directory with a spec file - tasks becomes ready
+      // 4. Create a spec file - design becomes ready
       const specsDir = path.join(tempDir, 'specs');
       fs.mkdirSync(specsDir, { recursive: true });
       fs.writeFileSync(path.join(specsDir, 'feature-auth.md'), '# Auth Spec\n\nAuthentication specification.');
       completed = detectCompleted(graph, tempDir);
-      expect(completed).toEqual(new Set(['proposal', 'design', 'specs']));
+      expect(completed).toEqual(new Set(['proposal', 'specs']));
+      expect(graph.getNextArtifacts(completed)).toEqual(['design']);
+      expect(normalizeBlocked(graph.getBlocked(completed))).toEqual({
+        tasks: ['design'],
+      });
+
+      // 5. Create design.md - tasks becomes ready
+      fs.writeFileSync(path.join(tempDir, 'design.md'), '# Design\n\nTechnical design content.');
+      completed = detectCompleted(graph, tempDir);
+      expect(completed).toEqual(new Set(['proposal', 'specs', 'design']));
       expect(graph.getNextArtifacts(completed)).toEqual(['tasks']);
       expect(graph.getBlocked(completed)).toEqual({});
 
@@ -92,7 +93,7 @@ describe('artifact-graph workflow integration', () => {
     });
 
     it('should handle out-of-order file creation', () => {
-      const schema = resolveSchema('spec-driven');
+      const schema = resolveSchema('deep-planning');
       const graph = ArtifactGraph.fromSchema(schema);
 
       // Create files in wrong order - design before proposal
@@ -113,7 +114,7 @@ describe('artifact-graph workflow integration', () => {
     });
 
     it('should handle multiple spec files in glob pattern', () => {
-      const schema = resolveSchema('spec-driven');
+      const schema = resolveSchema('deep-planning');
       const graph = ArtifactGraph.fromSchema(schema);
 
       // Complete prerequisites
@@ -133,7 +134,7 @@ describe('artifact-graph workflow integration', () => {
 
   describe('build order consistency', () => {
     it('should return consistent build order across multiple calls', () => {
-      const schema = resolveSchema('spec-driven');
+      const schema = resolveSchema('deep-planning');
       const graph = ArtifactGraph.fromSchema(schema);
 
       const order1 = graph.getBuildOrder();
@@ -147,7 +148,7 @@ describe('artifact-graph workflow integration', () => {
 
   describe('empty and edge cases', () => {
     it('should handle empty change directory gracefully', () => {
-      const schema = resolveSchema('spec-driven');
+      const schema = resolveSchema('deep-planning');
       const graph = ArtifactGraph.fromSchema(schema);
 
       // Directory exists but is empty
@@ -157,7 +158,7 @@ describe('artifact-graph workflow integration', () => {
     });
 
     it('should handle non-existent change directory', () => {
-      const schema = resolveSchema('spec-driven');
+      const schema = resolveSchema('deep-planning');
       const graph = ArtifactGraph.fromSchema(schema);
 
       const nonExistentDir = path.join(tempDir, 'does-not-exist');
@@ -166,7 +167,7 @@ describe('artifact-graph workflow integration', () => {
     });
 
     it('should not count non-matching files in glob directories', () => {
-      const schema = resolveSchema('spec-driven');
+      const schema = resolveSchema('deep-planning');
       const graph = ArtifactGraph.fromSchema(schema);
 
       // Create specs directory with wrong file types

@@ -75,7 +75,7 @@ describe('store root selection for normal commands', () => {
   function createOpenSpecRoot(rootDir: string): void {
     fs.mkdirSync(path.join(rootDir, 'openspec', 'specs'), { recursive: true });
     fs.mkdirSync(path.join(rootDir, 'openspec', 'changes', 'archive'), { recursive: true });
-    fs.writeFileSync(path.join(rootDir, 'openspec', 'config.yaml'), 'schema: spec-driven\n');
+    fs.writeFileSync(path.join(rootDir, 'openspec', 'config.yaml'), 'schema: deep-planning\n');
   }
 
   async function registerStoreFixture(id: string): Promise<string> {
@@ -190,7 +190,7 @@ describe('store root selection for normal commands', () => {
       expect(status.exitCode).toBe(0);
       const statusJson = parseJson(status);
       expect(statusJson.changeName).toBe('store-change');
-      expect(statusJson.schemaName).toBe('spec-driven');
+      expect(statusJson.schemaName).toBe('deep-planning');
       expect(statusJson.root).toEqual({
         path: storeRoot,
         source: 'store',
@@ -458,7 +458,7 @@ describe('store root selection for normal commands', () => {
       });
       expect(result.exitCode).toBe(0);
       const json = parseJson(result);
-      expect(json.schemaName).toBe('spec-driven');
+      expect(json.schemaName).toBe('deep-planning');
       expect(json.root.source).toBe('nearest');
       expect(json.root.store_id).toBeUndefined();
     });

@@ -59,24 +59,24 @@ describe('schema command', () => {
         '../../src/core/artifact-graph/resolver.js'
       );
 
-      // Verify spec-driven exists in package
+      // Verify deep-planning exists in package
       const schemas = listSchemas(tempDir);
-      expect(schemas).toContain('spec-driven');
+      expect(schemas).toContain('deep-planning');
 
-      const schemaDir = getSchemaDir('spec-driven', tempDir);
+      const schemaDir = getSchemaDir('deep-planning', tempDir);
       expect(schemaDir).not.toBeNull();
       expect(schemaDir).toContain('schemas');
     });
 
     it('should detect project schema shadowing package', async () => {
-      // Create a project-local spec-driven schema
-      const projectSchemaDir = path.join(tempDir, 'openspec', 'schemas', 'spec-driven');
+      // Create a project-local deep-planning schema
+      const projectSchemaDir = path.join(tempDir, 'openspec', 'schemas', 'deep-planning');
       fs.mkdirSync(projectSchemaDir, { recursive: true });
       fs.writeFileSync(
         path.join(projectSchemaDir, 'schema.yaml'),
-        `name: spec-driven
+        `name: deep-planning
 version: 1
-description: Custom spec-driven
+description: Custom deep-planning
 artifacts:
   - id: proposal
     generates: proposal.md
@@ -89,7 +89,7 @@ artifacts:
       const { getSchemaDir } = await import('../../src/core/artifact-graph/resolver.js');
 
       // Should resolve to project
-      const schemaDir = getSchemaDir('spec-driven', tempDir);
+      const schemaDir = getSchemaDir('deep-planning', tempDir);
       expect(schemaDir).toBe(projectSchemaDir);
     });
 
@@ -98,7 +98,7 @@ artifacts:
 
       const schemas = listSchemas(tempDir);
       expect(schemas.length).toBeGreaterThan(0);
-      expect(schemas).toContain('spec-driven');
+      expect(schemas).toContain('deep-planning');
     });
   });
 
@@ -203,8 +203,8 @@ artifacts:
     it('should copy schema to project directory', async () => {
       const { getSchemaDir } = await import('../../src/core/artifact-graph/resolver.js');
 
-      // Get the package spec-driven schema
-      const sourceDir = getSchemaDir('spec-driven', tempDir);
+      // Get the package deep-planning schema
+      const sourceDir = getSchemaDir('deep-planning', tempDir);
       expect(sourceDir).not.toBeNull();
 
       // Copy manually to simulate fork
@@ -353,7 +353,7 @@ artifacts:
     it('should include expected fields in fork JSON', () => {
       const forkResult = {
         forked: true,
-        source: 'spec-driven',
+        source: 'deep-planning',
         sourcePath: '/path/to/source',
         sourceLocation: 'package',
         destination: 'my-custom',

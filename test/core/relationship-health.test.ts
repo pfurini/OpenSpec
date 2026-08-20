@@ -10,7 +10,7 @@ const root = {
   changesDir: '/team/store/openspec/changes',
   specsDir: '/team/store/openspec/specs',
   archiveDir: '/team/store/openspec/changes/archive',
-  defaultSchema: 'spec-driven',
+  defaultSchema: 'deep-planning',
 } as ResolvedOpenSpecRoot;
 
 function baseInput() {

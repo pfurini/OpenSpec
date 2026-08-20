@@ -49,7 +49,7 @@ describe('resolveOpenSpecRoot', () => {
   function createOpenSpecRoot(rootDir: string): void {
     fs.mkdirSync(path.join(rootDir, 'openspec', 'specs'), { recursive: true });
     fs.mkdirSync(path.join(rootDir, 'openspec', 'changes', 'archive'), { recursive: true });
-    fs.writeFileSync(path.join(rootDir, 'openspec', 'config.yaml'), 'schema: spec-driven\n');
+    fs.writeFileSync(path.join(rootDir, 'openspec', 'config.yaml'), 'schema: deep-planning\n');
   }
 
   async function registerStore(
@@ -325,7 +325,7 @@ describe('resolveOpenSpecRoot', () => {
       createOpenSpecRoot(repo);
       fs.writeFileSync(
         path.join(repo, 'openspec', 'config.yaml'),
-        'schema: spec-driven\nstore: team-context\n'
+        'schema: deep-planning\nstore: team-context\n'
       );
 
       const warnings: string[] = [];
@@ -347,7 +347,7 @@ describe('resolveOpenSpecRoot', () => {
 
     it('keeps config-only directories without a pointer as plain roots', async () => {
       await registerStore('team-context');
-      const dir = createPointerDir('plain-config-only', 'schema: spec-driven\n');
+      const dir = createPointerDir('plain-config-only', 'schema: deep-planning\n');
 
       const warnings: string[] = [];
       const original = console.error;
@@ -457,7 +457,7 @@ describe('resolveOpenSpecRoot', () => {
       const storeRoot = await registerStore('team-context');
       fs.writeFileSync(
         path.join(storeRoot, 'openspec', 'config.yaml'),
-        'schema: spec-driven\nstore: somewhere-else\n'
+        'schema: deep-planning\nstore: somewhere-else\n'
       );
       const pointerDir = createPointerDir('app-repo', 'store: team-context\n');
 

@@ -35,7 +35,7 @@ describe('openspec context (4.1)', () => {
 
     fs.writeFileSync(
       path.join(storeRoot, 'openspec', 'config.yaml'),
-      'schema: spec-driven\n' +
+      'schema: deep-planning\n' +
         'references:\n  - upstream-context\n  - { id: design-system, remote: https://192.0.2.1/ds.git }\n'
     );
   });
@@ -106,7 +106,7 @@ describe('openspec context (4.1)', () => {
   it('distinguishes self-reference omission from nothing declared', async () => {
     fs.writeFileSync(
       path.join(storeRoot, 'openspec', 'config.yaml'),
-      'schema: spec-driven\nreferences:\n  - team-context\n'
+      'schema: deep-planning\nreferences:\n  - team-context\n'
     );
     const human = await runCLI(['context', '--store', 'team-context'], { cwd: tempDir, env });
     expect(human.stdout).toContain('Declared references all resolve to this root');
@@ -114,7 +114,7 @@ describe('openspec context (4.1)', () => {
   });
 
   it('says so plainly when nothing is declared', async () => {
-    fs.writeFileSync(path.join(storeRoot, 'openspec', 'config.yaml'), 'schema: spec-driven\n');
+    fs.writeFileSync(path.join(storeRoot, 'openspec', 'config.yaml'), 'schema: deep-planning\n');
     const human = await runCLI(['context', '--store', 'team-context'], { cwd: tempDir, env });
     expect(human.stdout).toContain('the working set is this root alone');
     const json = await runCLI(['context', '--json', '--store', 'team-context'], {

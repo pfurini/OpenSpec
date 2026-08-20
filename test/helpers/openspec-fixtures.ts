@@ -5,7 +5,7 @@ import * as path from 'node:path';
 export function createOpenSpecRoot(rootDir: string): void {
   fs.mkdirSync(path.join(rootDir, 'openspec', 'specs'), { recursive: true });
   fs.mkdirSync(path.join(rootDir, 'openspec', 'changes', 'archive'), { recursive: true });
-  fs.writeFileSync(path.join(rootDir, 'openspec', 'config.yaml'), 'schema: spec-driven\n');
+  fs.writeFileSync(path.join(rootDir, 'openspec', 'config.yaml'), 'schema: deep-planning\n');
 }
 
 /** Writes a spec file under the root's openspec/specs/<id>/spec.md. */

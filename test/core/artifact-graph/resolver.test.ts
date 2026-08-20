@@ -51,45 +51,45 @@ describe('artifact-graph/resolver', () => {
     });
 
     it('should return package dir for built-in schema', () => {
-      const dir = getSchemaDir('spec-driven');
+      const dir = getSchemaDir('deep-planning');
       expect(dir).not.toBeNull();
       expect(dir).toContain('schemas');
-      expect(dir).toContain('spec-driven');
+      expect(dir).toContain('deep-planning');
     });
 
     it('should prefer user override directory', () => {
       process.env.XDG_DATA_HOME = tempDir;
-      const userSchemaDir = path.join(tempDir, 'openspec', 'schemas', 'spec-driven');
+      const userSchemaDir = path.join(tempDir, 'openspec', 'schemas', 'deep-planning');
       fs.mkdirSync(userSchemaDir, { recursive: true });
       fs.writeFileSync(
         path.join(userSchemaDir, 'schema.yaml'),
         'name: custom\nversion: 1\nartifacts: []'
       );
 
-      const dir = getSchemaDir('spec-driven');
+      const dir = getSchemaDir('deep-planning');
       expect(dir).toBe(userSchemaDir);
     });
   });
 
   describe('resolveSchema', () => {
-    it('should return built-in spec-driven schema', () => {
-      const schema = resolveSchema('spec-driven');
+    it('should return built-in deep-planning schema', () => {
+      const schema = resolveSchema('deep-planning');
 
-      expect(schema.name).toBe('spec-driven');
+      expect(schema.name).toBe('deep-planning');
       expect(schema.version).toBe(1);
       expect(schema.artifacts.length).toBeGreaterThan(0);
     });
 
     it('should strip .yaml extension from name', () => {
-      const schema1 = resolveSchema('spec-driven');
-      const schema2 = resolveSchema('spec-driven.yaml');
+      const schema1 = resolveSchema('deep-planning');
+      const schema2 = resolveSchema('deep-planning.yaml');
 
       expect(schema1).toEqual(schema2);
     });
 
     it('should strip .yml extension from name', () => {
-      const schema1 = resolveSchema('spec-driven');
-      const schema2 = resolveSchema('spec-driven.yml');
+      const schema1 = resolveSchema('deep-planning');
+      const schema2 = resolveSchema('deep-planning.yml');
 
       expect(schema1).toEqual(schema2);
     });
@@ -97,7 +97,7 @@ describe('artifact-graph/resolver', () => {
     it('should prefer user override over built-in', () => {
       // Set up global data dir
       process.env.XDG_DATA_HOME = tempDir;
-      const userSchemaDir = path.join(tempDir, 'openspec', 'schemas', 'spec-driven');
+      const userSchemaDir = path.join(tempDir, 'openspec', 'schemas', 'deep-planning');
       fs.mkdirSync(userSchemaDir, { recursive: true });
 
       // Create a custom schema with same name as built-in
@@ -112,7 +112,7 @@ artifacts:
 `;
       fs.writeFileSync(path.join(userSchemaDir, 'schema.yaml'), customSchema);
 
-      const schema = resolveSchema('spec-driven');
+      const schema = resolveSchema('deep-planning');
 
       expect(schema.name).toBe('custom-override');
       expect(schema.version).toBe(99);
@@ -120,7 +120,7 @@ artifacts:
 
     it('should validate user override and throw on invalid schema', () => {
       process.env.XDG_DATA_HOME = tempDir;
-      const userSchemaDir = path.join(tempDir, 'openspec', 'schemas', 'spec-driven');
+      const userSchemaDir = path.join(tempDir, 'openspec', 'schemas', 'deep-planning');
       fs.mkdirSync(userSchemaDir, { recursive: true });
 
       // Create an invalid schema (missing required fields)
@@ -133,12 +133,12 @@ artifacts:
 `;
       fs.writeFileSync(path.join(userSchemaDir, 'schema.yaml'), invalidSchema);
 
-      expect(() => resolveSchema('spec-driven')).toThrow(SchemaLoadError);
+      expect(() => resolveSchema('deep-planning')).toThrow(SchemaLoadError);
     });
 
     it('should include file path in validation error message', () => {
       process.env.XDG_DATA_HOME = tempDir;
-      const userSchemaDir = path.join(tempDir, 'openspec', 'schemas', 'spec-driven');
+      const userSchemaDir = path.join(tempDir, 'openspec', 'schemas', 'deep-planning');
       fs.mkdirSync(userSchemaDir, { recursive: true });
 
       const invalidSchema = `
@@ -151,7 +151,7 @@ artifacts:
       fs.writeFileSync(schemaPath, invalidSchema);
 
       try {
-        resolveSchema('spec-driven');
+        resolveSchema('deep-planning');
         expect.fail('Should have thrown');
       } catch (e) {
         const error = e as SchemaLoadError;
@@ -163,7 +163,7 @@ artifacts:
 
     it('should detect cycles in user override schemas', () => {
       process.env.XDG_DATA_HOME = tempDir;
-      const userSchemaDir = path.join(tempDir, 'openspec', 'schemas', 'spec-driven');
+      const userSchemaDir = path.join(tempDir, 'openspec', 'schemas', 'deep-planning');
       fs.mkdirSync(userSchemaDir, { recursive: true });
 
       // Create a schema with cyclic dependencies
@@ -184,12 +184,12 @@ artifacts:
 `;
       fs.writeFileSync(path.join(userSchemaDir, 'schema.yaml'), cyclicSchema);
 
-      expect(() => resolveSchema('spec-driven')).toThrow(/Cyclic dependency/);
+      expect(() => resolveSchema('deep-planning')).toThrow(/Cyclic dependency/);
     });
 
     it('should detect invalid requires references in user override schemas', () => {
       process.env.XDG_DATA_HOME = tempDir;
-      const userSchemaDir = path.join(tempDir, 'openspec', 'schemas', 'spec-driven');
+      const userSchemaDir = path.join(tempDir, 'openspec', 'schemas', 'deep-planning');
       fs.mkdirSync(userSchemaDir, { recursive: true });
 
       // Create a schema with invalid requires reference
@@ -205,12 +205,12 @@ artifacts:
 `;
       fs.writeFileSync(path.join(userSchemaDir, 'schema.yaml'), invalidRefSchema);
 
-      expect(() => resolveSchema('spec-driven')).toThrow(/does not exist/);
+      expect(() => resolveSchema('deep-planning')).toThrow(/does not exist/);
     });
 
     it('should throw SchemaLoadError on YAML syntax errors', () => {
       process.env.XDG_DATA_HOME = tempDir;
-      const userSchemaDir = path.join(tempDir, 'openspec', 'schemas', 'spec-driven');
+      const userSchemaDir = path.join(tempDir, 'openspec', 'schemas', 'deep-planning');
       fs.mkdirSync(userSchemaDir, { recursive: true });
 
       // Create malformed YAML
@@ -222,7 +222,7 @@ version: [[[invalid yaml
       fs.writeFileSync(schemaPath, malformedYaml);
 
       try {
-        resolveSchema('spec-driven');
+        resolveSchema('deep-planning');
         expect.fail('Should have thrown');
       } catch (e) {
         expect(e).toBeInstanceOf(SchemaLoadError);
@@ -236,9 +236,9 @@ version: [[[invalid yaml
       process.env.XDG_DATA_HOME = tempDir;
       // Don't create any user schemas
 
-      const schema = resolveSchema('spec-driven');
+      const schema = resolveSchema('deep-planning');
 
-      expect(schema.name).toBe('spec-driven');
+      expect(schema.name).toBe('deep-planning');
       expect(schema.version).toBe(1);
     });
 
@@ -252,7 +252,7 @@ version: [[[invalid yaml
         expect.fail('Should have thrown');
       } catch (e) {
         const error = e as Error;
-        expect(error.message).toContain('spec-driven');
+        expect(error.message).toContain('deep-planning');
       }
     });
   });
@@ -261,7 +261,7 @@ version: [[[invalid yaml
     it('should list built-in schemas', () => {
       const schemas = listSchemas();
 
-      expect(schemas).toContain('spec-driven');
+      expect(schemas).toContain('deep-planning');
     });
 
     it('should include user override schemas', () => {
@@ -273,20 +273,20 @@ version: [[[invalid yaml
       const schemas = listSchemas();
 
       expect(schemas).toContain('custom-workflow');
-      expect(schemas).toContain('spec-driven');
+      expect(schemas).toContain('deep-planning');
     });
 
     it('should deduplicate schemas with same name', () => {
       process.env.XDG_DATA_HOME = tempDir;
-      const userSchemaDir = path.join(tempDir, 'openspec', 'schemas', 'spec-driven');
+      const userSchemaDir = path.join(tempDir, 'openspec', 'schemas', 'deep-planning');
       fs.mkdirSync(userSchemaDir, { recursive: true });
-      // Override spec-driven
+      // Override deep-planning
       fs.writeFileSync(path.join(userSchemaDir, 'schema.yaml'), 'name: custom\nversion: 1\nartifacts: []');
 
       const schemas = listSchemas();
 
       // Should only appear once
-      const count = schemas.filter(s => s === 'spec-driven').length;
+      const count = schemas.filter(s => s === 'deep-planning').length;
       expect(count).toBe(1);
     });
 
@@ -366,14 +366,14 @@ version: [[[invalid yaml
     it('should prefer project-local schema over package built-in', () => {
       // Set up project-local schema that overrides built-in
       const projectRoot = path.join(tempDir, 'project');
-      const projectSchemaDir = path.join(projectRoot, 'openspec', 'schemas', 'spec-driven');
+      const projectSchemaDir = path.join(projectRoot, 'openspec', 'schemas', 'deep-planning');
       fs.mkdirSync(projectSchemaDir, { recursive: true });
       fs.writeFileSync(
         path.join(projectSchemaDir, 'schema.yaml'),
-        'name: project-spec-driven\nversion: 99\nartifacts: []\n'
+        'name: project-deep-planning\nversion: 99\nartifacts: []\n'
       );
 
-      const dir = getSchemaDir('spec-driven', projectRoot);
+      const dir = getSchemaDir('deep-planning', projectRoot);
       expect(dir).toBe(projectSchemaDir);
     });
 
@@ -398,7 +398,7 @@ version: [[[invalid yaml
       const projectRoot = path.join(tempDir, 'project');
       fs.mkdirSync(projectRoot, { recursive: true });
 
-      const dir = getSchemaDir('spec-driven', projectRoot);
+      const dir = getSchemaDir('deep-planning', projectRoot);
       expect(dir).not.toBeNull();
       // Should be package path, not project or user
       expect(dir).not.toContain(projectRoot);
@@ -503,7 +503,7 @@ artifacts:
 
       const schemas = listSchemas(projectRoot);
       expect(schemas).toContain('team-workflow');
-      expect(schemas).toContain('spec-driven'); // built-in still included
+      expect(schemas).toContain('deep-planning'); // built-in still included
     });
 
     it('should deduplicate project-local schema that shadows user override', () => {
@@ -575,7 +575,7 @@ artifacts:
       fs.mkdirSync(projectRoot, { recursive: true });
 
       const schemas = listSchemasWithInfo(projectRoot);
-      const specDriven = schemas.find(s => s.name === 'spec-driven');
+      const specDriven = schemas.find(s => s.name === 'deep-planning');
       expect(specDriven).toBeDefined();
       expect(specDriven!.source).toBe('package');
     });

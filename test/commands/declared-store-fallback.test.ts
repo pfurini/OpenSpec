@@ -133,7 +133,7 @@ describe('declared store fallback (3.2)', () => {
     await registerStore({ id: 'upstream-context', localPath: upstreamRoot, globalDataDir });
     fs.writeFileSync(
       path.join(storeRoot, 'openspec', 'config.yaml'),
-      'schema: spec-driven\nreferences:\n  - upstream-context\n'
+      'schema: deep-planning\nreferences:\n  - upstream-context\n'
     );
 
     const created = await runCLI(['new', 'change', 'ref-check', '--json'], {
@@ -166,7 +166,7 @@ describe('declared store fallback (3.2)', () => {
     }
 
     // Conversion: remove the line, rerun, get a normal local root.
-    fs.writeFileSync(path.join(pointerRepo, 'openspec', 'config.yaml'), 'schema: spec-driven\n');
+    fs.writeFileSync(path.join(pointerRepo, 'openspec', 'config.yaml'), 'schema: deep-planning\n');
     const converted = await runCLI(['init', '.', '--tools', 'none'], {
       cwd: pointerRepo,
       env,
@@ -207,8 +207,8 @@ describe('declared store fallback (3.2)', () => {
     const runs: Record<string, { stdout: string; warnings: number }> = {};
 
     for (const [label, config] of [
-      ['without', 'schema: spec-driven\n'],
-      ['with', 'schema: spec-driven\nstore: team-context\n'],
+      ['without', 'schema: deep-planning\n'],
+      ['with', 'schema: deep-planning\nstore: team-context\n'],
     ] as const) {
       fs.writeFileSync(path.join(realRepo, 'openspec', 'config.yaml'), config);
       const result = await runCLI(['list', '--json'], { cwd: realRepo, env });

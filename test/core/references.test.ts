@@ -85,7 +85,7 @@ describe('reference index assembly', () => {
       path: rootDir,
       source: 'nearest',
       changesDir: path.join(rootDir, 'openspec', 'changes'),
-      defaultSchema: 'spec-driven',
+      defaultSchema: 'deep-planning',
     } as ResolvedOpenSpecRoot;
   }
 
@@ -280,7 +280,7 @@ describe('reference index assembly', () => {
         source: 'store',
         storeId: 'self-store',
         changesDir: path.join(root, 'openspec', 'changes'),
-        defaultSchema: 'spec-driven',
+        defaultSchema: 'deep-planning',
       } as ResolvedOpenSpecRoot,
       globalDataDir,
     });
@@ -302,7 +302,7 @@ describe('reference index assembly', () => {
         source: 'store',
         storeId: 'self-context',
         changesDir: path.join(storeRoot, 'openspec', 'changes'),
-        defaultSchema: 'spec-driven',
+        defaultSchema: 'deep-planning',
       } as ResolvedOpenSpecRoot,
       globalDataDir,
     });
@@ -314,7 +314,7 @@ describe('reference index assembly', () => {
         path: storeRoot,
         source: 'nearest',
         changesDir: path.join(storeRoot, 'openspec', 'changes'),
-        defaultSchema: 'spec-driven',
+        defaultSchema: 'deep-planning',
       } as ResolvedOpenSpecRoot,
       globalDataDir,
     });

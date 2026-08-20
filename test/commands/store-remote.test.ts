@@ -371,7 +371,7 @@ describe('store canonical remote (3.3)', () => {
       fs.mkdirSync(path.join(appRepo, 'openspec'), { recursive: true });
       fs.writeFileSync(
         path.join(appRepo, 'openspec', 'config.yaml'),
-        'schema: spec-driven\nreferences:\n' +
+        'schema: deep-planning\nreferences:\n' +
           `  - { id: team-context, remote: ${originRemote} }\n`
       );
       fs.mkdirSync(path.join(appRepo, 'openspec', 'specs'), { recursive: true });

@@ -29,7 +29,7 @@ describe('project-config', () => {
         fs.mkdirSync(configDir, { recursive: true });
         fs.writeFileSync(
           path.join(configDir, 'config.yaml'),
-          `schema: spec-driven
+          `schema: deep-planning
 context: |
   Tech stack: TypeScript, React
   API style: RESTful
@@ -45,7 +45,7 @@ rules:
         const config = readProjectConfig(tempDir);
 
         expect(config).toEqual({
-          schema: 'spec-driven',
+          schema: 'deep-planning',
           context: 'Tech stack: TypeScript, React\nAPI style: RESTful\n',
           rules: {
             proposal: ['Include rollback plan', 'Identify affected teams'],
@@ -58,12 +58,12 @@ rules:
       it('should parse minimal config with schema only', () => {
         const configDir = path.join(tempDir, 'openspec');
         fs.mkdirSync(configDir, { recursive: true });
-        fs.writeFileSync(path.join(configDir, 'config.yaml'), 'schema: spec-driven\n');
+        fs.writeFileSync(path.join(configDir, 'config.yaml'), 'schema: deep-planning\n');
 
         const config = readProjectConfig(tempDir);
 
         expect(config).toEqual({
-          schema: 'spec-driven',
+          schema: 'deep-planning',
         });
         expect(consoleWarnSpy).not.toHaveBeenCalled();
       });
@@ -99,7 +99,7 @@ rules:
         fs.mkdirSync(configDir, { recursive: true });
         fs.writeFileSync(
           path.join(configDir, 'config.yaml'),
-          `schema: spec-driven
+          `schema: deep-planning
 context: 123
 rules:
   proposal:
@@ -110,7 +110,7 @@ rules:
         const config = readProjectConfig(tempDir);
 
         expect(config).toEqual({
-          schema: 'spec-driven',
+          schema: 'deep-planning',
           rules: {
             proposal: ['Valid rule'],
           },
@@ -125,7 +125,7 @@ rules:
         fs.mkdirSync(configDir, { recursive: true });
         fs.writeFileSync(
           path.join(configDir, 'config.yaml'),
-          `schema: spec-driven
+          `schema: deep-planning
 context: Valid context
 rules: ["not", "an", "object"]
 `
@@ -134,7 +134,7 @@ rules: ["not", "an", "object"]
         const config = readProjectConfig(tempDir);
 
         expect(config).toEqual({
-          schema: 'spec-driven',
+          schema: 'deep-planning',
           context: 'Valid context',
         });
         expect(consoleWarnSpy).toHaveBeenCalledWith(
@@ -148,7 +148,7 @@ rules: ["not", "an", "object"]
         fs.mkdirSync(configDir, { recursive: true });
         fs.writeFileSync(
           path.join(configDir, 'config.yaml'),
-          `schema: spec-driven
+          `schema: deep-planning
 context: Valid context
 rules:
 `
@@ -158,7 +158,7 @@ rules:
 
         // Should still parse schema and context despite null rules
         expect(config).toEqual({
-          schema: 'spec-driven',
+          schema: 'deep-planning',
           context: 'Valid context',
         });
         expect(consoleWarnSpy).toHaveBeenCalledWith(
@@ -171,7 +171,7 @@ rules:
         fs.mkdirSync(configDir, { recursive: true });
         fs.writeFileSync(
           path.join(configDir, 'config.yaml'),
-          `schema: spec-driven
+          `schema: deep-planning
 rules:
   proposal:
     - Valid rule
@@ -184,7 +184,7 @@ rules:
         const config = readProjectConfig(tempDir);
 
         expect(config).toEqual({
-          schema: 'spec-driven',
+          schema: 'deep-planning',
           rules: {
             proposal: ['Valid rule'],
             design: ['Another valid rule'],
@@ -200,7 +200,7 @@ rules:
         fs.mkdirSync(configDir, { recursive: true });
         fs.writeFileSync(
           path.join(configDir, 'config.yaml'),
-          `schema: spec-driven
+          `schema: deep-planning
 rules:
   proposal:
     - Valid rule
@@ -213,7 +213,7 @@ rules:
         const config = readProjectConfig(tempDir);
 
         expect(config).toEqual({
-          schema: 'spec-driven',
+          schema: 'deep-planning',
           rules: {
             proposal: ['Valid rule', 'Another valid rule'],
           },
@@ -228,7 +228,7 @@ rules:
         fs.mkdirSync(configDir, { recursive: true });
         fs.writeFileSync(
           path.join(configDir, 'config.yaml'),
-          `schema: spec-driven
+          `schema: deep-planning
 rules:
   proposal:
     - ""
@@ -241,7 +241,7 @@ rules:
         const config = readProjectConfig(tempDir);
 
         expect(config).toEqual({
-          schema: 'spec-driven',
+          schema: 'deep-planning',
           rules: {
             specs: ['Valid rule'],
           },
@@ -299,7 +299,7 @@ rules:
 
       it('keeps entries deduplicated and order-preserving, including invalid grammar', () => {
         writeConfig(
-          'schema: spec-driven\nreferences:\n  - team-context\n  - team-context\n  - "BAD ID"\n  - other-context\n  - 7\n'
+          'schema: deep-planning\nreferences:\n  - team-context\n  - team-context\n  - "BAD ID"\n  - other-context\n  - 7\n'
         );
 
         const config = readProjectConfig(tempDir);
@@ -318,7 +318,7 @@ rules:
 
       it('ignores legacy targets declarations', () => {
         writeConfig(
-          'schema: spec-driven\n' +
+          'schema: deep-planning\n' +
             'references:\n  - team-context\n  - { id: team-context, remote: https://192.0.2.1/a.git }\n  - 7\n' +
             'targets:\n  - api-server\n  - { id: api-server, remote: https://192.0.2.1/b.git }\n  - 7\n'
         );
@@ -336,7 +336,7 @@ rules:
 
       it('normalizes map entries and fills remotes across duplicates (3.3)', () => {
         writeConfig(
-          'schema: spec-driven\nreferences:\n' +
+          'schema: deep-planning\nreferences:\n' +
             '  - team-context\n' +
             '  - { id: team-context, remote: https://192.0.2.1/team.git }\n' +
             '  - { id: team-context, remote: https://192.0.2.2/other.git }\n' +
@@ -361,10 +361,10 @@ rules:
       });
 
       it('omits the field when absent or empty and warns on non-arrays', () => {
-        writeConfig('schema: spec-driven\n');
+        writeConfig('schema: deep-planning\n');
         expect(readProjectConfig(tempDir)?.references).toBeUndefined();
 
-        writeConfig('schema: spec-driven\nreferences: not-an-array\n');
+        writeConfig('schema: deep-planning\nreferences: not-an-array\n');
         expect(readProjectConfig(tempDir)?.references).toBeUndefined();
         expect(consoleWarnSpy).toHaveBeenCalledWith(
           expect.stringContaining("Invalid 'references' field")
@@ -379,7 +379,7 @@ rules:
         const smallContext = 'a'.repeat(1000); // 1KB
         fs.writeFileSync(
           path.join(configDir, 'config.yaml'),
-          `schema: spec-driven\ncontext: "${smallContext}"\n`
+          `schema: deep-planning\ncontext: "${smallContext}"\n`
         );
 
         const config = readProjectConfig(tempDir);
@@ -396,12 +396,12 @@ rules:
         const largeContext = 'a'.repeat(51 * 1024); // 51KB
         fs.writeFileSync(
           path.join(configDir, 'config.yaml'),
-          `schema: spec-driven\ncontext: "${largeContext}"\n`
+          `schema: deep-planning\ncontext: "${largeContext}"\n`
         );
 
         const config = readProjectConfig(tempDir);
 
-        expect(config).toEqual({ schema: 'spec-driven' });
+        expect(config).toEqual({ schema: 'deep-planning' });
         expect(config?.context).toBeUndefined();
         expect(consoleWarnSpy).toHaveBeenCalledWith(
           expect.stringContaining('Context too large (51.0KB, limit: 50KB)')
@@ -417,7 +417,7 @@ rules:
         const exactContext = 'a'.repeat(50 * 1024); // Exactly 50KB
         fs.writeFileSync(
           path.join(configDir, 'config.yaml'),
-          `schema: spec-driven\ncontext: "${exactContext}"\n`
+          `schema: deep-planning\ncontext: "${exactContext}"\n`
         );
 
         const config = readProjectConfig(tempDir);
@@ -435,7 +435,7 @@ rules:
         const contextWithUnicode = '☃'.repeat(18000); // ~54KB in UTF-8 (18000 * 3 bytes)
         fs.writeFileSync(
           path.join(configDir, 'config.yaml'),
-          `schema: spec-driven
+          `schema: deep-planning
 context: |
   ${contextWithUnicode}
 `
@@ -456,7 +456,7 @@ context: |
         fs.mkdirSync(configDir, { recursive: true });
         fs.writeFileSync(
           path.join(configDir, 'config.yaml'),
-          'schema: spec-driven\ncontext: from yaml\n'
+          'schema: deep-planning\ncontext: from yaml\n'
         );
         fs.writeFileSync(
           path.join(configDir, 'config.yml'),
@@ -465,7 +465,7 @@ context: |
 
         const config = readProjectConfig(tempDir);
 
-        expect(config?.schema).toBe('spec-driven');
+        expect(config?.schema).toBe('deep-planning');
         expect(config?.context).toBe('from yaml');
       });
 
@@ -507,7 +507,7 @@ context: |
         fs.mkdirSync(configDir, { recursive: true });
         fs.writeFileSync(
           path.join(configDir, 'config.yaml'),
-          `schema: spec-driven
+          `schema: deep-planning
 context: |
   Line 1: Tech stack
   Line 2: API conventions
@@ -527,7 +527,7 @@ context: |
         fs.mkdirSync(configDir, { recursive: true });
         fs.writeFileSync(
           path.join(configDir, 'config.yaml'),
-          `schema: spec-driven
+          `schema: deep-planning
 context: |
   Special chars: : @ # $ % & * [ ] { }
   Quotes: "double" 'single'
@@ -548,7 +548,7 @@ context: |
         fs.mkdirSync(configDir, { recursive: true });
         fs.writeFileSync(
           path.join(configDir, 'config.yaml'),
-          `schema: spec-driven
+          `schema: deep-planning
 rules:
   proposal:
     - "Use <template> tags in docs"
@@ -577,7 +577,7 @@ rules:
       };
       const validIds = new Set(['proposal', 'specs', 'design', 'tasks']);
 
-      const warnings = validateConfigRules(rules, validIds, 'spec-driven');
+      const warnings = validateConfigRules(rules, validIds, 'deep-planning');
 
       expect(warnings).toEqual([]);
     });
@@ -590,11 +590,11 @@ rules:
       };
       const validIds = new Set(['proposal', 'specs', 'design', 'tasks']);
 
-      const warnings = validateConfigRules(rules, validIds, 'spec-driven');
+      const warnings = validateConfigRules(rules, validIds, 'deep-planning');
 
       expect(warnings).toHaveLength(2);
       expect(warnings[0]).toContain('Unknown artifact ID in rules: "testplan"');
-      expect(warnings[0]).toContain('Valid IDs for schema "spec-driven": design, proposal, specs, tasks');
+      expect(warnings[0]).toContain('Valid IDs for schema "deep-planning": design, proposal, specs, tasks');
       expect(warnings[1]).toContain('Unknown artifact ID in rules: "documentation"');
     });
 
@@ -606,7 +606,7 @@ rules:
       };
       const validIds = new Set(['proposal', 'specs']);
 
-      const warnings = validateConfigRules(rules, validIds, 'spec-driven');
+      const warnings = validateConfigRules(rules, validIds, 'deep-planning');
 
       expect(warnings).toHaveLength(3);
     });
@@ -615,7 +615,7 @@ rules:
       const rules = {};
       const validIds = new Set(['proposal', 'specs']);
 
-      const warnings = validateConfigRules(rules, validIds, 'spec-driven');
+      const warnings = validateConfigRules(rules, validIds, 'deep-planning');
 
       expect(warnings).toEqual([]);
     });
@@ -623,17 +623,17 @@ rules:
 
   describe('suggestSchemas', () => {
     const availableSchemas = [
-      { name: 'spec-driven', isBuiltIn: true },
+      { name: 'deep-planning', isBuiltIn: true },
       { name: 'custom-workflow', isBuiltIn: false },
       { name: 'team-process', isBuiltIn: false },
     ];
 
     it('should suggest close matches using fuzzy matching', () => {
-      const message = suggestSchemas('spec-drven', availableSchemas); // Missing 'i'
+      const message = suggestSchemas('deep-planing', availableSchemas); // Missing 'n'
 
-      expect(message).toContain("Schema 'spec-drven' not found");
+      expect(message).toContain("Schema 'deep-planing' not found");
       expect(message).toContain('Did you mean one of these?');
-      expect(message).toContain('spec-driven (built-in)');
+      expect(message).toContain('deep-planning (built-in)');
     });
 
     it('should suggest custom-workflow for workflow typo', () => {
@@ -647,17 +647,17 @@ rules:
       const message = suggestSchemas('nonexistent', availableSchemas);
 
       expect(message).toContain('Available schemas:');
-      expect(message).toContain('Built-in: spec-driven');
+      expect(message).toContain('Built-in: deep-planning');
       expect(message).toContain('Project-local: custom-workflow, team-process');
     });
 
     it('should handle case when no project-local schemas exist', () => {
       const builtInOnly = [
-        { name: 'spec-driven', isBuiltIn: true },
+        { name: 'deep-planning', isBuiltIn: true },
       ];
       const message = suggestSchemas('invalid', builtInOnly);
 
-      expect(message).toContain('Built-in: spec-driven');
+      expect(message).toContain('Built-in: deep-planning');
       expect(message).toContain('Project-local: (none found)');
     });
 

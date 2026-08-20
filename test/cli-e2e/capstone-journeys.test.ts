@@ -54,7 +54,7 @@ describe('capstone persona journeys (6.1)', () => {
     createOpenSpecRoot(appRepo);
     fs.writeFileSync(
       path.join(appRepo, 'openspec', 'config.yaml'),
-      'schema: spec-driven\nreferences:\n  - product-requirements\n'
+      'schema: deep-planning\nreferences:\n  - product-requirements\n'
     );
 
     // Discovery: the relationship comes from config, not insider
@@ -114,7 +114,7 @@ describe('capstone persona journeys (6.1)', () => {
 
     // The whole lifecycle from the code repo, zero --store flags.
     const created = await runCLI(
-      ['new', 'change', 'add-rate-limits', '--schema', 'spec-driven', '--json'],
+      ['new', 'change', 'add-rate-limits', '--schema', 'deep-planning', '--json'],
       { cwd: codeRepo, env }
     );
     expect(created.exitCode).toBe(0);
