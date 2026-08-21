@@ -1,6 +1,6 @@
 # OpenSpec — Agent Guidance
 
-OpenSpec (`@fission-ai/openspec`) is a TypeScript CLI for spec-driven development: it scaffolds
+OpenSpec (`@pfurini/openspec`) is a TypeScript CLI for spec-driven development: it scaffolds
 change proposals, specs, designs, and tasks, and generates per-tool Agent Skills for coding agents.
 ESM package, built with `tsc`, distributed via npm.
 

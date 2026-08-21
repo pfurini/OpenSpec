@@ -136,11 +136,11 @@ It collects anonymous usage stats: command names and version only. No arguments,
 
 ### How do I upgrade?
 
-Two steps. Upgrade the package (`npm install -g @fission-ai/openspec@latest`), then run `openspec update` inside each project to refresh the generated skills.
+Two steps. Upgrade the package (`npm install -g @pfurini/openspec@latest`), then run `openspec update` inside each project to refresh the generated skills.
 
 ### How do I uninstall OpenSpec?
 
-There's no uninstall command, because it's just a global package plus files in your project. Remove the package (`npm uninstall -g @fission-ai/openspec`), and optionally delete the `openspec/` directory and the generated tool files. Step-by-step, including what's safe to keep, is in [Installation: Uninstalling](installation.md#uninstalling).
+There's no uninstall command, because it's just a global package plus files in your project. Remove the package (`npm uninstall -g @pfurini/openspec`), and optionally delete the `openspec/` directory and the generated tool files. Step-by-step, including what's safe to keep, is in [Installation: Uninstalling](installation.md#uninstalling).
 
 ## Getting help
 

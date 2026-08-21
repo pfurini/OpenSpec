@@ -95,7 +95,7 @@ That second one matters more than it looks. OpenSpec has two halves: a command l
 ## The thirty-second version
 
 ```text
-1. Install        npm install -g @fission-ai/openspec@latest
+1. Install        npm install -g @pfurini/openspec@latest
 2. Initialize     cd your-project && openspec init
 3. Explore        (in your AI chat)  /openspec-explore           ← optional, but a great habit
 4. Propose        (in your AI chat)  /openspec-propose add-dark-mode

@@ -9,19 +9,19 @@
 ### npm
 
 ```bash
-npm install -g @fission-ai/openspec@latest
+npm install -g @pfurini/openspec@latest
 ```
 
 ### pnpm
 
 ```bash
-pnpm add -g @fission-ai/openspec@latest
+pnpm add -g @pfurini/openspec@latest
 ```
 
 ### yarn
 
 ```bash
-yarn global add @fission-ai/openspec@latest
+yarn global add @pfurini/openspec@latest
 ```
 
 ### bun
@@ -30,7 +30,7 @@ Bun can install OpenSpec globally, but OpenSpec currently runs on Node.js.
 You still need Node.js 20.19.0 or higher available on `PATH`.
 
 ```bash
-bun add -g @fission-ai/openspec@latest
+bun add -g @pfurini/openspec@latest
 ```
 
 ## Nix
@@ -75,7 +75,7 @@ openspec --version
 Upgrade the package, then refresh each project's generated files:
 
 ```bash
-npm install -g @fission-ai/openspec@latest   # or pnpm/yarn/bun equivalent
+npm install -g @pfurini/openspec@latest   # or pnpm/yarn/bun equivalent
 openspec update                              # run inside each project
 ```
 
@@ -88,7 +88,7 @@ There's no `openspec uninstall` command, because OpenSpec is just a global packa
 **1. Remove the global package:**
 
 ```bash
-npm uninstall -g @fission-ai/openspec   # or: pnpm rm -g / yarn global remove / bun rm -g
+npm uninstall -g @pfurini/openspec   # or: pnpm rm -g / yarn global remove / bun rm -g
 ```
 
 **2. Remove OpenSpec from a project (optional).** Delete the `openspec/` directory if you no longer want its specs and changes:

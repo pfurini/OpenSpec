@@ -1,4 +1,4 @@
-# @fission-ai/openspec
+# @pfurini/openspec
 
 ## 1.5.0
 

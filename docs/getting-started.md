@@ -14,7 +14,7 @@ This guide explains how OpenSpec works after you've installed and initialized it
 The whole loop, with each step labeled by where it happens:
 
 ```text
-TERMINAL   $ npm install -g @fission-ai/openspec@latest
+TERMINAL   $ npm install -g @pfurini/openspec@latest
 TERMINAL   $ cd your-project && openspec init
 AI CHAT      /openspec-explore                    (optional: think it through first)
 AI CHAT      /openspec-propose add-dark-mode      (AI drafts the plan; you review it)

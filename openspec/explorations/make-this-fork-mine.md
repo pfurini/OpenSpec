@@ -55,7 +55,7 @@ Status is **LANDED** (code matches the verdict) or **OPEN** (verdict stands, wor
 | `src/commands/feedback.ts` | **EVICT** | **LANDED** | Command gone. |
 | `docs/` + marketing README | **EVICT most, rewrite rest** | **OPEN** | Partial sweep in `docs/cli.md` / `docs/commands.md`. README, `docs/opsx.md`, `docs/concepts.md`, `docs/glossary.md`, `docs/migration-guide.md`, `docs/stores-beta/` still upstream / spec-driven-first. Keep `agent-contract.md` as a seed; rewrite README as the fork's front page (deep-planning first). Low urgency — docs lie quietly. |
 | `CHANGELOG.md`, `MAINTAINERS.md`, `.github/` release | **EVICT/replace** | partial | `MAINTAINERS.md` gone. `CHANGELOG.md` remains. CI kept (`ci.yml`). `deploy-docs.yml` remains. No npm publish workflow. |
-| Package identity `@fission-ai/openspec` | **RENAME** (ratified) | **OPEN** | npm name → owned scope; **bin stays `openspec`**. Homepage/repo URLs still Fission-AI. **Open: pick the scope/name.** |
+| Package identity `@pfurini/openspec` | **RENAME** (ratified) | **LANDED** | npm name `@pfurini/openspec`; **bin stays `openspec`**. Product name stays OpenSpec. `homepage`/`repository` point at `pfurini/OpenSpec`. GitHub org on website / in-product issue URLs remain Fission-AI until row 5. |
 
 ### Specs baseline (`openspec/specs/` — 35 specs)
 
@@ -71,7 +71,7 @@ GH#1 (`pfurini/OpenSpec#1`) is still **OPEN**. Residue shrank with row 1 (`telem
 |---|---|---|---|
 | 1 | `evict-upstream-surfaces` | **LANDED** 2026-08-13 | Telemetry, feedback, profiles, legacy-cleanup, three skills. ADR-0001 accepted. |
 | 2 | `adopt-deep-planning-as-default` | **LANDED** 2026-08-20 | Default flipped to `deep-planning`; `schemas/spec-driven/` + its docs/tests/specs evicted. Also fixed the `new change` spinner announcing the machine default instead of the resolved schema. |
-| 3 | `rename-package-identity` | **OPEN** | npm scope rename, bin unchanged; update installs. Blocked on the name decision. |
+| 3 | `rename-package-identity` | **LANDED** 2026-08-21 | npm name `@pfurini/openspec`; bin unchanged; install docs and pack guard retargeted. |
 | 4 | `trim-stores-surface` | **OPEN** | Audit which workset/context/doctor subcommands we actually use. |
 | 5 | Docs rewrite | **OPEN** | Lowest urgency. Can trail 2–4. README is the loudest lie. |
 
@@ -83,6 +83,5 @@ Then: **the ledger change** (`ops/START-HERE.md` #1). Originally "after 1–2"; 
 
 ## Open decisions
 
-1. **Package name/scope** (blocks change 3 only).
-2. Which workset/context/doctor subcommands survive (blocks change 4 only; needs a usage pass).
-3. Docs end-state: minimal README + agent-contract, or a real docs rewrite (defer).
+1. Which workset/context/doctor subcommands survive (blocks change 4 only; needs a usage pass).
+2. Docs end-state: minimal README + agent-contract, or a real docs rewrite (defer).

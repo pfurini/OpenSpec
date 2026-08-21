@@ -159,7 +159,7 @@ openspec update [path] [options]
 
 ```bash
 # Update instruction files after npm upgrade
-npm update @fission-ai/openspec
+npm update @pfurini/openspec
 openspec update
 ```
 
@@ -966,7 +966,7 @@ openspec schema which deep-planning
 
 ```
 deep-planning resolves from: package
-  Source: /usr/local/lib/node_modules/@fission-ai/openspec/schemas/deep-planning
+  Source: /usr/local/lib/node_modules/@pfurini/openspec/schemas/deep-planning
 ```
 
 **Schema precedence:**

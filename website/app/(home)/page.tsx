@@ -620,7 +620,7 @@ function FinalCta() {
       </p>
       <div className="mt-8 inline-flex items-center gap-2 rounded-lg border border-fd-border bg-fd-card px-4 py-3 font-mono text-sm">
         <span className="text-fd-muted-foreground">$</span>
-        npm install -g @fission-ai/openspec@latest
+        npm install -g @pfurini/openspec@latest
       </div>
       <div className="mt-8">
         <Link
