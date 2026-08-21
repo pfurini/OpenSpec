@@ -1,12 +1,12 @@
 # Make this fork mine — ownership map
 
-**Status:** living eviction ledger. First-pass audit 2026-07-05; **refreshed 2026-08-17**.
+**Status:** living eviction ledger. First-pass audit 2026-07-05; **refreshed 2026-08-21**.
 Verdict per subsystem: **MINE** (built by us) / **KEEP** (upstream code that earns its
 place) / **EVICT** / **CONTESTED**. Row 1 (`evict-upstream-surfaces`) **LANDED** 2026-08-13
 (`openspec/changes/archive/2026-08-13-evict-upstream-surfaces/`). ADR-0001 is **accepted**.
 
 Ratified direction (unchanged): evict `spec-driven` entirely; rename the package to an owned
-scope; keep the stores architecture but audit subcommand depth. Telemetry and profile
+scope; keep the stores architecture as-is (the subcommand-depth trim was discarded). Telemetry and profile
 machinery are **gone**. Upstream strategy is law: **no merge/rebase — periodic shopping
 trips, re-implement ideas, never pull diffs** (`docs/adr/ADR-0001-fork-sovereignty.md`).
 
@@ -39,7 +39,7 @@ Status is **LANDED** (code matches the verdict) or **OPEN** (verdict stands, wor
 |---|---|---|---|
 | `reverse/`, `adr/`, `lint/` | **MINE** | LANDED | ADR registry + `openspec lint --adr` (ADR-registry rule only). |
 | `artifact-graph/`, `validation/`, `parsers/`, instruction loading | **KEEP** | LANDED | Chat→schema enforcement. |
-| `store/` + `workset.ts` + `context.ts` + `doctor.ts` | **KEEP, audit depth** | **OPEN** | Full surface intact. Usage pass still owed before trimming. |
+| `store/` + `workset.ts` + `context.ts` + `doctor.ts` | **KEEP** | LANDED | Full surface intact. Depth-trim (`trim-stores-surface`) discarded 2026-08-21 — not essential. |
 | `init.ts`, `update.ts` | **KEEP, trim** | partial | Profile/telemetry/legacy branches died with row 1. Spec-driven default remains until row 2. |
 | `legacy-cleanup.ts`, `migration.ts` | **EVICT** | **LANDED** | Files gone. |
 | `profiles.ts`, `profile-sync-drift.ts` | **EVICT** | **LANDED** | Files gone. Global config `profile` / `workflows` are retired keys (ignored on read, stripped on write). Init always installs the full skill set. |
@@ -72,8 +72,8 @@ GH#1 (`pfurini/OpenSpec#1`) is still **OPEN**. Residue shrank with row 1 (`telem
 | 1 | `evict-upstream-surfaces` | **LANDED** 2026-08-13 | Telemetry, feedback, profiles, legacy-cleanup, three skills. ADR-0001 accepted. |
 | 2 | `adopt-deep-planning-as-default` | **LANDED** 2026-08-20 | Default flipped to `deep-planning`; `schemas/spec-driven/` + its docs/tests/specs evicted. Also fixed the `new change` spinner announcing the machine default instead of the resolved schema. |
 | 3 | `rename-package-identity` | **LANDED** 2026-08-21 | npm name `@pfurini/openspec`; bin unchanged; install docs and pack guard retargeted. |
-| 4 | `trim-stores-surface` | **OPEN** | Audit which workset/context/doctor subcommands we actually use. |
-| 5 | Docs rewrite | **OPEN** | Lowest urgency. Can trail 2–4. README is the loudest lie. |
+| 4 | `trim-stores-surface` | **DISCARDED** 2026-08-21 | Not essential. Full workset/context/doctor surface stays. No usage pass. |
+| 5 | Docs rewrite | **OPEN** | Lowest urgency. Can trail 2–3. README is the loudest lie. |
 
 Then: **the ledger change** (`ops/START-HERE.md` #1). Originally "after 1–2"; row 1 is done, so ledger can start after row 2 (or in parallel — they don't share files). START-HERE is the ranked process backlog; this file is only the eviction track.
 
@@ -83,5 +83,5 @@ Then: **the ledger change** (`ops/START-HERE.md` #1). Originally "after 1–2"; 
 
 ## Open decisions
 
-1. Which workset/context/doctor subcommands survive (blocks change 4 only; needs a usage pass).
-2. Docs end-state: minimal README + agent-contract, or a real docs rewrite (defer).
+1. Docs end-state: minimal README + agent-contract, or a real docs rewrite (defer).
+   (The workset/context/doctor survival question died with discarded change 4.)
