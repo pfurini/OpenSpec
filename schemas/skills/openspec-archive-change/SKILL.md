@@ -84,14 +84,16 @@ ${STORE_SELECTION_GUIDANCE}
    mkdir -p "<planningHome.changesDir>/archive"
    ```
 
-   Generate target name using current date: `YYYY-MM-DD-<change-name>`
+   Generate the target name from the change name, date-prefixing it **only when the name is not already dated**:
+   - If the change name already starts with a `YYYY-MM-DD-` prefix, use it unchanged as the target name — never stack a second date (no `2026-08-23-2026-08-01-<name>`).
+   - Otherwise, prefix the current date: `YYYY-MM-DD-<change-name>`.
 
    **Check if target already exists:**
    - If yes: Fail with error, suggest renaming existing archive or using different date
    - If no: Move `changeRoot` to the archive directory
 
    ```bash
-   mv "<changeRoot>" "<planningHome.changesDir>/archive/YYYY-MM-DD-<name>"
+   mv "<changeRoot>" "<planningHome.changesDir>/archive/<target-name>"
    ```
 
 7. **Display summary**
@@ -111,7 +113,7 @@ ${STORE_SELECTION_GUIDANCE}
 
 **Change:** <change-name>
 **Schema:** <schema-name>
-**Archived to:** the archive path derived from `planningHome.changesDir`/YYYY-MM-DD-<name>/
+**Archived to:** the archive path derived from `planningHome.changesDir`/<target-name>/
 **Specs:** ✓ Synced to main specs (or "No delta specs" or "Sync skipped")
 
 All artifacts complete. All tasks complete.
@@ -122,6 +124,7 @@ All artifacts complete. All tasks complete.
 - Use artifact graph (openspec status --json) for completion checking
 - Don't block archive on warnings - just inform and confirm
 - Preserve .openspec.yaml when moving to archive (it moves with the directory)
+- Date-prefix the target name only when the change name is not already dated; an already-dated name archives under itself
 - Promote this change's `proposed` ADRs (those tagged `change: <name>`) to `accepted` before the move; ADRs live outside the change dir and persist as durable architectural memory
 - Show clear summary of what happened
 - If sync is requested, use openspec-sync-specs approach (agent-driven)

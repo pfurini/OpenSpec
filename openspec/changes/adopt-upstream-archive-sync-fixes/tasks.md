@@ -139,7 +139,7 @@ Each `## Wave N` is one fresh-session vertical slice, proven test-first. The sin
 
 ## Wave 6
 
-- [ ] Generated archive skills instruct the date-prefix guard; parity wall green
+- [x] Generated archive skills instruct the date-prefix guard; parity wall green
 - components: `schemas/skills/openspec-archive-change/SKILL.md`, `schemas/skills/openspec-bulk-archive-change/SKILL.md`
 - interfaces: prose only (no code surface)
 - depends-on: Wave 0

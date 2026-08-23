@@ -24,8 +24,8 @@ const EXPECTED_FUNCTION_HASHES: Record<string, string> = {
   getContinueChangeSkillTemplate: '3d08d09995bc32975ed732ea2becab33be3f96c76995a30dd1eec112695b8478',
   getApplyChangeSkillTemplate: '9b1cc0151aa00d7dcb73525a81886ec01122189b04380c55b203b68514abb4c3',
   getSyncSpecsSkillTemplate: '8fb15693288b95d3a0a966a15972b00029bd7400ec75e55b8581dc6d3d161aeb',
-  getArchiveChangeSkillTemplate: 'd8529cf40f6e8191bcf7558ba8dd730030e5405d71dae5fe76cc679345cba3db',
-  getBulkArchiveChangeSkillTemplate: '12fbe1b8cac45da6323766d965099fd6ed0f245b596a312b2a1595c238c63dd0',
+  getArchiveChangeSkillTemplate: '71d36aeeac16c1a9a310b11313977cc5d7662c98c4b837c712daf67558cabff3',
+  getBulkArchiveChangeSkillTemplate: 'b363727bfcd93f9eb77284de2f8bb4c21eeb08f9efd07e1915790207188de313',
   getVerifyChangeSkillTemplate: '40391f03390c62263e33dde0bc22627a0b3bf3f5961fe68e72747c0fd5a9db0e',
 };
 
@@ -37,8 +37,8 @@ const EXPECTED_GENERATED_SKILL_CONTENT_HASHES: Record<string, string> = {
   'openspec-continue-change': '740ccc3c7c407e98665203c01625caff14cf429eb21dae007f1aca33f6383101',
   'openspec-apply-change': 'b5bc3236f52be9d3d6fe9efe2b7262f37eba8cab321499e9e78239dabf7efc4d',
   'openspec-sync-specs': 'a5d13279b9e868ccfa0ef0b626c21ff7a9942afe75790cdccb06b488917925f7',
-  'openspec-archive-change': '552c31ff2418ebd98d7b9ebd08ff55cb9fe5fd89a968fc563d566ebb0a4c70bd',
-  'openspec-bulk-archive-change': 'daf6288f09c7e7d808dd7be2ecf3e4edb98527b8943a6fa28cae50d803a2e5b1',
+  'openspec-archive-change': '15d6c14f9a8962004ca15d86de6d4920f94c4f98fab985ce1d69713c0f06d575',
+  'openspec-bulk-archive-change': '45d98ae321f0935d182b743e4569ee4381724d4df1768b302cc626e47f32a461',
   'openspec-verify-change': '583b66750f560da7fd505aee3958e738caa07d0b276169f976fc80d579cba833',
 };
 

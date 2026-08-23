@@ -127,9 +127,14 @@ This skill allows you to batch-archive changes, handling spec conflicts intellig
       - Track if sync was done
 
    b. **Perform the archive**:
+
+      Derive each change's target name, date-prefixing it **only when the change name is not already dated**:
+      - If the change name already starts with a `YYYY-MM-DD-` prefix, use it unchanged as the target name — never stack a second date (no `2026-08-23-2026-08-01-<name>`).
+      - Otherwise, prefix the current date: `YYYY-MM-DD-<change-name>`.
+
       ```bash
       mkdir -p "<planningHome.changesDir>/archive"
-      mv "<changeRoot>" "<planningHome.changesDir>/archive/YYYY-MM-DD-<name>"
+      mv "<changeRoot>" "<planningHome.changesDir>/archive/<target-name>"
       ```
 
    c. **Track outcome** for each change:
@@ -243,5 +248,5 @@ No active changes found. Create a new change to get started.
 - Use single confirmation for entire batch
 - Track and report all outcomes (success/skip/fail)
 - Preserve .openspec.yaml when moving to archive
-- Archive directory target uses current date: YYYY-MM-DD-<name>
+- Archive directory target is date-prefixed only when the change name is not already dated; an already-dated name archives under itself
 - If archive target exists, fail that change but continue with others
