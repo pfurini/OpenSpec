@@ -16,6 +16,7 @@ describe('ArchiveCommand', () => {
   let archiveCommand: ArchiveCommand;
   const originalConsoleLog = console.log;
   const originalXdgDataHome = process.env.XDG_DATA_HOME;
+  let originalExitCode: typeof process.exitCode;
 
   beforeEach(async () => {
     // Create temp directory
@@ -35,6 +36,10 @@ describe('ArchiveCommand', () => {
     await fs.mkdir(path.join(openspecDir, 'specs'), { recursive: true });
     await fs.mkdir(path.join(openspecDir, 'changes', 'archive'), { recursive: true });
 
+    // Aborts set process.exitCode; keep that out of the vitest process.
+    originalExitCode = process.exitCode;
+    process.exitCode = undefined;
+
     // Suppress console.log during tests
     console.log = vi.fn();
 
@@ -44,6 +49,8 @@ describe('ArchiveCommand', () => {
   afterEach(async () => {
     // Restore console.log
     console.log = originalConsoleLog;
+
+    process.exitCode = originalExitCode;
 
     if (originalXdgDataHome === undefined) {
       delete process.env.XDG_DATA_HOME;
@@ -318,8 +325,24 @@ New feature description.
     it('should throw error if archive already exists', async () => {
       const changeName = 'duplicate-feature';
       const changeDir = path.join(tempDir, 'openspec', 'changes', changeName);
-      await fs.mkdir(changeDir, { recursive: true });
-      
+      const changeSpecDir = path.join(changeDir, 'specs', 'duplicate-capability');
+      await fs.mkdir(changeSpecDir, { recursive: true });
+
+      // A delta that would otherwise create a brand new main spec.
+      await fs.writeFile(
+        path.join(changeSpecDir, 'spec.md'),
+        `# Duplicate Capability - Changes
+
+## ADDED Requirements
+
+### Requirement: Duplicate Rule
+The system SHALL apply the duplicate rule.
+
+#### Scenario: Rule applies
+- **WHEN** it runs
+- **THEN** the rule applies`
+      );
+
       // Create existing archive with same date
       const date = new Date().toISOString().split('T')[0];
       const archivePath = path.join(tempDir, 'openspec', 'changes', 'archive', `${date}-${changeName}`);
@@ -327,8 +350,89 @@ New feature description.
       
       // Try to archive
       await expect(
-        archiveCommand.execute(changeName, { yes: true })
+        archiveCommand.execute(changeName, { yes: true, noValidate: true })
       ).rejects.toThrow(`Archive '${date}-${changeName}' already exists.`);
+
+      // The destination check runs before the merge, so no spec was written.
+      const mainSpecPath = path.join(tempDir, 'openspec', 'specs', 'duplicate-capability', 'spec.md');
+      await expect(fs.access(mainSpecPath)).rejects.toThrow();
+    });
+
+    it('should date-prefix an undated change name', async () => {
+      const changeName = 'undated-feature';
+      const changeDir = path.join(tempDir, 'openspec', 'changes', changeName);
+      await fs.mkdir(changeDir, { recursive: true });
+
+      await archiveCommand.execute(changeName, { yes: true });
+
+      const date = new Date().toISOString().split('T')[0];
+      const archiveDir = path.join(tempDir, 'openspec', 'changes', 'archive');
+      const archives = await fs.readdir(archiveDir);
+      expect(archives).toEqual([`${date}-${changeName}`]);
+    });
+
+    it('should not stack a second date prefix on an already dated change name', async () => {
+      const changeName = '2026-08-01-dated-feature';
+      const changeDir = path.join(tempDir, 'openspec', 'changes', changeName);
+      await fs.mkdir(changeDir, { recursive: true });
+
+      await archiveCommand.execute(changeName, { yes: true });
+
+      const archiveDir = path.join(tempDir, 'openspec', 'changes', 'archive');
+      const archives = await fs.readdir(archiveDir);
+      expect(archives).toEqual([changeName]);
+      await expect(fs.access(path.join(archiveDir, changeName))).resolves.not.toThrow();
+    });
+
+    it('should check the archive destination before modifying any main spec', async () => {
+      const changeName = 'ordering-feature';
+      const changeDir = path.join(tempDir, 'openspec', 'changes', changeName);
+      const changeSpecDir = path.join(changeDir, 'specs', 'ordering');
+      await fs.mkdir(changeSpecDir, { recursive: true });
+
+      const mainSpecDir = path.join(tempDir, 'openspec', 'specs', 'ordering');
+      await fs.mkdir(mainSpecDir, { recursive: true });
+      const mainContent = `# ordering Specification
+
+## Purpose
+Ordering purpose.
+
+## Requirements
+
+### Requirement: Ordering Rule
+The system SHALL keep the ordering rule.
+
+#### Scenario: Rule holds
+- **WHEN** it runs
+- **THEN** the rule holds`;
+      const mainSpecPath = path.join(mainSpecDir, 'spec.md');
+      await fs.writeFile(mainSpecPath, mainContent);
+
+      await fs.writeFile(
+        path.join(changeSpecDir, 'spec.md'),
+        `# Ordering - Changes
+
+## MODIFIED Requirements
+
+### Requirement: Ordering Rule
+The system SHALL change the ordering rule.
+
+#### Scenario: Rule holds
+- **WHEN** it runs
+- **THEN** the changed rule holds`
+      );
+
+      const date = new Date().toISOString().split('T')[0];
+      await fs.mkdir(
+        path.join(tempDir, 'openspec', 'changes', 'archive', `${date}-${changeName}`),
+        { recursive: true }
+      );
+
+      await expect(
+        archiveCommand.execute(changeName, { yes: true, noValidate: true })
+      ).rejects.toThrow(`Archive '${date}-${changeName}' already exists.`);
+
+      expect(await fs.readFile(mainSpecPath, 'utf-8')).toBe(mainContent);
     });
 
     it('should handle changes without tasks.md', async () => {
