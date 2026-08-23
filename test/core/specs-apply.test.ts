@@ -358,6 +358,130 @@ describe('buildUpdatedSpec', () => {
     });
   });
 
+  describe('Scenario Preservation', () => {
+    const MAIN_TWO_SCENARIOS = [
+      '# auth Specification',
+      '',
+      '## Purpose',
+      'Authentication rules for the platform, covering sign-in and session handling.',
+      '',
+      '## Requirements',
+      '',
+      '### Requirement: Sign In',
+      'The system SHALL authenticate users.',
+      '',
+      '#### Scenario: Valid credentials',
+      '- **WHEN** credentials are valid',
+      '- **THEN** a session starts',
+      '',
+      '#### Scenario: Locked account',
+      '- **WHEN** the account is locked',
+      '- **THEN** access is refused',
+      '',
+    ].join('\n');
+
+    it('refuses a MODIFIED block that drops a scenario, naming every missing one', async () => {
+      const delta = [
+        '# auth - Changes',
+        '',
+        '## MODIFIED Requirements',
+        '',
+        '### Requirement: Sign In',
+        'The system SHALL authenticate users against the directory.',
+        '',
+        '#### Scenario: Valid credentials',
+        '- **WHEN** credentials are valid',
+        '- **THEN** a directory session starts',
+        '',
+      ].join('\n');
+
+      await expect(build('auth', delta, MAIN_TWO_SCENARIOS)).rejects.toThrow(
+        /Scenario: Locked account/
+      );
+    });
+
+    it('changes no files when it refuses', async () => {
+      const delta = [
+        '# auth - Changes',
+        '',
+        '## MODIFIED Requirements',
+        '',
+        '### Requirement: Sign In',
+        'The system SHALL authenticate users against the directory.',
+        '',
+        '#### Scenario: Valid credentials',
+        '- **WHEN** credentials are valid',
+        '- **THEN** a directory session starts',
+        '',
+      ].join('\n');
+
+      await expect(build('auth', delta, MAIN_TWO_SCENARIOS)).rejects.toThrow();
+
+      const onDisk = await fs.readFile(mainPath('auth'), 'utf-8');
+      expect(onDisk).toBe(MAIN_TWO_SCENARIOS);
+    });
+
+    it('reports dropped instances when duplicate scenario names are thinned out', async () => {
+      const mainWithDuplicates = [
+        '# auth Specification',
+        '',
+        '## Purpose',
+        'Authentication rules for the platform, covering sign-in and session handling.',
+        '',
+        '## Requirements',
+        '',
+        '### Requirement: Sign In',
+        'The system SHALL authenticate users.',
+        '',
+        '#### Scenario: Retry',
+        '- **THEN** the first retry is allowed',
+        '',
+        '#### Scenario: Retry',
+        '- **THEN** the second retry is refused',
+        '',
+      ].join('\n');
+      const delta = [
+        '# auth - Changes',
+        '',
+        '## MODIFIED Requirements',
+        '',
+        '### Requirement: Sign In',
+        'The system SHALL authenticate users against the directory.',
+        '',
+        '#### Scenario: Retry',
+        '- **THEN** the first retry is allowed',
+        '',
+      ].join('\n');
+
+      await expect(build('auth', delta, mainWithDuplicates)).rejects.toThrow(/Scenario: Retry/);
+    });
+
+    it('accepts a MODIFIED block that keeps every current scenario', async () => {
+      const delta = [
+        '# auth - Changes',
+        '',
+        '## MODIFIED Requirements',
+        '',
+        '### Requirement: Sign In',
+        'The system SHALL authenticate users against the directory.',
+        '',
+        '#### Scenario: Valid credentials',
+        '- **WHEN** credentials are valid',
+        '- **THEN** a directory session starts',
+        '',
+        '#### Scenario: Locked account',
+        '- **WHEN** the account is locked',
+        '- **THEN** access is refused',
+        '',
+      ].join('\n');
+
+      const result = await build('auth', delta, MAIN_TWO_SCENARIOS);
+
+      expect(result.counts.modified).toBe(1);
+      expect(result.rebuilt).toContain('#### Scenario: Locked account');
+    });
+  });
+
   describe('Content Preservation Warnings', () => {
     it('warns when a removed requirement absorbs a trailing note section', async () => {
       const mainWithNote = [

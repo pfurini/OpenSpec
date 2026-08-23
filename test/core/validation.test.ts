@@ -709,6 +709,225 @@ The system MUST support mixed case delta headers.
     });
   });
 
+  // Scenario-loss detection: the authoring-time twin of the archive merge's
+  // refusal, so a MODIFIED block that drops scenarios fails validate first.
+  describe('validateChangeDeltaSpecs scenario-loss detection', () => {
+    const mainSpec = (requirementBlock: string): string =>
+      [
+        '# auth Specification',
+        '',
+        '## Purpose',
+        'Authentication rules for the platform, covering sign-in and session handling.',
+        '',
+        '## Requirements',
+        '',
+        requirementBlock,
+        '',
+      ].join('\n');
+
+    async function setup(
+      name: string,
+      delta: string,
+      main?: string
+    ): Promise<{ changeDir: string; mainSpecsDir: string }> {
+      const changeDir = path.join(testDir, name);
+      const mainSpecsDir = path.join(testDir, `${name}-specs`);
+      const deltaDir = path.join(changeDir, 'specs', 'auth');
+      await fs.mkdir(deltaDir, { recursive: true });
+      await fs.writeFile(path.join(deltaDir, 'spec.md'), delta);
+      if (main !== undefined) {
+        const mainDir = path.join(mainSpecsDir, 'auth');
+        await fs.mkdir(mainDir, { recursive: true });
+        await fs.writeFile(path.join(mainDir, 'spec.md'), main);
+      }
+      return { changeDir, mainSpecsDir };
+    }
+
+    const scenarioLossIssues = (issues: { message: string }[]) =>
+      issues.filter(i => i.message.includes('scenario'));
+
+    it('errors listing each scenario the MODIFIED block omits', async () => {
+      const { changeDir, mainSpecsDir } = await setup(
+        'scenario-loss-basic',
+        [
+          '## MODIFIED Requirements',
+          '',
+          '### Requirement: Sign In',
+          'The system SHALL authenticate users against the directory.',
+          '',
+          '#### Scenario: Valid credentials',
+          '- **THEN** a directory session starts',
+          '',
+        ].join('\n'),
+        mainSpec(
+          [
+            '### Requirement: Sign In',
+            'The system SHALL authenticate users.',
+            '',
+            '#### Scenario: Valid credentials',
+            '- **THEN** a session starts',
+            '',
+            '#### Scenario: Locked account',
+            '- **THEN** access is refused',
+          ].join('\n')
+        )
+      );
+
+      const report = await new Validator().validateChangeDeltaSpecs(changeDir, { mainSpecsDir });
+
+      expect(report.valid).toBe(false);
+      const messages = scenarioLossIssues(report.issues).map(i => i.message).join('\n');
+      expect(messages).toContain('Scenario: Locked account');
+      expect(messages).not.toContain('Scenario: Valid credentials');
+      expect(messages).toContain('MODIFIED');
+    });
+
+    it('compares against the pre-rename requirement when the same delta renames it', async () => {
+      const { changeDir, mainSpecsDir } = await setup(
+        'scenario-loss-rename',
+        [
+          '## RENAMED Requirements',
+          '',
+          '- FROM: `### Requirement: Sign In`',
+          '- TO: `### Requirement: Authenticate`',
+          '',
+          '## MODIFIED Requirements',
+          '',
+          '### Requirement: Authenticate',
+          'The system SHALL authenticate users against the directory.',
+          '',
+          '#### Scenario: Valid credentials',
+          '- **THEN** a directory session starts',
+          '',
+        ].join('\n'),
+        mainSpec(
+          [
+            '### Requirement: Sign In',
+            'The system SHALL authenticate users.',
+            '',
+            '#### Scenario: Valid credentials',
+            '- **THEN** a session starts',
+            '',
+            '#### Scenario: Locked account',
+            '- **THEN** access is refused',
+          ].join('\n')
+        )
+      );
+
+      const report = await new Validator().validateChangeDeltaSpecs(changeDir, { mainSpecsDir });
+
+      const messages = scenarioLossIssues(report.issues).map(i => i.message).join('\n');
+      expect(messages).toContain('Scenario: Locked account');
+    });
+
+    it('counts duplicate names per instance and ignores fenced #### headers', async () => {
+      const { changeDir, mainSpecsDir } = await setup(
+        'scenario-loss-duplicates',
+        [
+          '## MODIFIED Requirements',
+          '',
+          '### Requirement: Sign In',
+          'The system SHALL authenticate users against the directory.',
+          '',
+          '#### Scenario: Retry',
+          '- **THEN** the retry is allowed',
+          '',
+          '```markdown',
+          '#### Scenario: Retry',
+          '```',
+          '',
+        ].join('\n'),
+        mainSpec(
+          [
+            '### Requirement: Sign In',
+            'The system SHALL authenticate users.',
+            '',
+            '#### Scenario: Retry',
+            '- **THEN** the first retry is allowed',
+            '',
+            '#### Scenario: Retry',
+            '- **THEN** the second retry is refused',
+          ].join('\n')
+        )
+      );
+
+      const report = await new Validator().validateChangeDeltaSpecs(changeDir, { mainSpecsDir });
+
+      const messages = scenarioLossIssues(report.issues).map(i => i.message).join('\n');
+      expect(messages).toContain('Scenario: Retry');
+    });
+
+    it('stays silent when the main spec or the requirement has no baseline yet', async () => {
+      const delta = [
+        '## MODIFIED Requirements',
+        '',
+        '### Requirement: Sign In',
+        'The system SHALL authenticate users against the directory.',
+        '',
+        '#### Scenario: Valid credentials',
+        '- **THEN** a directory session starts',
+        '',
+      ].join('\n');
+
+      const noSpec = await setup('scenario-loss-no-spec', delta);
+      const noSpecReport = await new Validator().validateChangeDeltaSpecs(noSpec.changeDir, {
+        mainSpecsDir: noSpec.mainSpecsDir,
+      });
+      expect(scenarioLossIssues(noSpecReport.issues)).toHaveLength(0);
+
+      const noRequirement = await setup(
+        'scenario-loss-no-requirement',
+        delta,
+        mainSpec(
+          [
+            '### Requirement: Sign Out',
+            'The system SHALL end sessions.',
+            '',
+            '#### Scenario: Session ends',
+            '- **THEN** the session is destroyed',
+          ].join('\n')
+        )
+      );
+      const noRequirementReport = await new Validator().validateChangeDeltaSpecs(
+        noRequirement.changeDir,
+        { mainSpecsDir: noRequirement.mainSpecsDir }
+      );
+      expect(scenarioLossIssues(noRequirementReport.issues)).toHaveLength(0);
+    });
+
+    it('reports nothing without a mainSpecsDir option', async () => {
+      const { changeDir } = await setup(
+        'scenario-loss-no-option',
+        [
+          '## MODIFIED Requirements',
+          '',
+          '### Requirement: Sign In',
+          'The system SHALL authenticate users against the directory.',
+          '',
+          '#### Scenario: Valid credentials',
+          '- **THEN** a directory session starts',
+          '',
+        ].join('\n'),
+        mainSpec(
+          [
+            '### Requirement: Sign In',
+            'The system SHALL authenticate users.',
+            '',
+            '#### Scenario: Valid credentials',
+            '- **THEN** a session starts',
+            '',
+            '#### Scenario: Locked account',
+            '- **THEN** access is refused',
+          ].join('\n')
+        )
+      );
+
+      const report = await new Validator().validateChangeDeltaSpecs(changeDir);
+
+      expect(scenarioLossIssues(report.issues)).toHaveLength(0);
+    });
+  });
+
   // #1156 — the SHALL/MUST body-keyword hint applies to main specs too, with the
   // actionable sentence byte-identical to the change-delta path, emitted once.
   describe('main-spec SHALL/MUST body-keyword hint (#1156)', () => {

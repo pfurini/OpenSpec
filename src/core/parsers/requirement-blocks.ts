@@ -29,6 +29,57 @@ export function foldRequirementName(name: string): string {
 
 const REQUIREMENT_HEADER_REGEX = /^###\s*Requirement:\s*(.+)\s*$/i;
 
+/** A scenario header is any `#### ` heading, exactly four hashes deep. */
+const SCENARIO_HEADER_REGEX = /^####(?!#)\s+(.+?)\s*$/;
+
+/**
+ * The scenario headers a requirement block carries, in order and one entry per
+ * instance. Any non-fenced `#### ` header counts, matching the validator's
+ * notion of a scenario; headers inside fenced code blocks are examples.
+ */
+export function parseScenarioBlocks(blockRaw: string): string[] {
+  const lines = normalizeLineEndings(blockRaw).split('\n');
+  const fenced = buildCodeFenceMask(lines);
+  const names: string[] = [];
+  for (const [index, line] of lines.entries()) {
+    if (fenced[index]) continue;
+    const match = line.match(SCENARIO_HEADER_REGEX);
+    if (match) {
+      names.push(match[1].trim());
+    }
+  }
+  return names;
+}
+
+/**
+ * The scenarios `current` carries that `incoming` would drop. Matching is per
+ * instance, so N copies of a name in the current block need N in the incoming
+ * one; names are compared folded, since case and interior spacing are spelling,
+ * not identity. Returned names keep the current block's spelling.
+ *
+ * One comparison shared by the archive merge and the validator, so the two can
+ * never disagree about what counts as a dropped scenario.
+ */
+export function findMissingCurrentScenarios(current: string, incoming: string): string[] {
+  const available = new Map<string, number>();
+  for (const name of parseScenarioBlocks(incoming)) {
+    const key = foldRequirementName(name);
+    available.set(key, (available.get(key) ?? 0) + 1);
+  }
+
+  const missing: string[] = [];
+  for (const name of parseScenarioBlocks(current)) {
+    const key = foldRequirementName(name);
+    const remaining = available.get(key) ?? 0;
+    if (remaining > 0) {
+      available.set(key, remaining - 1);
+    } else {
+      missing.push(name);
+    }
+  }
+  return missing;
+}
+
 /**
  * Extracts the Requirements section from a spec file and parses requirement blocks.
  */

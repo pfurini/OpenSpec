@@ -14,6 +14,7 @@ import {
   parseDeltaSpec,
   normalizeRequirementName,
   foldRequirementName,
+  findMissingCurrentScenarios,
   type RequirementBlock,
 } from './parsers/requirement-blocks.js';
 import { buildCodeFenceMask } from './parsers/code-fence.js';
@@ -356,6 +357,17 @@ export async function buildUpdatedSpec(
     if (blocksMatch(existing.raw, mod.raw)) {
       // Already synced by an earlier run of this change.
       continue;
+    }
+    // A MODIFIED requirement replaces the whole block, so a scenario the block
+    // omits would be dropped silently. Refuse instead, before anything is written.
+    const missingScenarios = findMissingCurrentScenarios(existing.raw, mod.raw);
+    if (missingScenarios.length > 0) {
+      throw new Error(
+        `${specName} MODIFIED failed for header "### Requirement: ${mod.name}" - the block omits ` +
+          `${missingScenarios.length} scenario(s) the main spec still carries: ` +
+          `${missingScenarios.map((name) => `"${name}"`).join(', ')}. ` +
+          `A MODIFIED requirement replaces the whole block, so copy every scenario you intend to keep into it.`
+      );
     }
     warnAboutDroppedTail(specName, existing, mod, 'replaces', warn);
     nameToBlock.set(key, mod);

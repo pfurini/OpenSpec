@@ -10,7 +10,12 @@ import {
   MAX_REQUIREMENT_TEXT_LENGTH,
   VALIDATION_MESSAGES
 } from './constants.js';
-import { parseDeltaSpec, normalizeRequirementName, extractRequirementsSection } from '../parsers/requirement-blocks.js';
+import {
+  parseDeltaSpec,
+  normalizeRequirementName,
+  extractRequirementsSection,
+  findMissingCurrentScenarios,
+} from '../parsers/requirement-blocks.js';
 import { findMainSpecStructureIssues } from '../parsers/spec-structure.js';
 import { FileSystemUtils } from '../../utils/file-system.js';
 
@@ -111,8 +116,13 @@ export class Validator {
    * - REMOVED: names only; no scenario/description required
    * - RENAMED: pairs well-formed
    * - No duplicates within sections; no cross-section conflicts per spec
+   * - MODIFIED blocks keep every scenario the main spec still carries, when
+   *   `mainSpecsDir` names a baseline to compare against
    */
-  async validateChangeDeltaSpecs(changeDir: string): Promise<ValidationReport> {
+  async validateChangeDeltaSpecs(
+    changeDir: string,
+    options: { mainSpecsDir?: string } = {}
+  ): Promise<ValidationReport> {
     const issues: ValidationIssue[] = [];
     const specsDir = path.join(changeDir, 'specs');
     let totalDeltas = 0;
@@ -174,6 +184,20 @@ export class Validator {
           }
         }
 
+        // Baseline for scenario-loss detection; empty when the caller passed no
+        // main specs dir or this capability has no main spec yet.
+        const mainRequirements = await this.loadMainRequirementBlocks(
+          options.mainSpecsDir,
+          specsDir,
+          specFile
+        );
+        // A rename applies before the modification, so a MODIFIED block that
+        // carries the new name is compared against the old one's scenarios.
+        const renamedTargets = new Map<string, string>();
+        for (const { from, to } of plan.renamed) {
+          renamedTargets.set(normalizeRequirementName(to), normalizeRequirementName(from));
+        }
+
         // Validate MODIFIED
         for (const block of plan.modified) {
           const key = normalizeRequirementName(block.name);
@@ -192,6 +216,21 @@ export class Validator {
           const scenarioCount = this.countScenarios(block.raw);
           if (scenarioCount < 1) {
             issues.push({ level: 'ERROR', path: entryPath, message: `MODIFIED "${block.name}" must include at least one scenario` });
+          }
+          const baselineName = renamedTargets.get(key) ?? key;
+          const baseline = mainRequirements?.get(baselineName);
+          if (baseline !== undefined) {
+            const missing = findMissingCurrentScenarios(baseline, block.raw);
+            if (missing.length > 0) {
+              issues.push({
+                level: 'ERROR',
+                path: entryPath,
+                message:
+                  `MODIFIED "${block.name}" omits ${missing.length} scenario(s) the main spec still carries: ` +
+                  `${missing.map(name => `"${name}"`).join(', ')}. ` +
+                  `A MODIFIED requirement replaces the whole block, so copy every scenario you intend to keep into it.`,
+              });
+            }
           }
         }
 
@@ -280,6 +319,33 @@ export class Validator {
    * (specs/<area>/<capability>/spec.md) layouts are discovered (#1182b).
    * Returns absolute paths, sorted for deterministic issue ordering.
    */
+  /**
+   * Requirement blocks of the main spec matching a delta spec file, keyed by
+   * normalized requirement name. Returns undefined when there is no baseline to
+   * compare against (no `mainSpecsDir` given, or the capability has no main spec
+   * yet, for example a sister change still in flight).
+   */
+  private async loadMainRequirementBlocks(
+    mainSpecsDir: string | undefined,
+    changeSpecsDir: string,
+    deltaSpecFile: string
+  ): Promise<Map<string, string> | undefined> {
+    if (!mainSpecsDir) return undefined;
+    const capability = path.relative(changeSpecsDir, path.dirname(deltaSpecFile));
+    const mainSpecFile = path.join(mainSpecsDir, capability, 'spec.md');
+    let content: string;
+    try {
+      content = await fs.readFile(mainSpecFile, 'utf-8');
+    } catch {
+      return undefined;
+    }
+    const blocks = new Map<string, string>();
+    for (const block of extractRequirementsSection(content).bodyBlocks) {
+      blocks.set(normalizeRequirementName(block.name), block.raw);
+    }
+    return blocks;
+  }
+
   private async findDeltaSpecFiles(specsDir: string): Promise<string[]> {
     const results: string[] = [];
     const walk = async (dir: string): Promise<void> => {

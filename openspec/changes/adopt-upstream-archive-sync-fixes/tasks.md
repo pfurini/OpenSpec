@@ -99,7 +99,7 @@ Each `## Wave N` is one fresh-session vertical slice, proven test-first. The sin
 
 ## Wave 2
 
-- [ ] A MODIFIED block that drops a scenario fails validate at authoring time and archive at apply time, with the missing names listed
+- [x] A MODIFIED block that drops a scenario fails validate at authoring time and archive at apply time, with the missing names listed
 - components: `parsers/requirement-blocks.ts` (`parseScenarioBlocks`, `findMissingCurrentScenarios`), `core/specs-apply.ts` (refusal), `core/validation/validator.ts` + callers (`mainSpecsDir`)
 - interfaces: `findMissingCurrentScenarios(current, incoming) → string[]`; `validateChangeDeltaSpecs(dir, {mainSpecsDir?})`
 - depends-on: Wave 1
