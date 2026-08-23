@@ -877,7 +877,9 @@ Zeta purpose.
 ### Requirement: Z1
 z1`);
 
-      // Delta: epsilon is valid modification; zeta tries to remove non-existent -> should abort both
+      // Delta: epsilon is a valid modification; zeta modifies a requirement that
+      // does not exist -> should abort both. (A REMOVED entry that is already
+      // gone is a warned no-op now, so it no longer serves as the failure here.)
       await fs.writeFile(path.join(spec1Dir, 'spec.md'), `# Epsilon - Changes
 
 ## MODIFIED Requirements
@@ -886,8 +888,9 @@ E1 updated`);
 
       await fs.writeFile(path.join(spec2Dir, 'spec.md'), `# Zeta - Changes
 
-## REMOVED Requirements
-### Requirement: Missing`);
+## MODIFIED Requirements
+### Requirement: Missing
+missing update`);
 
       await archiveCommand.execute(changeName, { yes: true, noValidate: true });
 
@@ -1025,4 +1028,175 @@ E1 updated`);
       await expect(fs.access(changeDir)).resolves.not.toThrow();
     });
   });
+
+  describe('spec merge display and warnings', () => {
+    const MAIN_SPEC = [
+      '# reporting Specification',
+      '',
+      '## Purpose',
+      'Reporting rules for the platform, covering scheduled and ad-hoc reports.',
+      '',
+      '## Requirements',
+      '',
+      '### Requirement: Scheduled Report',
+      'The system SHALL deliver scheduled reports.',
+      '',
+      '#### Scenario: Report delivered',
+      '- **WHEN** the schedule fires',
+      '- **THEN** the report is delivered',
+      '',
+    ].join('\n');
+
+    async function seedMainSpec(): Promise<string> {
+      const mainSpecPath = path.join(tempDir, 'openspec', 'specs', 'reporting', 'spec.md');
+      await fs.mkdir(path.dirname(mainSpecPath), { recursive: true });
+      await fs.writeFile(mainSpecPath, MAIN_SPEC);
+      return mainSpecPath;
+    }
+
+    async function seedChange(changeName: string, delta: string): Promise<void> {
+      const changeSpecDir = path.join(
+        tempDir,
+        'openspec',
+        'changes',
+        changeName,
+        'specs',
+        'reporting'
+      );
+      await fs.mkdir(changeSpecDir, { recursive: true });
+      await fs.writeFile(path.join(changeSpecDir, 'spec.md'), delta);
+    }
+
+    function loggedLines(): string {
+      return (console.log as unknown as ReturnType<typeof vi.fn>).mock.calls
+        .map((call) => call.map((arg: unknown) => String(arg)).join(' '))
+        .join('\n');
+    }
+
+    it('displays only the counts of operations that changed the file', async () => {
+      const mainSpecPath = await seedMainSpec();
+      await seedChange(
+        'applied-counts',
+        [
+          '# Reporting - Changes',
+          '',
+          '## ADDED Requirements',
+          '',
+          '### Requirement: Ad-hoc Report',
+          'The system SHALL deliver ad-hoc reports.',
+          '',
+          '#### Scenario: Report requested',
+          '- **WHEN** a report is requested',
+          '- **THEN** the report is delivered',
+          '',
+          '## MODIFIED Requirements',
+          '',
+          '### Requirement: Scheduled Report',
+          'The system SHALL deliver scheduled reports.',
+          '',
+          '#### Scenario: Report delivered',
+          '- **WHEN** the schedule fires',
+          '- **THEN** the report is delivered',
+          '',
+        ].join('\n')
+      );
+
+      await archiveCommand.execute('applied-counts', { yes: true, noValidate: true });
+
+      const output = loggedLines();
+      expect(output).toContain(
+        `Applying changes to ${path.posix.join('openspec', 'specs', 'reporting', 'spec.md')}:`
+      );
+      expect(output).toContain('+ 1 added');
+      expect(output).not.toContain('~ 1 modified');
+      expect(output).toContain('Totals: + 1, ~ 0, - 0, → 0');
+
+      const updated = await fs.readFile(mainSpecPath, 'utf-8');
+      expect(updated).toContain('### Requirement: Ad-hoc Report');
+    });
+
+    it('writes nothing and reports zero totals when every operation is already synced', async () => {
+      const mainSpecPath = await seedMainSpec();
+      await seedChange(
+        'already-synced',
+        [
+          '# Reporting - Changes',
+          '',
+          '## MODIFIED Requirements',
+          '',
+          '### Requirement: Scheduled Report',
+          'The system SHALL deliver scheduled reports.',
+          '',
+          '#### Scenario: Report delivered',
+          '- **WHEN** the schedule fires',
+          '- **THEN** the report is delivered',
+          '',
+        ].join('\n')
+      );
+
+      await archiveCommand.execute('already-synced', { yes: true, noValidate: true });
+
+      expect(await fs.readFile(mainSpecPath, 'utf-8')).toBe(MAIN_SPEC);
+      expect(loggedLines()).toContain('Specs already in sync - no changes needed');
+
+      const archives = await fs.readdir(path.join(tempDir, 'openspec', 'changes', 'archive'));
+      expect(archives.some((a) => a.includes('already-synced'))).toBe(true);
+    });
+
+    it('surfaces non-blocking merge warnings in human output', async () => {
+      const mainSpecPath = await seedMainSpec();
+      await seedChange(
+        'warned-merge',
+        [
+          '# Reporting - Changes',
+          '',
+          '## REMOVED Requirements',
+          '',
+          '### Requirement: Retired Report',
+          '',
+        ].join('\n')
+      );
+
+      await archiveCommand.execute('warned-merge', { yes: true, noValidate: true });
+
+      // Non-blocking: the warning is printed and the archive still completes.
+      expect(loggedLines()).toContain('Retired Report');
+      expect(loggedLines()).not.toContain('Aborted. No files were changed.');
+      expect(await fs.readFile(mainSpecPath, 'utf-8')).toBe(MAIN_SPEC);
+
+      const archives = await fs.readdir(path.join(tempDir, 'openspec', 'changes', 'archive'));
+      expect(archives.some((a) => a.includes('warned-merge'))).toBe(true);
+    });
+
+    it('includes merge warnings in the --json result', async () => {
+      await seedMainSpec();
+      await seedChange(
+        'warned-merge-json',
+        [
+          '# Reporting - Changes',
+          '',
+          '## REMOVED Requirements',
+          '',
+          '### Requirement: Retired Report',
+          '',
+        ].join('\n')
+      );
+
+      await archiveCommand.execute('warned-merge-json', {
+        yes: true,
+        noValidate: true,
+        json: true,
+      });
+
+      const jsonCall = (console.log as unknown as ReturnType<typeof vi.fn>).mock.calls
+        .map((call) => String(call[0]))
+        .find((line) => line.trimStart().startsWith('{'));
+      expect(jsonCall).toBeDefined();
+
+      const parsed = JSON.parse(jsonCall!);
+      expect(Array.isArray(parsed.archive.warnings)).toBe(true);
+      expect(parsed.archive.warnings.join('\n')).toContain('Retired Report');
+    });
+  });
 });
+

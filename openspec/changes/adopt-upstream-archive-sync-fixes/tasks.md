@@ -89,7 +89,7 @@ Each `## Wave N` is one fresh-session vertical slice, proven test-first. The sin
 
 ## Wave 1
 
-- [ ] Re-archiving already-synced deltas is a warned no-op; rebuilt specs are byte-stable, keep blank lines/EOF, carry delta Purpose, and warn before dropping notes; `applySpecs` deleted
+- [x] Re-archiving already-synced deltas is a warned no-op; rebuilt specs are byte-stable, keep blank lines/EOF, carry delta Purpose, and warn before dropping notes; `applySpecs` deleted
 - components: `parsers/code-fence.ts`, `parsers/requirement-blocks.ts` (fence masks, `foldRequirementName`), `core/specs-apply.ts` rework
 - interfaces: `buildCodeFenceMask(lines) → boolean[]`; `foldRequirementName(name) → string`; `buildUpdatedSpec(update, changeName, {silent?}) → { rebuilt, counts, warnings, noRequirementBlocks, unaccountedContent }` (applied counts); `buildSpecSkeleton(name, change, purpose?)`; `extractPurposeSection(content) → string | undefined`
 - depends-on: Wave 0

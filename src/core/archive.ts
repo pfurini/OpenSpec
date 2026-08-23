@@ -16,6 +16,7 @@ import {
   findSpecUpdates,
   buildUpdatedSpec,
   writeUpdatedSpec,
+  type SpecCounts,
   type SpecUpdate,
 } from './specs-apply.js';
 
@@ -59,7 +60,9 @@ interface ArchiveResult {
   archivedAs: string;
   path: string;
   specsUpdated: boolean;
-  totals?: { added: number; modified: number; removed: number; renamed: number };
+  totals?: SpecCounts;
+  /** Non-blocking merge notices (already-synced no-ops, dropped notes, ...). */
+  warnings?: string[];
 }
 
 /**
@@ -403,6 +406,7 @@ export class ArchiveCommand {
     // Handle spec updates unless skipSpecs flag is set
     let specsUpdated = false;
     let totals: ArchiveResult['totals'];
+    const warnings: string[] = [];
     if (options.skipSpecs) {
       if (!json) {
         console.log('Skipping spec updates (--skip-specs flag provided).');
@@ -442,10 +446,12 @@ export class ArchiveCommand {
 
         if (shouldUpdateSpecs) {
           // Prepare all updates first (validation pass, no writes)
-          const prepared: Array<{ update: SpecUpdate; rebuilt: string; counts: { added: number; modified: number; removed: number; renamed: number } }> = [];
+          const prepared: Array<{ update: SpecUpdate; rebuilt: string; counts: SpecCounts }> = [];
           try {
             for (const update of specUpdates) {
+              // Human mode: buildUpdatedSpec prints its own warnings as it goes.
               const built = await buildUpdatedSpec(update, changeName!, { silent: json });
+              warnings.push(...built.warnings);
               prepared.push({ update, rebuilt: built.rebuilt, counts: built.counts });
             }
           } catch (err: any) {
@@ -488,26 +494,35 @@ export class ArchiveCommand {
             }
           }
 
-          // All validations passed; write files and display counts
-          const writeTotals = { added: 0, modified: 0, removed: 0, renamed: 0 };
+          // All validations passed; write the specs this run actually changes.
+          // A spec whose every operation was already synced is left untouched,
+          // so re-archiving cannot rewrite a byte-identical file.
+          const writeTotals: SpecCounts = { added: 0, modified: 0, removed: 0, renamed: 0 };
           for (const p of prepared) {
+            const changed =
+              p.counts.added + p.counts.modified + p.counts.removed + p.counts.renamed > 0;
+            if (!changed) continue;
             await writeUpdatedSpec(p.update, p.rebuilt, p.counts, {
               silent: json,
               // Cross-root paths must be absolute when a store is selected.
               ...(isStoreSelectedRoot(root) ? { displayPath: p.update.target } : {}),
             });
+            specsUpdated = true;
             writeTotals.added += p.counts.added;
             writeTotals.modified += p.counts.modified;
             writeTotals.removed += p.counts.removed;
             writeTotals.renamed += p.counts.renamed;
           }
-          specsUpdated = true;
           totals = writeTotals;
           if (!json) {
-            console.log(
-              `Totals: + ${writeTotals.added}, ~ ${writeTotals.modified}, - ${writeTotals.removed}, → ${writeTotals.renamed}`
-            );
-            console.log('Specs updated successfully.');
+            if (specsUpdated) {
+              console.log(
+                `Totals: + ${writeTotals.added}, ~ ${writeTotals.modified}, - ${writeTotals.removed}, → ${writeTotals.renamed}`
+              );
+              console.log('Specs updated successfully.');
+            } else {
+              console.log('Specs already in sync - no changes needed.');
+            }
           }
         }
       }
@@ -529,6 +544,7 @@ export class ArchiveCommand {
       path: archivePath,
       specsUpdated,
       ...(totals ? { totals } : {}),
+      ...(warnings.length > 0 ? { warnings } : {}),
     };
   }
 

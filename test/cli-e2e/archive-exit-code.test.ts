@@ -96,13 +96,26 @@ describe('openspec archive failure exit status', () => {
     ].join('\n');
     const mainSpecPath = await writeMainSpec(projectDir, 'alpha', mainContent);
 
-    // REMOVED names a requirement the main spec does not have: the merge cannot
-    // be built, so the flow must abort before any write.
+    // MODIFIED names a requirement the main spec does not have: the merge cannot
+    // be built, so the flow must abort before any write. (A REMOVED entry that is
+    // already gone is a warned no-op, so it does not abort anything.)
     await writeChangeSpec(
       projectDir,
       changeName,
       'alpha',
-      ['# Alpha - Changes', '', '## REMOVED Requirements', '', '### Requirement: Absent Rule', ''].join('\n')
+      [
+        '# Alpha - Changes',
+        '',
+        '## MODIFIED Requirements',
+        '',
+        '### Requirement: Absent Rule',
+        'The system SHALL keep the absent rule.',
+        '',
+        '#### Scenario: Absent holds',
+        '- **WHEN** it runs',
+        '- **THEN** the rule holds',
+        '',
+      ].join('\n')
     );
 
     const result = await runCLI(['archive', changeName, '--yes', '--no-validate'], {
