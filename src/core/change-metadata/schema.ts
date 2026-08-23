@@ -32,6 +32,10 @@ export const ChangeMetadataSchema = z.object({
     .optional(),
   goal: z.string().min(1).optional(),
   affected_areas: z.array(z.string().min(1)).optional(),
+  // Opt-in marker: when true, archiving a change whose deltas remove the last
+  // requirement of a capability retires that capability by deleting its main
+  // spec instead of aborting on a spec that cannot be written.
+  retire_capabilities: z.boolean().optional(),
   initiative: InitiativeLinkSchema.optional(),
 });
 

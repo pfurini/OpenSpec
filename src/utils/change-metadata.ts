@@ -146,6 +146,73 @@ export function readChangeMetadata(
   return parseResult.data;
 }
 
+/**
+ * The result of reading an opt-in boolean marker from change metadata.
+ * A marker that cannot be honored is never declared; `invalidReason` says why
+ * so the caller can tell the author instead of rejecting them bare.
+ */
+export interface MetadataMarker {
+  declared: boolean;
+  invalidReason?: string;
+}
+
+/**
+ * Reduce a failure message to a single, control-character-free line. Metadata
+ * errors quote user-authored YAML, which can carry newlines or escapes that
+ * would otherwise corrupt the terminal output the reason ends up in.
+ */
+function sanitizeMarkerReason(reason: string): string {
+  return reason
+    .replace(/[\u0000-\u001F\u007F]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Reads an opt-in boolean marker from a change's `.openspec.yaml`.
+ *
+ * The marker is honored only when the metadata parses, satisfies the metadata
+ * shape, and names a schema that resolves. Anything else - including a missing
+ * or non-boolean value - is `{ declared: false }`, with `invalidReason` set
+ * whenever the metadata itself was the obstacle.
+ *
+ * @param changeDir - The path to the change directory
+ * @param key - The metadata key to read
+ * @param projectRootOverride - Optional project root for schema resolution
+ */
+export function readBooleanMarker(
+  changeDir: string,
+  key: string,
+  projectRootOverride?: string
+): MetadataMarker {
+  const projectRoot = projectRootOverride ?? path.resolve(changeDir, '../../..');
+
+  let metadata: ChangeMetadata | null;
+  try {
+    metadata = readChangeMetadata(changeDir, projectRoot);
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : String(err);
+    return { declared: false, invalidReason: sanitizeMarkerReason(reason) };
+  }
+
+  if (!metadata) {
+    return { declared: false };
+  }
+
+  return { declared: (metadata as Record<string, unknown>)[key] === true };
+}
+
+/**
+ * Reads the `retire_capabilities` marker, which lets an archive delete a main
+ * spec whose last requirement this change removes.
+ */
+export function readRetireCapabilitiesMarker(
+  changeDir: string,
+  projectRootOverride?: string
+): MetadataMarker {
+  return readBooleanMarker(changeDir, 'retire_capabilities', projectRootOverride);
+}
+
 export interface ResolveSchemaForChangeOptions {
   metadata?: ChangeMetadata | null;
 }

@@ -1198,5 +1198,306 @@ missing update`);
       expect(parsed.archive.warnings.join('\n')).toContain('Retired Report');
     });
   });
+
+  describe('capability retirement', () => {
+    const SCHEDULED_REPORT_BLOCK = [
+      '### Requirement: Scheduled Report',
+      'The system SHALL deliver scheduled reports.',
+      '',
+      '#### Scenario: Report delivered',
+      '- **WHEN** the schedule fires',
+      '- **THEN** the report is delivered',
+    ].join('\n');
+
+    const MAIN_SPEC = [
+      '# reporting Specification',
+      '',
+      '## Purpose',
+      'Reporting rules for the platform, covering scheduled and ad-hoc reports.',
+      '',
+      '## Requirements',
+      '',
+      SCHEDULED_REPORT_BLOCK,
+      '',
+    ].join('\n');
+
+    const EMPTY_MAIN_SPEC = [
+      '# reporting Specification',
+      '',
+      '## Purpose',
+      'Reporting rules for the platform, covering scheduled and ad-hoc reports.',
+      '',
+      '## Requirements',
+      '',
+    ].join('\n');
+
+    const REMOVE_LAST_REQUIREMENT = [
+      '# Reporting - Changes',
+      '',
+      '## REMOVED Requirements',
+      '',
+      '### Requirement: Scheduled Report',
+      '',
+    ].join('\n');
+
+    const MARKER_DECLARED = 'schema: deep-planning\nretire_capabilities: true\n';
+
+    function specsRoot(): string {
+      return path.join(tempDir, 'openspec', 'specs');
+    }
+
+    function mainSpecPath(): string {
+      return path.join(specsRoot(), 'reporting', 'spec.md');
+    }
+
+    async function seedMainSpec(content: string): Promise<string> {
+      const target = mainSpecPath();
+      await fs.mkdir(path.dirname(target), { recursive: true });
+      await fs.writeFile(target, content);
+      return target;
+    }
+
+    async function seedChange(
+      changeName: string,
+      delta: string,
+      metadata?: string
+    ): Promise<string> {
+      const changeDir = path.join(tempDir, 'openspec', 'changes', changeName);
+      const changeSpecDir = path.join(changeDir, 'specs', 'reporting');
+      await fs.mkdir(changeSpecDir, { recursive: true });
+      await fs.writeFile(path.join(changeSpecDir, 'spec.md'), delta);
+      if (metadata !== undefined) {
+        await fs.writeFile(path.join(changeDir, '.openspec.yaml'), metadata);
+      }
+      return changeDir;
+    }
+
+    function loggedLines(): string {
+      return (console.log as unknown as ReturnType<typeof vi.fn>).mock.calls
+        .map((call) => call.map((arg: unknown) => String(arg)).join(' '))
+        .join('\n');
+    }
+
+    async function exists(target: string): Promise<boolean> {
+      try {
+        await fs.access(target);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    async function archiveNames(): Promise<string[]> {
+      return fs.readdir(path.join(tempDir, 'openspec', 'changes', 'archive'));
+    }
+
+    it('retires a declared, emptied capability and reports how to recover it', async () => {
+      const target = await seedMainSpec(MAIN_SPEC);
+      await seedChange('retire-reporting', REMOVE_LAST_REQUIREMENT, MARKER_DECLARED);
+
+      await archiveCommand.execute('retire-reporting', { yes: true });
+
+      expect(await exists(target)).toBe(false);
+      // The emptied capability directory is pruned, the specs root is not.
+      expect(await exists(path.dirname(target))).toBe(false);
+      expect(await exists(specsRoot())).toBe(true);
+
+      const output = loggedLines();
+      expect(output).toContain(
+        path.posix.join('openspec', 'specs', 'reporting', 'spec.md')
+      );
+      expect(output).toContain('git checkout HEAD --');
+      expect(output).not.toContain('Aborted. No files were changed.');
+
+      expect(process.exitCode).toBeUndefined();
+      expect((await archiveNames()).some((name) => name.includes('retire-reporting'))).toBe(true);
+    });
+
+    it('includes the retirement report in the --json warnings array', async () => {
+      const target = await seedMainSpec(MAIN_SPEC);
+      await seedChange('retire-reporting-json', REMOVE_LAST_REQUIREMENT, MARKER_DECLARED);
+
+      await archiveCommand.execute('retire-reporting-json', { yes: true, json: true });
+
+      expect(await exists(target)).toBe(false);
+
+      const jsonCall = (console.log as unknown as ReturnType<typeof vi.fn>).mock.calls
+        .map((call) => String(call[0]))
+        .find((line) => line.trimStart().startsWith('{'));
+      expect(jsonCall).toBeDefined();
+
+      const parsed = JSON.parse(jsonCall!);
+      expect(Array.isArray(parsed.archive.warnings)).toBe(true);
+      const warnings = parsed.archive.warnings.join('\n');
+      expect(warnings).toContain(path.posix.join('openspec', 'specs', 'reporting', 'spec.md'));
+      expect(warnings).toContain('git checkout HEAD --');
+    });
+
+    it('names retire_capabilities as the way out when the marker is missing', async () => {
+      const target = await seedMainSpec(MAIN_SPEC);
+      await seedChange('retire-undeclared', REMOVE_LAST_REQUIREMENT);
+
+      await archiveCommand.execute('retire-undeclared', { yes: true });
+
+      expect(await fs.readFile(target, 'utf-8')).toBe(MAIN_SPEC);
+
+      const output = loggedLines();
+      expect(output).toContain('retire_capabilities: true');
+      expect(output).toContain('.openspec.yaml');
+      expect(output).toContain('Aborted. No files were changed.');
+
+      expect(process.exitCode).toBe(1);
+      expect((await archiveNames()).some((name) => name.includes('retire-undeclared'))).toBe(false);
+    });
+
+    it('refuses the retirement and quotes content the merge cannot account for', async () => {
+      const withNotes = [
+        '# reporting Specification',
+        '',
+        '## Purpose',
+        'Reporting rules for the platform, covering scheduled and ad-hoc reports.',
+        '',
+        '## Requirements',
+        '',
+        SCHEDULED_REPORT_BLOCK,
+        '',
+        '### Notes',
+        'Keep the quarterly rollup formula documented here.',
+        '',
+      ].join('\n');
+      const target = await seedMainSpec(withNotes);
+      await seedChange('retire-with-notes', REMOVE_LAST_REQUIREMENT, MARKER_DECLARED);
+
+      await archiveCommand.execute('retire-with-notes', { yes: true });
+
+      expect(await fs.readFile(target, 'utf-8')).toBe(withNotes);
+
+      const output = loggedLines();
+      expect(output).toContain('### Notes');
+      expect(output).toContain('Keep the quarterly rollup formula documented here.');
+      expect(output).toContain('Aborted. No files were changed.');
+      expect(output).not.toContain('git checkout HEAD --');
+
+      expect(process.exitCode).toBe(1);
+    });
+
+    it('names the unaccounted content rather than the marker when the marker is missing too', async () => {
+      const withNotes = [
+        '# reporting Specification',
+        '',
+        '## Purpose',
+        'Reporting rules for the platform, covering scheduled and ad-hoc reports.',
+        '',
+        '## Requirements',
+        '',
+        SCHEDULED_REPORT_BLOCK,
+        '',
+        '### Notes',
+        'Keep the quarterly rollup formula documented here.',
+        '',
+      ].join('\n');
+      const target = await seedMainSpec(withNotes);
+      await seedChange('retire-notes-undeclared', REMOVE_LAST_REQUIREMENT);
+
+      await archiveCommand.execute('retire-notes-undeclared', { yes: true });
+
+      expect(await fs.readFile(target, 'utf-8')).toBe(withNotes);
+
+      const output = loggedLines();
+      expect(output).toContain('### Notes');
+      expect(output).toContain('Keep the quarterly rollup formula documented here.');
+      // The marker would not help here, so the abort must not offer it as the fix.
+      expect(output).not.toContain('retire_capabilities: true');
+      expect(output).toContain('Aborted. No files were changed.');
+
+      expect(process.exitCode).toBe(1);
+    });
+
+    it('treats a marker it cannot honor as not declared and states why', async () => {
+      const target = await seedMainSpec(MAIN_SPEC);
+      await seedChange(
+        'retire-bad-marker',
+        REMOVE_LAST_REQUIREMENT,
+        '{ invalid yaml\nretire_capabilities: true\n'
+      );
+
+      await archiveCommand.execute('retire-bad-marker', { yes: true });
+
+      expect(await fs.readFile(target, 'utf-8')).toBe(MAIN_SPEC);
+
+      const output = loggedLines();
+      expect(output).toContain('retire_capabilities');
+      expect(output).toMatch(/YAML/i);
+      expect(output).toContain('Aborted. No files were changed.');
+
+      expect(process.exitCode).toBe(1);
+    });
+
+    it('never retires a capability when validation is skipped', async () => {
+      const target = await seedMainSpec(MAIN_SPEC);
+      await seedChange('retire-no-validate', REMOVE_LAST_REQUIREMENT, MARKER_DECLARED);
+
+      await archiveCommand.execute('retire-no-validate', { yes: true, noValidate: true });
+
+      expect(await exists(target)).toBe(true);
+      const rewritten = await fs.readFile(target, 'utf-8');
+      expect(rewritten).not.toContain('### Requirement: Scheduled Report');
+      expect(loggedLines()).not.toContain('git checkout HEAD --');
+
+      expect((await archiveNames()).some((name) => name.includes('retire-no-validate'))).toBe(true);
+    });
+
+    it('does not retire a spec that was already empty before the change', async () => {
+      const target = await seedMainSpec(EMPTY_MAIN_SPEC);
+      await seedChange(
+        'retire-already-empty',
+        [
+          '# Reporting - Changes',
+          '',
+          '## REMOVED Requirements',
+          '',
+          '### Requirement: Retired Report',
+          '',
+        ].join('\n'),
+        MARKER_DECLARED
+      );
+
+      await archiveCommand.execute('retire-already-empty', { yes: true });
+
+      expect(await exists(target)).toBe(true);
+      expect(await fs.readFile(target, 'utf-8')).toBe(EMPTY_MAIN_SPEC);
+
+      const output = loggedLines();
+      expect(output).toContain('Aborted. No files were changed.');
+      // Never a bare rejection: the abort says why the declared marker did not retire it.
+      expect(output).toMatch(/removes no requirements|already had no requirements/);
+
+      expect(process.exitCode).toBe(1);
+    });
+
+    it('never follows a symlinked capability directory when pruning', async () => {
+      const linkTarget = path.join(tempDir, 'external-reporting');
+      await fs.mkdir(linkTarget, { recursive: true });
+      await fs.writeFile(path.join(linkTarget, 'spec.md'), MAIN_SPEC);
+
+      await fs.mkdir(specsRoot(), { recursive: true });
+      const linkPath = path.join(specsRoot(), 'reporting');
+      try {
+        await fs.symlink(linkTarget, linkPath, 'dir');
+      } catch {
+        // Platforms without symlink privileges cannot exercise this guard.
+        return;
+      }
+
+      await seedChange('retire-linked', REMOVE_LAST_REQUIREMENT, MARKER_DECLARED);
+
+      await archiveCommand.execute('retire-linked', { yes: true });
+
+      // The spec is deleted through the link, but the link itself is left alone.
+      expect(await exists(path.join(linkTarget, 'spec.md'))).toBe(false);
+      expect((await fs.lstat(linkPath)).isSymbolicLink()).toBe(true);
+      expect(await exists(linkTarget)).toBe(true);
+    });
+  });
 });
 

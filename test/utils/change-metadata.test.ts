@@ -8,6 +8,8 @@ import {
   readChangeMetadata,
   resolveSchemaForChange,
   validateSchemaName,
+  readBooleanMarker,
+  readRetireCapabilitiesMarker,
   ChangeMetadataError,
 } from '../../src/utils/change-metadata.js';
 import { ChangeMetadataSchema } from '../../src/core/change-metadata/index.js';
@@ -34,6 +36,18 @@ describe('ChangeMetadataSchema', () => {
       if (result.success) {
         expect(result.data.schema).toBe('custom-schema');
         expect(result.data.created).toBeUndefined();
+      }
+    });
+
+    it('should accept the retire_capabilities marker', () => {
+      const result = ChangeMetadataSchema.safeParse({
+        schema: 'deep-planning',
+        retire_capabilities: true,
+      });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.retire_capabilities).toBe(true);
       }
     });
 
@@ -84,6 +98,15 @@ describe('ChangeMetadataSchema', () => {
         schema: 'deep-planning',
         created: '2025-1-5', // Missing leading zeros
       });
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject a non-boolean retire_capabilities marker', () => {
+      const result = ChangeMetadataSchema.safeParse({
+        schema: 'deep-planning',
+        retire_capabilities: 'maybe',
+      });
+
       expect(result.success).toBe(false);
     });
 
@@ -352,6 +375,113 @@ describe('resolveSchemaForChange', () => {
     // Remove config, default should win
     await fs.unlink(path.join(configDir, 'config.yaml'));
     expect(resolveSchemaForChange(changeDir)).toBe('deep-planning'); // Default wins
+  });
+});
+
+describe('readRetireCapabilitiesMarker', () => {
+  let testDir: string;
+  let changeDir: string;
+
+  beforeEach(async () => {
+    testDir = path.join(os.tmpdir(), `openspec-test-${randomUUID()}`);
+    changeDir = path.join(testDir, 'openspec', 'changes', 'test-change');
+    await fs.mkdir(changeDir, { recursive: true });
+  });
+
+  afterEach(async () => {
+    await fs.rm(testDir, { recursive: true, force: true });
+  });
+
+  async function writeMetadata(content: string): Promise<void> {
+    await fs.writeFile(path.join(changeDir, '.openspec.yaml'), content, 'utf-8');
+  }
+
+  it('is not declared when the change has no metadata file', () => {
+    expect(readRetireCapabilitiesMarker(changeDir)).toEqual({ declared: false });
+  });
+
+  it('is not declared when the metadata omits the marker', async () => {
+    await writeMetadata('schema: deep-planning\n');
+
+    expect(readRetireCapabilitiesMarker(changeDir)).toEqual({ declared: false });
+  });
+
+  it('is declared when the metadata sets the marker to true', async () => {
+    await writeMetadata('schema: deep-planning\nretire_capabilities: true\n');
+
+    expect(readRetireCapabilitiesMarker(changeDir)).toEqual({ declared: true });
+  });
+
+  it('is not declared when the marker is explicitly false', async () => {
+    await writeMetadata('schema: deep-planning\nretire_capabilities: false\n');
+
+    expect(readRetireCapabilitiesMarker(changeDir)).toEqual({ declared: false });
+  });
+
+  it('refuses the marker and says why when the YAML cannot be parsed', async () => {
+    await writeMetadata('{ invalid yaml\nretire_capabilities: true\n');
+
+    const marker = readRetireCapabilitiesMarker(changeDir);
+    expect(marker.declared).toBe(false);
+    expect(marker.invalidReason).toMatch(/YAML/i);
+  });
+
+  it('refuses the marker when the metadata shape is invalid', async () => {
+    await writeMetadata('retire_capabilities: true\n');
+
+    const marker = readRetireCapabilitiesMarker(changeDir);
+    expect(marker.declared).toBe(false);
+    expect(marker.invalidReason).toBeDefined();
+  });
+
+  it('refuses the marker when the schema name does not resolve', async () => {
+    await writeMetadata('schema: no-such-schema\nretire_capabilities: true\n');
+
+    const marker = readRetireCapabilitiesMarker(changeDir);
+    expect(marker.declared).toBe(false);
+    expect(marker.invalidReason).toMatch(/Unknown schema/);
+  });
+
+  it('refuses a marker that is not a boolean', async () => {
+    await writeMetadata('schema: deep-planning\nretire_capabilities: maybe\n');
+
+    const marker = readRetireCapabilitiesMarker(changeDir);
+    expect(marker.declared).toBe(false);
+    expect(marker.invalidReason).toBeDefined();
+  });
+
+  it('strips control characters from the reason', async () => {
+    await writeMetadata('schema: deep-planning\nretire_capabilities: maybe\n');
+
+    const marker = readRetireCapabilitiesMarker(changeDir);
+    expect(marker.invalidReason).toBeDefined();
+    expect(marker.invalidReason).not.toMatch(/[\u0000-\u001F\u007F]/);
+  });
+});
+
+describe('readBooleanMarker', () => {
+  let testDir: string;
+  let changeDir: string;
+
+  beforeEach(async () => {
+    testDir = path.join(os.tmpdir(), `openspec-test-${randomUUID()}`);
+    changeDir = path.join(testDir, 'openspec', 'changes', 'test-change');
+    await fs.mkdir(changeDir, { recursive: true });
+  });
+
+  afterEach(async () => {
+    await fs.rm(testDir, { recursive: true, force: true });
+  });
+
+  it('reads any boolean marker the metadata schema declares', async () => {
+    await fs.writeFile(
+      path.join(changeDir, '.openspec.yaml'),
+      'schema: deep-planning\nretire_capabilities: true\n',
+      'utf-8'
+    );
+
+    expect(readBooleanMarker(changeDir, 'retire_capabilities')).toEqual({ declared: true });
+    expect(readBooleanMarker(changeDir, 'not_a_marker')).toEqual({ declared: false });
   });
 });
 

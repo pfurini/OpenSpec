@@ -16,9 +16,18 @@ import {
   findSpecUpdates,
   buildUpdatedSpec,
   writeUpdatedSpec,
+  retireSpec,
+  formatRetirementReport,
   type SpecCounts,
   type SpecUpdate,
 } from './specs-apply.js';
+import {
+  METADATA_FILENAME,
+  readRetireCapabilitiesMarker,
+  type MetadataMarker,
+} from '../utils/change-metadata.js';
+import { VALIDATION_MESSAGES } from './validation/constants.js';
+import type { ValidationReport } from './validation/types.js';
 
 /**
  * A change name that already carries its own `YYYY-MM-DD-` prefix is archived
@@ -97,6 +106,23 @@ function toArchiveDiagnostic(error: unknown): ArchiveDiagnostic {
     code: 'archive_error',
     message: error instanceof Error ? error.message : String(error),
   };
+}
+
+/** How many unaccounted lines an abort quotes before summarizing the rest. */
+const MAX_QUOTED_UNACCOUNTED_LINES = 10;
+
+/**
+ * A rebuilt spec is retirable when the only thing wrong with it is that it has
+ * no requirements left. The block parser and the validator genuinely disagree
+ * about what counts as a requirement, so asking the validator makes "this spec
+ * could not have been written anyway" true by construction.
+ */
+function isRetirableSpec(report: ValidationReport): boolean {
+  const errors = report.issues.filter((issue) => issue.level === 'ERROR');
+  return (
+    errors.length > 0 &&
+    errors.every((issue) => issue.message === VALIDATION_MESSAGES.SPEC_NO_REQUIREMENTS)
+  );
 }
 
 /**
@@ -446,13 +472,25 @@ export class ArchiveCommand {
 
         if (shouldUpdateSpecs) {
           // Prepare all updates first (validation pass, no writes)
-          const prepared: Array<{ update: SpecUpdate; rebuilt: string; counts: SpecCounts }> = [];
+          const prepared: Array<{
+            update: SpecUpdate;
+            rebuilt: string;
+            counts: SpecCounts;
+            unaccountedContent: string[];
+            retire: boolean;
+          }> = [];
           try {
             for (const update of specUpdates) {
               // Human mode: buildUpdatedSpec prints its own warnings as it goes.
               const built = await buildUpdatedSpec(update, changeName!, { silent: json });
               warnings.push(...built.warnings);
-              prepared.push({ update, rebuilt: built.rebuilt, counts: built.counts });
+              prepared.push({
+                update,
+                rebuilt: built.rebuilt,
+                counts: built.counts,
+                unaccountedContent: built.unaccountedContent,
+                retire: false,
+              });
             }
           } catch (err: any) {
             if (json) {
@@ -470,22 +508,55 @@ export class ArchiveCommand {
 
           // Validate every rebuilt spec before writing any of them, so a
           // late validation failure really does leave all targets unchanged.
+          // Retirement is opt-in per change, and only meaningful while the
+          // rebuilt specs are being validated at all.
+          const retireMarker = skipValidation
+            ? { declared: false }
+            : readRetireCapabilitiesMarker(changeDir);
+
           if (!skipValidation) {
             for (const p of prepared) {
               const specName = path.basename(path.dirname(p.update.target));
               const report = await new Validator().validateSpecContent(specName, p.rebuilt);
               if (!report.valid) {
+                const emptied = isRetirableSpec(report);
+                if (
+                  emptied &&
+                  retireMarker.declared &&
+                  p.counts.removed > 0 &&
+                  p.update.exists &&
+                  p.unaccountedContent.length === 0
+                ) {
+                  p.retire = true;
+                  continue;
+                }
+
+                const hint = emptied
+                  ? this.retirementHint({
+                      specName,
+                      displayPath: this.specDisplayPath(root, p.update),
+                      marker: retireMarker,
+                      unaccountedContent: p.unaccountedContent,
+                      removed: p.counts.removed,
+                      exists: p.update.exists,
+                    })
+                  : undefined;
+
                 if (json) {
                   throw new ArchiveBlockedError(
                     'archive_spec_validation_failed',
                     `Rebuilt spec for '${specName}' failed validation. No files were changed.`,
-                    `Run ${withStoreFlag(root, `openspec validate ${specName}`)} after fixing the change deltas.`
+                    hint ??
+                      `Run ${withStoreFlag(root, `openspec validate ${specName}`)} after fixing the change deltas.`
                   );
                 }
                 console.log(chalk.red(`\nValidation errors in rebuilt spec for ${specName} (will not write changes):`));
                 for (const issue of report.issues) {
                   if (issue.level === 'ERROR') console.log(chalk.red(`  ✗ ${issue.message}`));
                   else if (issue.level === 'WARNING') console.log(chalk.yellow(`  ⚠ ${issue.message}`));
+                }
+                if (hint) {
+                  console.log(chalk.yellow(hint));
                 }
                 console.log('Aborted. No files were changed.');
                 process.exitCode = 1;
@@ -499,6 +570,7 @@ export class ArchiveCommand {
           // so re-archiving cannot rewrite a byte-identical file.
           const writeTotals: SpecCounts = { added: 0, modified: 0, removed: 0, renamed: 0 };
           for (const p of prepared) {
+            if (p.retire) continue;
             const changed =
               p.counts.added + p.counts.modified + p.counts.removed + p.counts.renamed > 0;
             if (!changed) continue;
@@ -513,6 +585,22 @@ export class ArchiveCommand {
             writeTotals.removed += p.counts.removed;
             writeTotals.renamed += p.counts.renamed;
           }
+
+          // Retirements come last: deleting a spec is the one step no later
+          // failure can undo, so every write happens before any deletion.
+          for (const p of prepared) {
+            if (!p.retire) continue;
+            const displayPath = this.specDisplayPath(root, p.update);
+            const { retired } = await retireSpec(p.update, mainSpecsDir, {
+              silent: json,
+              displayPath,
+            });
+            if (!retired) continue;
+            specsUpdated = true;
+            writeTotals.removed += p.counts.removed;
+            warnings.push(formatRetirementReport(displayPath));
+          }
+
           totals = writeTotals;
           if (!json) {
             if (specsUpdated) {
@@ -546,6 +634,81 @@ export class ArchiveCommand {
       ...(totals ? { totals } : {}),
       ...(warnings.length > 0 ? { warnings } : {}),
     };
+  }
+
+  /**
+   * The path a spec is reported by. Cross-root paths must be absolute when a
+   * store is selected; otherwise the root-relative POSIX form reads the same on
+   * every platform.
+   */
+  private specDisplayPath(root: ResolvedOpenSpecRoot, update: SpecUpdate): string {
+    if (isStoreSelectedRoot(root)) {
+      return update.target;
+    }
+    const capability = path.basename(path.dirname(update.target));
+    return path.posix.join('openspec', 'specs', capability, 'spec.md');
+  }
+
+  /**
+   * Say what to do about a capability the change emptied but the archive will
+   * not retire. Never a bare rejection: whichever obstacle applies is named,
+   * and a marker that could not be honored always says why.
+   */
+  private retirementHint(context: {
+    specName: string;
+    displayPath: string;
+    marker: MetadataMarker;
+    unaccountedContent: string[];
+    removed: number;
+    exists: boolean;
+  }): string {
+    const { specName, displayPath, marker, unaccountedContent, removed, exists } = context;
+    const parts: string[] = [];
+
+    if (unaccountedContent.length > 0) {
+      const quoted = unaccountedContent
+        .slice(0, MAX_QUOTED_UNACCOUNTED_LINES)
+        .map((line) => `    ${line}`);
+      const extra = unaccountedContent.length - quoted.length;
+      parts.push(
+        `'${specName}' has no requirements left, but ${displayPath} still holds content the merge ` +
+          `cannot account for, so it was not retired` +
+          (marker.declared ? '' : ` (declaring retire_capabilities would not help)`) +
+          `:\n${quoted.join('\n')}` +
+          (extra > 0 ? `\n    ... and ${extra} more line(s)` : '') +
+          `\nMove those lines into "## Purpose" or a requirement, or delete ${displayPath} deliberately, then rerun.`
+      );
+    } else if (!exists) {
+      parts.push(
+        `This change creates '${specName}' with no requirements. Add at least one ADDED requirement ` +
+          `to the change's delta spec, then rerun.`
+      );
+    } else if (!marker.declared) {
+      parts.push(
+        `'${specName}' has no requirements left. To retire the capability, add ` +
+          `"retire_capabilities: true" to ${METADATA_FILENAME} in the change and rerun; ` +
+          `otherwise keep at least one requirement in the delta.`
+      );
+    } else if (removed === 0) {
+      parts.push(
+        `'${specName}' already had no requirements before this change, and this change removes none ` +
+          `from it, so it was not retired. Delete ${displayPath} deliberately, or add the requirement ` +
+          `removals to the change, then rerun.`
+      );
+    } else {
+      parts.push(
+        `'${specName}' has no requirements left and was not retired. Keep at least one requirement, ` +
+          `or delete ${displayPath} deliberately, then rerun.`
+      );
+    }
+
+    if (marker.invalidReason) {
+      parts.push(
+        `"retire_capabilities" in ${METADATA_FILENAME} could not be honored: ${marker.invalidReason}`
+      );
+    }
+
+    return parts.join('\n');
   }
 
   private async selectChange(changesDir: string): Promise<string | null> {

@@ -426,9 +426,60 @@ export async function buildUpdatedSpec(
     counts,
     warnings,
     noRequirementBlocks: keptOrder.length === 0,
-    // Populated by the retirement audit; the merge itself accounts for nothing yet.
-    unaccountedContent: [],
+    // Audited on the spec as it stands, because retiring the capability deletes
+    // that file: anything the merge cannot name would go with it.
+    unaccountedContent: contentTheMergeCannotName(targetContent),
   };
+}
+
+/**
+ * Delete a main spec whose last requirement this change removed, then prune the
+ * directories the deletion empties.
+ *
+ * A spec that is already gone is not an error - the caller has nothing left to
+ * retire. Any other failure is rethrown naming the path, because the archive
+ * has already written the other specs and the author has to finish by hand.
+ */
+export async function retireSpec(
+  update: SpecUpdate,
+  mainSpecsDir: string,
+  options: { silent?: boolean; displayPath?: string } = {}
+): Promise<{ retired: boolean }> {
+  const specName = path.basename(path.dirname(update.target));
+  const displayPath =
+    options.displayPath ?? path.posix.join('openspec', 'specs', specName, 'spec.md');
+
+  try {
+    await fs.unlink(update.target);
+  } catch (err: any) {
+    if (err?.code === 'ENOENT') {
+      return { retired: false };
+    }
+    throw new Error(
+      `Failed to retire ${update.target}: ${err?.message ?? String(err)}. ` +
+        `Delete the file by hand and rerun the archive.`
+    );
+  }
+
+  await pruneEmptyDirs(path.dirname(update.target), mainSpecsDir);
+
+  if (!options.silent) {
+    console.log(chalk.yellow(`⚠️  ${formatRetirementReport(displayPath)}`));
+  }
+
+  return { retired: true };
+}
+
+/**
+ * The retirement report: what was deleted and how to get it back. Deleted specs
+ * are recoverable from version control by construction, so the recovery hint is
+ * the whole rollback story.
+ */
+export function formatRetirementReport(displayPath: string): string {
+  return (
+    `Retired capability spec ${displayPath} - this change removed its last requirement. ` +
+    `Recover it with: git checkout HEAD -- ${displayPath}`
+  );
 }
 
 /**
@@ -515,6 +566,191 @@ function carryablePurpose(
       `(under ${MIN_PURPOSE_LENGTH} readable characters); the placeholder was used instead.`
   );
   return undefined;
+}
+
+/**
+ * Remove `startDir` and each empty parent above it, stopping at the specs root.
+ *
+ * Bounds are compared on real paths so an aliased spelling of the root cannot
+ * be walked past, and a symlinked directory is never followed or removed - the
+ * link is not ours to delete, and its target may live outside the specs tree.
+ */
+async function pruneEmptyDirs(startDir: string, boundaryDir: string): Promise<void> {
+  let boundary: string;
+  try {
+    boundary = await fs.realpath(boundaryDir);
+  } catch {
+    return;
+  }
+
+  let current = startDir;
+  while (true) {
+    let real: string;
+    try {
+      if ((await fs.lstat(current)).isSymbolicLink()) {
+        return;
+      }
+      real = await fs.realpath(current);
+    } catch {
+      return;
+    }
+
+    if (real === boundary || !isWithin(boundary, real)) {
+      return;
+    }
+
+    let entries: string[];
+    try {
+      entries = await fs.readdir(current);
+    } catch {
+      return;
+    }
+    if (entries.length > 0) {
+      return;
+    }
+
+    try {
+      await fs.rmdir(current);
+    } catch {
+      return;
+    }
+    current = path.dirname(current);
+  }
+}
+
+function isWithin(parent: string, child: string): boolean {
+  const rel = path.relative(parent, child);
+  return rel !== '' && !rel.startsWith('..') && !path.isAbsolute(rel);
+}
+
+const ATX_HEADING = /^(#{1,6})\s+(.*\S)\s*$/;
+const SETEXT_UNDERLINE = /^\s{0,3}(=+|-{3,})\s*$/;
+const SCENARIO_BULLET = /^\s*([-*+]|\d+[.)])\s+\S/;
+const BULLET_CONTINUATION = /^\s+\S/;
+
+/**
+ * Every non-blank line of a spec that the merge cannot attribute to a part it
+ * understands: the title, the `## Purpose` section, the `## Requirements`
+ * header, or a requirement's own header, statement, and scenario bullets.
+ *
+ * Everything else - a hand-written section, a setext or HTML heading, prose or
+ * bullets written after a requirement's scenarios - is authored content that
+ * deleting the file would lose. The audit fails safe: a line it cannot classify
+ * is reported, so the retirement is refused rather than guessed.
+ */
+function contentTheMergeCannotName(content: string): string[] {
+  const lines = content.replace(/\r\n?/g, '\n').split('\n');
+  const fenced = buildCodeFenceMask(lines);
+  const unaccounted: string[] = [];
+
+  let section: 'preamble' | 'purpose' | 'requirements' | 'foreign' = 'preamble';
+  let sawTitle = false;
+  let inRequirement = false;
+  let inScenario = false;
+  let bulletRunBroken = false;
+
+  const authored = (line: string): void => {
+    unaccounted.push(line.trim());
+    bulletRunBroken = true;
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.trim() === '') continue;
+
+    if (fenced[i]) {
+      // Fenced content belongs to whatever section encloses it.
+      if (section === 'foreign') authored(line);
+      continue;
+    }
+
+    const heading = ATX_HEADING.exec(line);
+    if (heading) {
+      const level = heading[1].length;
+      const text = heading[2].trim();
+
+      if (level === 1) {
+        if (!sawTitle && section === 'preamble') {
+          sawTitle = true;
+          continue;
+        }
+        section = 'foreign';
+        inRequirement = false;
+        inScenario = false;
+        authored(line);
+        continue;
+      }
+
+      if (level === 2) {
+        inRequirement = false;
+        inScenario = false;
+        bulletRunBroken = false;
+        if (/^Purpose$/i.test(text)) {
+          section = 'purpose';
+          continue;
+        }
+        if (/^Requirements$/i.test(text)) {
+          section = 'requirements';
+          continue;
+        }
+        section = 'foreign';
+        authored(line);
+        continue;
+      }
+
+      if (section === 'purpose') {
+        // Sub-headings inside Purpose are part of the Purpose body.
+        continue;
+      }
+
+      if (section === 'requirements') {
+        if (level === 3) {
+          if (/^Requirement:\s*\S/i.test(text)) {
+            inRequirement = true;
+            inScenario = false;
+            bulletRunBroken = false;
+            continue;
+          }
+          inRequirement = false;
+          inScenario = false;
+          authored(line);
+          continue;
+        }
+        if (inRequirement) {
+          // #### and deeper are the requirement's scenarios.
+          inScenario = true;
+          bulletRunBroken = false;
+          continue;
+        }
+      }
+
+      authored(line);
+      continue;
+    }
+
+    if (SETEXT_UNDERLINE.test(line)) {
+      authored(line);
+      continue;
+    }
+
+    if (section === 'purpose') continue;
+
+    if (section === 'requirements' && inRequirement) {
+      if (!inScenario) {
+        // The requirement statement, between its header and its scenarios.
+        continue;
+      }
+      if (!bulletRunBroken && (SCENARIO_BULLET.test(line) || BULLET_CONTINUATION.test(line))) {
+        continue;
+      }
+      authored(line);
+      continue;
+    }
+
+    authored(line);
+  }
+
+  return unaccounted;
 }
 
 /** Strip HTML comments, including an unterminated trailing one. */

@@ -109,7 +109,7 @@ Each `## Wave N` is one fresh-session vertical slice, proven test-first. The sin
 
 ## Wave 3
 
-- [ ] An emptied capability with `retire_capabilities: true` archives by deleting its spec with a recovery hint; without the marker the abort names the way out
+- [x] An emptied capability with `retire_capabilities: true` archives by deleting its spec with a recovery hint; without the marker the abort names the way out
 - components: `utils/change-metadata.ts` (schema key + marker reader), `core/specs-apply.ts` (`retireSpec`, `pruneEmptyDirs`, `unaccountedContent`), `core/archive.ts` (outcome decision, hint ladder, warnings)
 - interfaces: `readRetireCapabilitiesMarker(dir) → { declared, invalidReason? }`; `retire_capabilities?: boolean` in `ChangeMetadataSchema`; `retireSpec(update, mainSpecsDir, opts) → { retired }`; `ArchiveResult.warnings?: string[]`
 - depends-on: Wave 1
