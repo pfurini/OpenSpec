@@ -43,7 +43,7 @@ async function build(capability: string, delta: string, main?: string) {
     await writeMain(capability, main);
     exists = true;
   }
-  return buildUpdatedSpec({ source, target, exists }, CHANGE, { silent: true });
+  return buildUpdatedSpec({ id: capability, source, target, exists }, CHANGE, { silent: true });
 }
 
 const SIGN_IN_BLOCK = [

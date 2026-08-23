@@ -2,6 +2,7 @@ import { MarkdownParser, Section } from './markdown-parser.js';
 import { Change, Delta, DeltaOperation, Requirement } from '../schemas/index.js';
 import path from 'path';
 import { promises as fs } from 'fs';
+import { discoverSpecFiles } from '../../utils/spec-discovery.js';
 
 interface DeltaSection {
   operation: DeltaOperation;
@@ -54,30 +55,19 @@ export class ChangeParser extends MarkdownParser {
 
   private async parseDeltaSpecs(specsDir: string): Promise<Delta[]> {
     const deltas: Delta[] = [];
-    
-    try {
-      const specDirs = await fs.readdir(specsDir, { withFileTypes: true });
-      
-      for (const dir of specDirs) {
-        if (!dir.isDirectory()) continue;
-        
-        const specName = dir.name;
-        const specFile = path.join(specsDir, specName, 'spec.md');
-        
-        try {
-          const content = await fs.readFile(specFile, 'utf-8');
-          const specDeltas = this.parseSpecDeltas(specName, content);
-          deltas.push(...specDeltas);
-        } catch (error) {
-          // Spec file might not exist, which is okay
-          continue;
-        }
+
+    // Delta specs nest like main specs; each one is named by its capability
+    // path relative to the change's specs dir.
+    for (const { id, specFile } of await discoverSpecFiles(specsDir)) {
+      try {
+        const content = await fs.readFile(specFile, 'utf-8');
+        deltas.push(...this.parseSpecDeltas(id, content));
+      } catch (error) {
+        // Spec file might not exist, which is okay
+        continue;
       }
-    } catch (error) {
-      // Specs directory might not exist, which is okay
-      return [];
     }
-    
+
     return deltas;
   }
 

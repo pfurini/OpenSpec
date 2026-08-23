@@ -1499,5 +1499,107 @@ missing update`);
       expect(await exists(linkTarget)).toBe(true);
     });
   });
+
+  describe('nested delta spec discovery', () => {
+    const NESTED_MAIN = [
+      '# session Specification',
+      '',
+      '## Purpose',
+      'Session rules for the platform, covering lifetime and revocation.',
+      '',
+      '## Requirements',
+      '',
+      '### Requirement: Session Lifetime',
+      'The system SHALL expire idle sessions.',
+      '',
+      '#### Scenario: Idle session expires',
+      '- **WHEN** a session is idle past its lifetime',
+      '- **THEN** it is expired',
+      '',
+    ].join('\n');
+
+    const NESTED_DELTA = [
+      '# Session - Changes',
+      '',
+      '## ADDED Requirements',
+      '',
+      '### Requirement: Session Revocation',
+      'The system SHALL revoke sessions on demand.',
+      '',
+      '#### Scenario: Session revoked',
+      '- **WHEN** revocation is requested',
+      '- **THEN** the session ends',
+      '',
+    ].join('\n');
+
+    function loggedLines(): string {
+      return (console.log as unknown as ReturnType<typeof vi.fn>).mock.calls
+        .map((call) => call.map((arg: unknown) => String(arg)).join(' '))
+        .join('\n');
+    }
+
+    it('merges a nested delta into the main spec at the same relative path', async () => {
+      const mainSpecPath = path.join(
+        tempDir,
+        'openspec',
+        'specs',
+        'platform',
+        'session',
+        'spec.md'
+      );
+      await fs.mkdir(path.dirname(mainSpecPath), { recursive: true });
+      await fs.writeFile(mainSpecPath, NESTED_MAIN);
+
+      const changeSpecDir = path.join(
+        tempDir,
+        'openspec',
+        'changes',
+        'nested-delta',
+        'specs',
+        'platform',
+        'session'
+      );
+      await fs.mkdir(changeSpecDir, { recursive: true });
+      await fs.writeFile(path.join(changeSpecDir, 'spec.md'), NESTED_DELTA);
+
+      await archiveCommand.execute('nested-delta', { yes: true });
+
+      const updated = await fs.readFile(mainSpecPath, 'utf-8');
+      expect(updated).toContain('### Requirement: Session Revocation');
+      expect(updated).toContain('### Requirement: Session Lifetime');
+
+      const output = loggedLines();
+      // The capability is named by its path id, with / separators everywhere.
+      expect(output).toContain('platform/session');
+      expect(output).toContain(
+        `Applying changes to ${path.posix.join('openspec', 'specs', 'platform', 'session', 'spec.md')}:`
+      );
+
+      const archives = await fs.readdir(path.join(tempDir, 'openspec', 'changes', 'archive'));
+      expect(archives.some((a) => a.includes('nested-delta'))).toBe(true);
+    });
+
+    it('creates a nested main spec when the capability is new', async () => {
+      const changeSpecDir = path.join(
+        tempDir,
+        'openspec',
+        'changes',
+        'nested-new',
+        'specs',
+        'platform',
+        'session'
+      );
+      await fs.mkdir(changeSpecDir, { recursive: true });
+      await fs.writeFile(path.join(changeSpecDir, 'spec.md'), NESTED_DELTA);
+
+      await archiveCommand.execute('nested-new', { yes: true });
+
+      const created = await fs.readFile(
+        path.join(tempDir, 'openspec', 'specs', 'platform', 'session', 'spec.md'),
+        'utf-8'
+      );
+      expect(created).toContain('### Requirement: Session Revocation');
+    });
+  });
 });
 

@@ -18,6 +18,7 @@ import {
   type RequirementBlock,
 } from './parsers/requirement-blocks.js';
 import { buildCodeFenceMask } from './parsers/code-fence.js';
+import { discoverSpecFiles } from '../utils/spec-discovery.js';
 import { findMainSpecStructureIssues } from './parsers/spec-structure.js';
 import { MIN_PURPOSE_LENGTH } from './validation/constants.js';
 
@@ -26,6 +27,8 @@ import { MIN_PURPOSE_LENGTH } from './validation/constants.js';
 // -----------------------------------------------------------------------------
 
 export interface SpecUpdate {
+  /** Capability path relative to the specs root, `/`-joined on every platform. */
+  id: string;
   source: string;
   target: string;
   exists: boolean;
@@ -56,43 +59,31 @@ export interface BuildUpdatedSpecResult {
 
 /**
  * Find all delta spec files that need to be applied from a change.
+ *
+ * Delta specs nest exactly like main specs, and each one merges into the main
+ * spec at the same capability path.
  */
 export async function findSpecUpdates(changeDir: string, mainSpecsDir: string): Promise<SpecUpdate[]> {
   const updates: SpecUpdate[] = [];
-  const changeSpecsDir = path.join(changeDir, 'specs');
+  const discovered = await discoverSpecFiles(path.join(changeDir, 'specs'));
 
-  try {
-    const entries = await fs.readdir(changeSpecsDir, { withFileTypes: true });
+  for (const { id, specFile } of discovered) {
+    const targetFile = path.join(mainSpecsDir, ...id.split('/'), 'spec.md');
 
-    for (const entry of entries) {
-      if (entry.isDirectory()) {
-        const specFile = path.join(changeSpecsDir, entry.name, 'spec.md');
-        const targetFile = path.join(mainSpecsDir, entry.name, 'spec.md');
-
-        try {
-          await fs.access(specFile);
-
-          // Check if target exists
-          let exists = false;
-          try {
-            await fs.access(targetFile);
-            exists = true;
-          } catch {
-            exists = false;
-          }
-
-          updates.push({
-            source: specFile,
-            target: targetFile,
-            exists,
-          });
-        } catch {
-          // Source spec doesn't exist, skip
-        }
-      }
+    let exists = false;
+    try {
+      await fs.access(targetFile);
+      exists = true;
+    } catch {
+      exists = false;
     }
-  } catch {
-    // No specs directory in change
+
+    updates.push({
+      id,
+      source: specFile,
+      target: targetFile,
+      exists,
+    });
   }
 
   return updates;
@@ -114,7 +105,7 @@ export async function buildUpdatedSpec(
 
   // Parse deltas from the change spec file
   const plan = parseDeltaSpec(changeContent);
-  const specName = path.basename(path.dirname(update.target));
+  const specName = update.id;
 
   const warnings: string[] = [];
   const warn = (message: string): void => {
@@ -222,7 +213,7 @@ export async function buildUpdatedSpec(
   const hasAnyDelta = plan.added.length + plan.modified.length + plan.removed.length + plan.renamed.length > 0;
   if (!hasAnyDelta) {
     throw new Error(
-      `Delta parsing found no operations for ${path.basename(path.dirname(update.source))}. ` +
+      `Delta parsing found no operations for ${update.id}. ` +
         `Provide ADDED/MODIFIED/REMOVED/RENAMED sections in change spec.`
     );
   }
@@ -445,9 +436,8 @@ export async function retireSpec(
   mainSpecsDir: string,
   options: { silent?: boolean; displayPath?: string } = {}
 ): Promise<{ retired: boolean }> {
-  const specName = path.basename(path.dirname(update.target));
   const displayPath =
-    options.displayPath ?? path.posix.join('openspec', 'specs', specName, 'spec.md');
+    options.displayPath ?? path.posix.join('openspec', 'specs', ...update.id.split('/'), 'spec.md');
 
   try {
     await fs.unlink(update.target);
@@ -498,8 +488,11 @@ export async function writeUpdatedSpec(
 
   if (options.silent) return;
 
-  const specName = path.basename(path.dirname(update.target));
-  console.log(`Applying changes to ${options.displayPath ?? `openspec/specs/${specName}/spec.md`}:`);
+  console.log(
+    `Applying changes to ${
+      options.displayPath ?? path.posix.join('openspec', 'specs', ...update.id.split('/'), 'spec.md')
+    }:`
+  );
   if (counts.added) console.log(`  + ${counts.added} added`);
   if (counts.modified) console.log(`  ~ ${counts.modified} modified`);
   if (counts.removed) console.log(`  - ${counts.removed} removed`);

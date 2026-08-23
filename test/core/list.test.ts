@@ -189,5 +189,73 @@ Regular text that should be ignored
       expect(JSON.parse(logOutput.join('\n'))).toEqual({ explorations: [] });
     });
   });
+
+  describe('specs mode', () => {
+    const SPEC = [
+      '# Example Specification',
+      '',
+      '## Purpose',
+      'Rules this capability owns, described well enough to be readable.',
+      '',
+      '## Requirements',
+      '',
+      '### Requirement: First',
+      'The system SHALL do the first thing.',
+      '',
+      '#### Scenario: First happens',
+      '- **WHEN** asked',
+      '- **THEN** it happens',
+      '',
+      '### Requirement: Second',
+      'The system SHALL do the second thing.',
+      '',
+      '#### Scenario: Second happens',
+      '- **WHEN** asked',
+      '- **THEN** it happens',
+      '',
+    ].join('\n');
+
+    async function writeSpec(id: string): Promise<void> {
+      const file = path.join(tempDir, 'openspec', 'specs', ...id.split('/'), 'spec.md');
+      await fs.mkdir(path.dirname(file), { recursive: true });
+      await fs.writeFile(file, SPEC);
+    }
+
+    it('scans capabilities and counts their requirements', async () => {
+      await writeSpec('auth');
+
+      const listCommand = new ListCommand();
+      await listCommand.execute(tempDir, 'specs', { json: true });
+
+      expect(JSON.parse(logOutput.join('\n'))).toEqual({
+        specs: [{ id: 'auth', requirementCount: 2 }],
+      });
+    });
+
+    it('lists nested specs by their path id with / separators', async () => {
+      await writeSpec('platform/session');
+      await writeSpec('auth');
+
+      const listCommand = new ListCommand();
+      await listCommand.execute(tempDir, 'specs', { json: true });
+
+      expect(JSON.parse(logOutput.join('\n'))).toEqual({
+        specs: [
+          { id: 'auth', requirementCount: 2 },
+          { id: 'platform/session', requirementCount: 2 },
+        ],
+      });
+    });
+
+    it('shows nested ids in human output', async () => {
+      await writeSpec('platform/session');
+
+      const listCommand = new ListCommand();
+      await listCommand.execute(tempDir, 'specs');
+
+      expect(logOutput.some(line => line.includes('platform/session'))).toBe(true);
+    });
+  });
   });
 });
+

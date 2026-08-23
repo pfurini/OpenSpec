@@ -174,5 +174,35 @@ describe('ViewCommand', () => {
     expect(draftLines.some(line => line.includes('nested-change'))).toBe(false);
     expect(output).toContain('60%');
   });
+
+  it('lists nested specs by their path id and counts their requirements', async () => {
+    const spec = [
+      '# Session Specification',
+      '',
+      '## Purpose',
+      'Session rules for the platform, covering lifetime and revocation.',
+      '',
+      '## Requirements',
+      '',
+      '### Requirement: Session Lifetime',
+      'The system SHALL expire idle sessions.',
+      '',
+      '#### Scenario: Idle session expires',
+      '- **WHEN** a session is idle past its lifetime',
+      '- **THEN** it is expired',
+      '',
+    ].join('\n');
+
+    const specFile = path.join(tempDir, 'openspec', 'specs', 'platform', 'session', 'spec.md');
+    await fs.mkdir(path.dirname(specFile), { recursive: true });
+    await fs.writeFile(specFile, spec);
+
+    await new ViewCommand().execute(tempDir);
+    const output = logOutput.map(stripAnsi).join('\n');
+
+    expect(output).toContain('Specifications');
+    expect(output).toContain('platform/session');
+    expect(output).toContain('1 requirement');
+  });
 });
 

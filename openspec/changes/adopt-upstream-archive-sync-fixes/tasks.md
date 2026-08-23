@@ -119,7 +119,7 @@ Each `## Wave N` is one fresh-session vertical slice, proven test-first. The sin
 
 ## Wave 4
 
-- [ ] `specs/<area>/<capability>/spec.md` parses, validates, archives, lists, and shows under id `<area>/<capability>`
+- [x] `specs/<area>/<capability>/spec.md` parses, validates, archives, lists, and shows under id `<area>/<capability>`
 - components: `utils/spec-discovery.ts`, `SpecUpdate.id`, wiring in `core/specs-apply.ts`, `core/archive.ts` detection loop, `core/parsers/change-parser.ts`, `core/list.ts`, `core/view.ts`, `commands/spec.ts`
 - interfaces: `discoverSpecFiles(root) → { id, specFile }[]` (ids `/`-joined, code-point sorted); `SpecUpdate { id, source, target, exists }`
 - depends-on: Wave 1

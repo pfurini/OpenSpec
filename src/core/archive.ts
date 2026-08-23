@@ -26,6 +26,7 @@ import {
   readRetireCapabilitiesMarker,
   type MetadataMarker,
 } from '../utils/change-metadata.js';
+import { discoverSpecFiles } from '../utils/spec-discovery.js';
 import { VALIDATION_MESSAGES } from './validation/constants.js';
 import type { ValidationReport } from './validation/types.js';
 
@@ -299,22 +300,18 @@ export class ArchiveCommand {
       // Validate delta-formatted spec files under the change directory if present
       const changeSpecsDir = path.join(changeDir, 'specs');
       let hasDeltaSpecs = false;
-      try {
-        const candidates = await fs.readdir(changeSpecsDir, { withFileTypes: true });
-        for (const c of candidates) {
-          if (c.isDirectory()) {
-            try {
-              const candidatePath = path.join(changeSpecsDir, c.name, 'spec.md');
-              await fs.access(candidatePath);
-              const content = await fs.readFile(candidatePath, 'utf-8');
-              if (/^##\s+(ADDED|MODIFIED|REMOVED|RENAMED)\s+Requirements/m.test(content)) {
-                hasDeltaSpecs = true;
-                break;
-              }
-            } catch {}
+      for (const { specFile } of await discoverSpecFiles(changeSpecsDir)) {
+        try {
+          const content = await fs.readFile(specFile, 'utf-8');
+          if (/^##\s+(ADDED|MODIFIED|REMOVED|RENAMED)\s+Requirements/m.test(content)) {
+            hasDeltaSpecs = true;
+            break;
           }
+        } catch {
+          // Unreadable here only skips the delta-validation probe; the merge
+          // reads the same file again and reports the failure for real.
         }
-      } catch {}
+      }
       if (hasDeltaSpecs) {
         const deltaReport = await validator.validateChangeDeltaSpecs(changeDir);
         if (!deltaReport.valid) {
@@ -446,8 +443,7 @@ export class ArchiveCommand {
           console.log('\nSpecs to update:');
           for (const update of specUpdates) {
             const status = update.exists ? 'update' : 'create';
-            const capability = path.basename(path.dirname(update.target));
-            console.log(`  ${capability}: ${status}`);
+            console.log(`  ${update.id}: ${status}`);
           }
         }
 
@@ -516,7 +512,7 @@ export class ArchiveCommand {
 
           if (!skipValidation) {
             for (const p of prepared) {
-              const specName = path.basename(path.dirname(p.update.target));
+              const specName = p.update.id;
               const report = await new Validator().validateSpecContent(specName, p.rebuilt);
               if (!report.valid) {
                 const emptied = isRetirableSpec(report);
@@ -645,8 +641,7 @@ export class ArchiveCommand {
     if (isStoreSelectedRoot(root)) {
       return update.target;
     }
-    const capability = path.basename(path.dirname(update.target));
-    return path.posix.join('openspec', 'specs', capability, 'spec.md');
+    return path.posix.join('openspec', 'specs', ...update.id.split('/'), 'spec.md');
   }
 
   /**
