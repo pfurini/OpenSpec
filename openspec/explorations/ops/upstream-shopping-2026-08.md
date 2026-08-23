@@ -90,25 +90,42 @@ packaging: **two adoption changes** — `adopt-upstream-archive-sync-fixes` and
 `adopt-upstream-validate-parser-fixes` — auditing each row against our code (some may
 already be fixed or not reproduce in our tree).
 
-### A1. Archive / spec-sync (ADOPT, audit each)
+### A1. Archive / spec-sync — LANDED 2026-08-23 via `adopt-upstream-archive-sync-fixes`
 
-| PR | What |
-| --- | --- |
-| #1699 | Never dead-end a capability retirement |
-| #1484 | Let a change retire a capability it empties |
-| #1475 + #1391/#1252 | Scenario-drift check: fence-aware + multiplicity-aware |
-| #1482 | Report scenarios a MODIFIED requirement would drop |
-| #1490 | Warn before archiving deletes a note next to a requirement |
-| #1431 | Keep the delta spec's Purpose in a new main spec |
-| #1386 / #19d41714 (#1437) | Already-synced RENAMED / early-synced REMOVED deltas = no-ops |
-| #1376 | Stop failing on specs already synced before archiving |
-| #1316 / #1388 | Don't stack a second date prefix on archive names |
-| #1637 | Preserve blank lines around `## Requirements` when syncing |
-| #1528 | Canonicalize rebuilt spec EOF |
-| #1311 | Correct `archive` exit code on validation failure |
-| #1483 | Tell the caller which flag to pass in non-interactive archive |
-| #1603 | No ANSI escapes to a redirected (non-TTY) stdout |
-| #1355 / #1508 | Discover/preserve nested spec paths recursively (parse, apply, archive) |
+All rows re-implemented from the module end-state (no upstream code copied, per ADR-0001).
+Per-row outcomes follow the change's design.md "Upstream row ledger".
+
+| PR | What | Outcome (2026-08-23, `adopt-upstream-archive-sync-fixes`) |
+| --- | --- | --- |
+| #1699 | Never dead-end a capability retirement | Landed (retirement hint ladder) |
+| #1484 | Let a change retire a capability it empties | Landed (validator-decided retirement + `retire_capabilities` marker) |
+| #1475 + #1391/#1252 | Scenario-drift check: fence-aware + multiplicity-aware | Superseded by end-state — intermediate states folded into the consolidated `findMissingCurrentScenarios` comparison |
+| #1482 | Report scenarios a MODIFIED requirement would drop | Landed (shared by archive + validate) |
+| #1490 | Warn before archiving deletes a note next to a requirement | Landed (`firstForeignTail` warning) |
+| #1431 | Keep the delta spec's Purpose in a new main spec | Landed (incl. masking guards) |
+| #1386 / #19d41714 (#1437) | Already-synced RENAMED / early-synced REMOVED deltas = no-ops | Landed (idempotent merge end-state, near-miss guards) |
+| #1376 | Stop failing on specs already synced before archiving | Landed (warned no-op) |
+| #1316 / #1388 | Don't stack a second date prefix on archive names | Landed (CLI guard + skill prose twin) |
+| #1637 | Preserve blank lines around `## Requirements` when syncing | Landed (canonical rebuild form) |
+| #1528 | Canonicalize rebuilt spec EOF | Landed (same rebuild form) |
+| #1311 | Correct `archive` exit code on validation failure | Landed (exit 1 at every abort) |
+| #1483 | Tell the caller which flag to pass in non-interactive archive | Landed (`ArchiveBlockedError` rerun hints) |
+| #1603 | No ANSI escapes to a redirected (non-TTY) stdout | Landed (`confirmPrompt` plain path + picker TTY guard) |
+| #1355 / #1508 | Discover/preserve nested spec paths recursively (parse, apply, archive) | Landed (`discoverSpecFiles`, wired through archive/list/view/spec) |
+
+**Deferred, NOT closed** (see the change's design.md Non-Goals; revisit as their own rows,
+e.g. a future `adopt-upstream-archive-hardening`):
+
+- Concurrency hardening from upstream's end-state: content fingerprinting, archive claim locks,
+  spec snapshots with rollback, verified copy-then-remove `moveDirectory`, displaced-file
+  (`deferDelete`) retirement protocol.
+- #1499 path-confinement machinery (`resolveTrustedSpecPath`, trust roots, `assertPathWithin`);
+  `discoverSpecFiles` landed minimal, without trust-root checks.
+
+**Execution method** (worked well; reuse for the A2/A3/A4 sweeps): group the section's rows by
+module, diff the upstream module end-state for reference only (never copied), re-implement the
+end-state behaviors in our idiom test-first, then walk the per-row checklist to confirm each is
+covered or explicitly superseded/deferred.
 
 ### A2. Validate / parser / change resolution (ADOPT, audit each)
 
