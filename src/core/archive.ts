@@ -19,6 +19,12 @@ import {
   type SpecUpdate,
 } from './specs-apply.js';
 
+/**
+ * A change name that already carries its own `YYYY-MM-DD-` prefix is archived
+ * under that name; only undated names get today's date prepended.
+ */
+export const ARCHIVE_DATE_PREFIX_PATTERN = /^\d{4}-\d{2}-\d{2}-/;
+
 async function listActiveChangeNames(changesDir: string): Promise<string[]> {
   try {
     const entries = await fs.readdir(changesDir, { withFileTypes: true });
@@ -211,6 +217,7 @@ export class ArchiveCommand {
       const selectedChange = await this.selectChange(changesDir);
       if (!selectedChange) {
         console.log('No change selected. Aborting.');
+        process.exitCode = 1;
         return null;
       }
       changeName = selectedChange;
@@ -306,6 +313,7 @@ export class ArchiveCommand {
         }
         console.log(chalk.red('\nValidation failed. Please fix the errors before archiving.'));
         console.log(chalk.yellow('To skip validation (not recommended), use --no-validate flag.'));
+        process.exitCode = 1;
         return null;
       }
     } else if (json) {
@@ -328,6 +336,7 @@ export class ArchiveCommand {
         });
         if (!proceed) {
           console.log('Archive cancelled.');
+          process.exitCode = 1;
           return null;
         }
       } else {
@@ -363,11 +372,32 @@ export class ArchiveCommand {
         });
         if (!proceed) {
           console.log('Archive cancelled.');
+          process.exitCode = 1;
           return null;
         }
       } else {
         console.log(`Warning: ${incompleteTasks} incomplete task(s) found. Continuing due to --yes flag.`);
       }
+    }
+
+    // Settle the archive name and check the destination before any main spec is
+    // modified, so a name collision can never leave half-merged specs behind.
+    const archiveName = ARCHIVE_DATE_PREFIX_PATTERN.test(changeName)
+      ? changeName
+      : `${this.getArchiveDate()}-${changeName}`;
+    const archivePath = path.join(archiveDir, archiveName);
+
+    let archiveExists = false;
+    try {
+      await fs.access(archivePath);
+      archiveExists = true;
+    } catch (error: any) {
+      if (error.code !== 'ENOENT') {
+        throw error;
+      }
+    }
+    if (archiveExists) {
+      throw new ArchiveBlockedError('archive_target_exists', `Archive '${archiveName}' already exists.`);
     }
 
     // Handle spec updates unless skipSpecs flag is set
@@ -428,6 +458,7 @@ export class ArchiveCommand {
             }
             console.log(String(err.message || err));
             console.log('Aborted. No files were changed.');
+            process.exitCode = 1;
             return null;
           }
 
@@ -451,6 +482,7 @@ export class ArchiveCommand {
                   else if (issue.level === 'WARNING') console.log(chalk.yellow(`  ⚠ ${issue.message}`));
                 }
                 console.log('Aborted. No files were changed.');
+                process.exitCode = 1;
                 return null;
               }
             }
@@ -479,24 +511,6 @@ export class ArchiveCommand {
           }
         }
       }
-    }
-
-    // Create archive directory with date prefix
-    const archiveName = `${this.getArchiveDate()}-${changeName}`;
-    const archivePath = path.join(archiveDir, archiveName);
-
-    // Check if archive already exists
-    let archiveExists = false;
-    try {
-      await fs.access(archivePath);
-      archiveExists = true;
-    } catch (error: any) {
-      if (error.code !== 'ENOENT') {
-        throw error;
-      }
-    }
-    if (archiveExists) {
-      throw new ArchiveBlockedError('archive_target_exists', `Archive '${archiveName}' already exists.`);
     }
 
     // Create archive directory if needed

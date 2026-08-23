@@ -79,7 +79,7 @@ Each `## Wave N` is one fresh-session vertical slice, proven test-first. The sin
 
 ## Wave 0
 
-- [ ] `openspec archive 2026-08-01-foo --yes` archives as `2026-08-01-foo` (no double date) and a validation failure exits 1 — one failing e2e test first, committed RED
+- [x] `openspec archive 2026-08-01-foo --yes` archives as `2026-08-01-foo` (no double date) and a validation failure exits 1 — one failing e2e test first, committed RED
 - components: `core/archive.ts` (prefix guard, exit codes)
 - interfaces: `ARCHIVE_DATE_PREFIX_PATTERN = /^\d{4}-\d{2}-\d{2}-/`; `process.exitCode = 1` at every abort that returns without archiving
 - depends-on: —
