@@ -27,6 +27,7 @@ import {
   type MetadataMarker,
 } from '../utils/change-metadata.js';
 import { discoverSpecFiles } from '../utils/spec-discovery.js';
+import { confirmPrompt, isNonInteractivePromptError } from '../utils/interactive.js';
 import { VALIDATION_MESSAGES } from './validation/constants.js';
 import type { ValidationReport } from './validation/types.js';
 
@@ -35,6 +36,23 @@ import type { ValidationReport } from './validation/types.js';
  * under that name; only undated names get today's date prepended.
  */
 export const ARCHIVE_DATE_PREFIX_PATTERN = /^\d{4}-\d{2}-\d{2}-/;
+
+/**
+ * Names that keep their meaning inside double quotes in every shell we can be
+ * pasted into. Anything else (spaces are fine, `$`, backticks, quotes and
+ * backslashes are not) is replaced by a placeholder rather than handing the
+ * user a command their shell would reinterpret.
+ */
+const PORTABLY_QUOTABLE_CHANGE_NAME = /^[A-Za-z0-9 ._\-/+=:,@]+$/;
+
+const CHANGE_NAME_PLACEHOLDER = '<change-name>';
+
+function quoteChangeName(changeName: string | undefined): string {
+  if (!changeName || !PORTABLY_QUOTABLE_CHANGE_NAME.test(changeName)) {
+    return CHANGE_NAME_PLACEHOLDER;
+  }
+  return `"${changeName}"`;
+}
 
 async function listActiveChangeNames(changesDir: string): Promise<string[]> {
   try {
@@ -244,7 +262,26 @@ export class ArchiveCommand {
           withStoreFlag(root, 'openspec archive <change-name> --json')
         );
       }
-      const selectedChange = await this.selectChange(changesDir);
+      if (!process.stdin.isTTY || !process.stdout.isTTY) {
+        throw new ArchiveBlockedError(
+          'archive_no_terminal',
+          'No terminal is available to select a change interactively.',
+          `Name the change instead: ${this.rerunCommand(root, undefined, options)}`
+        );
+      }
+      let selectedChange: string | null;
+      try {
+        selectedChange = await this.selectChange(changesDir);
+      } catch (error) {
+        if (isNonInteractivePromptError(error)) {
+          throw new ArchiveBlockedError(
+            'archive_selection_unanswered',
+            'Change selection ended without an answer.',
+            `Name the change instead: ${this.rerunCommand(root, undefined, options)}`
+          );
+        }
+        throw error;
+      }
       if (!selectedChange) {
         console.log('No change selected. Aborting.');
         process.exitCode = 1;
@@ -355,11 +392,16 @@ export class ArchiveCommand {
       const timestamp = new Date().toISOString();
 
       if (!options.yes) {
-        const { confirm } = await import('@inquirer/prompts');
-        const proceed = await confirm({
-          message: chalk.yellow('⚠️  WARNING: Skipping validation may archive invalid specs. Continue? (y/N)'),
-          default: false
-        });
+        const proceed = await this.confirmOrBlock(
+          {
+            message: chalk.yellow('⚠️  WARNING: Skipping validation may archive invalid specs. Continue? (y/N)'),
+            default: false,
+          },
+          'Skipping validation may archive invalid specs. Continue?',
+          root,
+          changeName,
+          options
+        );
         if (!proceed) {
           console.log('Archive cancelled.');
           process.exitCode = 1;
@@ -391,11 +433,14 @@ export class ArchiveCommand {
           );
         }
       } else if (!options.yes) {
-        const { confirm } = await import('@inquirer/prompts');
-        const proceed = await confirm({
-          message: `Warning: ${incompleteTasks} incomplete task(s) found. Continue?`,
-          default: false
-        });
+        const taskPrompt = `Warning: ${incompleteTasks} incomplete task(s) found. Continue?`;
+        const proceed = await this.confirmOrBlock(
+          { message: taskPrompt, default: false },
+          taskPrompt,
+          root,
+          changeName,
+          options
+        );
         if (!proceed) {
           console.log('Archive cancelled.');
           process.exitCode = 1;
@@ -456,11 +501,13 @@ export class ArchiveCommand {
               withStoreFlag(root, 'openspec archive <change-name> --json --yes')
             );
           }
-          const { confirm } = await import('@inquirer/prompts');
-          shouldUpdateSpecs = await confirm({
-            message: 'Proceed with spec updates?',
-            default: true
-          });
+          shouldUpdateSpecs = await this.confirmOrBlock(
+            { message: 'Proceed with spec updates?', default: true },
+            'Proceed with spec updates?',
+            root,
+            changeName,
+            options
+          );
           if (!shouldUpdateSpecs) {
             console.log('Skipping spec updates. Proceeding with archive.');
           }
@@ -633,6 +680,52 @@ export class ArchiveCommand {
   }
 
   /**
+   * The command that answers, in advance, whatever this run could not ask:
+   * the caller's own flags plus `--yes`, inside the selected store.
+   */
+  private rerunCommand(
+    root: ResolvedOpenSpecRoot,
+    changeName: string | undefined,
+    options: ArchiveOptions
+  ): string {
+    const flags: string[] = [];
+    if (options.skipSpecs) flags.push('--skip-specs');
+    if (options.validate === false || options.noValidate === true) flags.push('--no-validate');
+    if (options.json) flags.push('--json');
+    flags.push('--yes');
+    return withStoreFlag(
+      root,
+      `openspec archive ${quoteChangeName(changeName)} ${flags.join(' ')}`
+    );
+  }
+
+  /**
+   * Asks a yes/no question that an unattended run cannot answer. A prompt that
+   * ends without an answer must never read as "no" and exit 0: it names the
+   * decision and the command that decides it up front.
+   */
+  private async confirmOrBlock(
+    prompt: { message: string; default: boolean },
+    decision: string,
+    root: ResolvedOpenSpecRoot,
+    changeName: string | undefined,
+    options: ArchiveOptions
+  ): Promise<boolean> {
+    try {
+      return await confirmPrompt(prompt);
+    } catch (error) {
+      if (isNonInteractivePromptError(error)) {
+        throw new ArchiveBlockedError(
+          'archive_confirmation_unanswered',
+          `Archive stopped: the confirmation "${decision}" could not be answered because the input ended.`,
+          `Answer it up front: ${this.rerunCommand(root, changeName, options)}`
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
    * The path a spec is reported by. Cross-root paths must be absolute when a
    * store is selected; otherwise the root-relative POSIX form reads the same on
    * every platform.
@@ -746,7 +839,11 @@ export class ArchiveCommand {
       });
       return answer;
     } catch (error) {
-      // User cancelled (Ctrl+C)
+      // A prompt nothing could answer is the caller's to explain; a plain
+      // cancellation (Ctrl+C) stays the quiet abort it has always been.
+      if (isNonInteractivePromptError(error)) {
+        throw error;
+      }
       return null;
     }
   }

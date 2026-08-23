@@ -17,6 +17,13 @@ describe('ArchiveCommand', () => {
   const originalConsoleLog = console.log;
   const originalXdgDataHome = process.env.XDG_DATA_HOME;
   let originalExitCode: typeof process.exitCode;
+  const originalStdinIsTTY = process.stdin.isTTY;
+  const originalStdoutIsTTY = process.stdout.isTTY;
+
+  function setTTY(isTTY: boolean): void {
+    Object.defineProperty(process.stdin, 'isTTY', { value: isTTY, writable: true, configurable: true });
+    Object.defineProperty(process.stdout, 'isTTY', { value: isTTY, writable: true, configurable: true });
+  }
 
   beforeEach(async () => {
     // Create temp directory
@@ -40,6 +47,10 @@ describe('ArchiveCommand', () => {
     originalExitCode = process.exitCode;
     process.exitCode = undefined;
 
+    // The suite drives the interactive flow through the mocked @inquirer
+    // prompts, which archive only reaches when both streams are a terminal.
+    setTTY(true);
+
     // Suppress console.log during tests
     console.log = vi.fn();
 
@@ -51,6 +62,17 @@ describe('ArchiveCommand', () => {
     console.log = originalConsoleLog;
 
     process.exitCode = originalExitCode;
+
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: originalStdinIsTTY,
+      writable: true,
+      configurable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: originalStdoutIsTTY,
+      writable: true,
+      configurable: true,
+    });
 
     if (originalXdgDataHome === undefined) {
       delete process.env.XDG_DATA_HOME;
@@ -1599,6 +1621,179 @@ missing update`);
         'utf-8'
       );
       expect(created).toContain('### Requirement: Session Revocation');
+    });
+  });
+
+  describe('non-interactive guidance', () => {
+    const ANSI = /\u001b\[/;
+
+    beforeEach(async () => {
+      // vi.clearAllMocks() keeps queued *Once implementations; a leftover answer
+      // from an earlier test would be handed to the first prompt asked here.
+      const { select, confirm } = await import('@inquirer/prompts');
+      (select as unknown as ReturnType<typeof vi.fn>).mockReset();
+      (confirm as unknown as ReturnType<typeof vi.fn>).mockReset();
+    });
+
+    function exitPromptError(message: string): Error {
+      const error = new Error(message);
+      error.name = 'ExitPromptError';
+      return error;
+    }
+
+    function diagnosticOf(error: unknown): { message: string; fix?: string } {
+      const diagnostic = (error as { diagnostic?: { message: string; fix?: string } }).diagnostic;
+      expect(diagnostic).toBeDefined();
+      return diagnostic!;
+    }
+
+    async function seedChangeWithSpec(changeName: string): Promise<string> {
+      const changeDir = path.join(tempDir, 'openspec', 'changes', changeName);
+      const changeSpecDir = path.join(changeDir, 'specs', 'test-capability');
+      await fs.mkdir(changeSpecDir, { recursive: true });
+      await fs.writeFile(
+        path.join(changeSpecDir, 'spec.md'),
+        [
+          '# Test Capability Spec',
+          '',
+          '## Purpose',
+          'This is a test capability specification.',
+          '',
+          '## Requirements',
+          '',
+          '### The system SHALL provide test capability',
+          '',
+          '#### Scenario: Basic test',
+          'Given a test condition',
+          'When an action occurs',
+          'Then expected result happens',
+        ].join('\n')
+      );
+      return changeDir;
+    }
+
+    it('never renders the picker when no terminal is available', async () => {
+      const { select } = await import('@inquirer/prompts');
+      const mockSelect = select as unknown as ReturnType<typeof vi.fn>;
+      await fs.mkdir(path.join(tempDir, 'openspec', 'changes', 'feature-a'), { recursive: true });
+      setTTY(false);
+
+      const error = await archiveCommand.execute(undefined, {}).then(
+        () => undefined,
+        (err: unknown) => err
+      );
+
+      expect(error).toBeInstanceOf(Error);
+      expect(mockSelect).not.toHaveBeenCalled();
+      const diagnostic = diagnosticOf(error);
+      expect(diagnostic.message).toMatch(/terminal/i);
+      expect(diagnostic.fix).toContain('openspec archive <change-name>');
+      expect(diagnostic.fix).toContain('--yes');
+      expect(`${diagnostic.message}\n${diagnostic.fix}`).not.toMatch(ANSI);
+    });
+
+    it('carries the flags the caller already passed into the rerun hint', async () => {
+      await fs.mkdir(path.join(tempDir, 'openspec', 'changes', 'feature-a'), { recursive: true });
+      setTTY(false);
+
+      const error = await archiveCommand
+        .execute(undefined, { skipSpecs: true, noValidate: true })
+        .then(
+          () => undefined,
+          (err: unknown) => err
+        );
+
+      expect(diagnosticOf(error).fix).toContain(
+        'openspec archive <change-name> --skip-specs --no-validate --yes'
+      );
+    });
+
+    it('turns a selection that ends without an answer into the same rerun guidance', async () => {
+      const { select } = await import('@inquirer/prompts');
+      const mockSelect = select as unknown as ReturnType<typeof vi.fn>;
+      await fs.mkdir(path.join(tempDir, 'openspec', 'changes', 'feature-a'), { recursive: true });
+      mockSelect.mockRejectedValueOnce(exitPromptError('User force closed the prompt with 0 null'));
+
+      const error = await archiveCommand.execute(undefined, {}).then(
+        () => undefined,
+        (err: unknown) => err
+      );
+
+      const diagnostic = diagnosticOf(error);
+      expect(diagnostic.fix).toContain('openspec archive <change-name>');
+      expect(diagnostic.fix).toContain('--yes');
+      expect(console.log).not.toHaveBeenCalledWith('No change selected. Aborting.');
+    });
+
+    it('still treats a SIGINT cancellation of the picker as a quiet abort', async () => {
+      const { select } = await import('@inquirer/prompts');
+      const mockSelect = select as unknown as ReturnType<typeof vi.fn>;
+      await fs.mkdir(path.join(tempDir, 'openspec', 'changes', 'feature-a'), { recursive: true });
+      mockSelect.mockRejectedValueOnce(exitPromptError('User force closed the prompt with SIGINT'));
+
+      await expect(archiveCommand.execute(undefined, {})).resolves.toBeUndefined();
+
+      expect(console.log).toHaveBeenCalledWith('No change selected. Aborting.');
+      expect(process.exitCode).toBe(1);
+    });
+
+    it('names the decision and the rerun command when a confirmation cannot be answered', async () => {
+      const { confirm } = await import('@inquirer/prompts');
+      const mockConfirm = confirm as unknown as ReturnType<typeof vi.fn>;
+      const changeName = 'confirm-eof';
+      const changeDir = await seedChangeWithSpec(changeName);
+      mockConfirm.mockRejectedValueOnce(exitPromptError('User force closed the prompt with 0 null'));
+
+      const error = await archiveCommand.execute(changeName, {}).then(
+        () => undefined,
+        (err: unknown) => err
+      );
+
+      const diagnostic = diagnosticOf(error);
+      expect(diagnostic.message).toContain('Proceed with spec updates?');
+      expect(diagnostic.fix).toContain(`openspec archive "${changeName}" --yes`);
+
+      // Nothing was written and nothing was archived.
+      await expect(fs.access(changeDir)).resolves.toBeUndefined();
+      await expect(
+        fs.access(path.join(tempDir, 'openspec', 'specs', 'test-capability', 'spec.md'))
+      ).rejects.toThrow();
+      const archives = await fs.readdir(path.join(tempDir, 'openspec', 'changes', 'archive'));
+      expect(archives).toEqual([]);
+    });
+
+    it('preserves --no-validate in the rerun command of an unanswered confirmation', async () => {
+      const { confirm } = await import('@inquirer/prompts');
+      const mockConfirm = confirm as unknown as ReturnType<typeof vi.fn>;
+      const changeName = 'validation-skip-eof';
+      await fs.mkdir(path.join(tempDir, 'openspec', 'changes', changeName), { recursive: true });
+      mockConfirm.mockRejectedValueOnce(exitPromptError('User force closed the prompt with 0 null'));
+
+      const error = await archiveCommand.execute(changeName, { noValidate: true }).then(
+        () => undefined,
+        (err: unknown) => err
+      );
+
+      expect(diagnosticOf(error).fix).toContain(
+        `openspec archive "${changeName}" --no-validate --yes`
+      );
+    });
+
+    it('falls back to a placeholder for change names no shell can quote portably', async () => {
+      const { confirm } = await import('@inquirer/prompts');
+      const mockConfirm = confirm as unknown as ReturnType<typeof vi.fn>;
+      const changeName = 'odd $name';
+      await fs.mkdir(path.join(tempDir, 'openspec', 'changes', changeName), { recursive: true });
+      mockConfirm.mockRejectedValueOnce(exitPromptError('User force closed the prompt with 0 null'));
+
+      const error = await archiveCommand.execute(changeName, { noValidate: true }).then(
+        () => undefined,
+        (err: unknown) => err
+      );
+
+      const fix = diagnosticOf(error).fix ?? '';
+      expect(fix).toContain('openspec archive <change-name> --no-validate --yes');
+      expect(fix).not.toContain(changeName);
     });
   });
 });

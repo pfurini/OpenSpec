@@ -1,3 +1,5 @@
+import readline from 'readline';
+
 export type InteractiveOptions = {
   /**
    * Explicit "disable prompts" flag passed by internal callers.
@@ -25,5 +27,113 @@ export function isInteractive(value?: boolean | InteractiveOptions): boolean {
   // Respect the standard CI environment variable (set by GitHub Actions, GitLab CI, Travis, etc.)
   if ('CI' in process.env) return false;
   return !!process.stdin.isTTY;
+}
+
+export type ConfirmPrompt = {
+  message: string;
+  /** Answer taken for an empty or unrecognized line. Defaults to true, as inquirer does. */
+  default?: boolean;
+};
+
+type PromptInput = NodeJS.ReadableStream & { isTTY?: boolean };
+type PromptOutput = NodeJS.WritableStream & { isTTY?: boolean };
+
+export type PromptStreams = {
+  input?: PromptInput;
+  output?: PromptOutput;
+};
+
+/**
+ * Shaped like `@inquirer/core`'s `ExitPromptError` so callers can classify a
+ * prompt that ended without an answer the same way whichever reader produced
+ * it. The message deliberately never mentions SIGINT: a Ctrl+C is a user
+ * decision, not an unanswerable prompt.
+ */
+export class NonInteractivePromptError extends Error {
+  constructor(message = 'The prompt input ended before an answer was given.') {
+    super(message);
+    this.name = 'ExitPromptError';
+  }
+}
+
+/**
+ * True when a prompt failed because nothing could answer it (closed stdin,
+ * redirected streams), false for a SIGINT cancellation and for every unrelated
+ * error.
+ */
+export function isNonInteractivePromptError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  if (error.name !== 'ExitPromptError') return false;
+  return !/SIGINT/i.test(error.message);
+}
+
+/**
+ * Every CSI sequence, so a colored message from a caller cannot smuggle an
+ * escape onto a redirected stream.
+ */
+const ANSI_ESCAPE_PATTERN = new RegExp('\u001B\\[[0-?]*[ -/]*[@-~]', 'g');
+
+/**
+ * Mirrors inquirer's confirm parsing: a `y`/`yes` or `n`/`no` prefix decides,
+ * anything else (including an empty line) takes the default.
+ */
+function parseConfirmAnswer(line: string, fallback: boolean): boolean {
+  const value = line.trim();
+  if (/^(y|yes)/i.test(value)) return true;
+  if (/^(n|no)/i.test(value)) return false;
+  return fallback;
+}
+
+/**
+ * Reads one line with no terminal handling, so nothing ANSI reaches a
+ * redirected stream. Resolves to null when the input ends unanswered.
+ */
+function readPlainLine(input: PromptInput, output: PromptOutput, question: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    output.write(question);
+    const rl = readline.createInterface({ input, terminal: false });
+    let answered = false;
+    rl.once('line', (line) => {
+      answered = true;
+      rl.close();
+      resolve(line);
+    });
+    rl.once('close', () => {
+      if (!answered) resolve(null);
+    });
+  });
+}
+
+/**
+ * Asks a yes/no question. With a terminal on both ends this is inquirer's
+ * confirm; otherwise it is a single plain line that accepts one piped answer.
+ * An input that ends without an answer rejects instead of silently defaulting.
+ */
+export async function confirmPrompt(
+  prompt: ConfirmPrompt,
+  io: PromptStreams = {}
+): Promise<boolean> {
+  const input = io.input ?? process.stdin;
+  const output = io.output ?? process.stdout;
+  const fallback = prompt.default !== false;
+
+  if (input.isTTY && output.isTTY) {
+    const { confirm } = await import('@inquirer/prompts');
+    const config = { message: prompt.message, default: fallback };
+    // Only hand inquirer explicit streams; the default context is its own.
+    return io.input || io.output
+      ? confirm(config, { input: input as NodeJS.ReadableStream, output: output as NodeJS.WritableStream })
+      : confirm(config);
+  }
+
+  const suffix = fallback ? '[Y/n]' : '[y/N]';
+  const plainMessage = prompt.message.replace(ANSI_ESCAPE_PATTERN, '');
+  const line = await readPlainLine(input, output, `${plainMessage} ${suffix} `);
+  if (line === null) {
+    throw new NonInteractivePromptError(
+      `The prompt "${prompt.message}" could not be answered: the input ended.`
+    );
+  }
+  return parseConfirmAnswer(line, fallback);
 }
 

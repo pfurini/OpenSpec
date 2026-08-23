@@ -129,7 +129,7 @@ Each `## Wave N` is one fresh-session vertical slice, proven test-first. The sin
 
 ## Wave 5
 
-- [ ] With no TTY or an EOF'd stdin, archive never spews escapes or exits 0 silently — it names the exact rerun command with the caller's flags; piped `y\n` still works
+- [x] With no TTY or an EOF'd stdin, archive never spews escapes or exits 0 silently — it names the exact rerun command with the caller's flags; piped `y\n` still works
 - components: `utils/interactive.ts` (`confirmPrompt`, `isNonInteractivePromptError`), `core/archive.ts` (`confirmOrBlock`, `rerunFlags`, portable quoting, picker TTY guard)
 - interfaces: `confirmPrompt({message, default}, {input?, output?}) → Promise<boolean>`; `isNonInteractivePromptError(e) → boolean`
 - depends-on: Wave 0
