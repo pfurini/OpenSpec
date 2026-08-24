@@ -20,6 +20,7 @@ deleted file: `git log --oneline -- openspec/explorations/<file>` then
 | 2026-08-21 | Package renamed `@pfurini/openspec` (bin stays `openspec`). Stores-surface trim discarded (kept whole). `make-this-fork-mine.md` refreshed. |
 | 2026-08-21..22 | **First upstream shopping trip** (183 commits, fork point `65a7233f`): inventory + verdicts in `ops/upstream-shopping-2026-08.md`. **Translation layer designed** (§B2): canonical dialect = Pi; per-target adapter modules; emit matrix `.pi`/`.claude`/`.cursor`/`.agents`; Cursor dedupe experiment run (dedupes by name, `.agents` > `.cursor`, `.claude`/`.codex` not read despite docs). |
 | 2026-08-22..24 | A1 adoption sweep (archive/sync fixes) run on Opus and archived (`adopt-upstream-archive-sync-fixes`). **The concept pivot** ratified: three pillars (process breadth; gradual automation with escalation; own the harness), **Archon parked**, factory rebuilt on Pi + `pi-dynamic-workflows`, ledger v2 (store-homed, three tiers), second brain named as a future consumer. Corpus pruned to 7 files. |
+| 2026-08-24 | The "Langgraph as Agentic Base" research session (Kimi) critically reviewed and imported into `ledger-and-evals.md`: LangGraph rejected (orchestration = data on Pi's extension API), never-a-gateway capture rule, token-governor concept, L1 semconv insurance, L3 backend shortlist (Laminar vs Opik), two eval regimes (rubric judges for prose, execution-based for code). Conclusions consistent with the pivot. |
 
 ## The 17 locked decisions — survival status after the pivot
 

@@ -73,10 +73,14 @@ Then synthesis changes, one process step at a time. Carried items that belong he
        classes; taxonomy bootstrap from existing logs/incidents first
 4. [ ] Semantic evals: schema-derived rubrics as advisory judges; calibrate against
        regrets before any blocking power
-5. [ ] Later, receipts permitting: OTLP export + backend (L2/L3); promptfoo/DeepEval
-       regression walls (L4) once skills stabilize
-6. [ ] Ledger experiments once live: skill-granularity counterfactual; WHAT-freshness
-       retro pass (git: START-HERE #19, #20)
+5. [ ] Token governor at Pi's model-call layer: pre-request budget enforcement fed by
+       ledger data — never via a gateway (see ledger-and-evals "Ecosystem research")
+6. [ ] Later, receipts permitting: OTLP export + backend bake-off (L2/L3 shortlist:
+       Laminar vs Opik — see ledger-and-evals); promptfoo regression walls (L4) once
+       skills stabilize
+7. [ ] Ledger experiments once live: skill-granularity counterfactual; WHAT-freshness
+       retro pass (git: START-HERE #19, #20); retro-vs-Ollie calibration benchmark
+       (non-sensitive project only)
 
 ## Track F — the factory on Pi (pillar 2; after D has its first wins and E1–E3 exist)
 

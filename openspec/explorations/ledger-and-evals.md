@@ -76,15 +76,30 @@ Fields: provenance (`retro` | `human-inline`), status (`candidate` | `adjudicate
   are hypotheses to validate, not truth. The taxonomy is versioned; every regret records
   its taxonomy version; changes are retro-proposed, human-ratified.
 
-## Evals: staged, calibrated before empowered
+## Evals: staged, calibrated before empowered — and two regimes
 
-1. **Semantic evals first (L5):** LLM judges scoring artifacts against rubrics derived
-   from our own schema instructions (falsifiability, spec-as-behavior-contract,
-   deferrable-only open questions). Advisory only, attached to receipts at gate time.
-2. **Calibration before authority:** a judge may block only after regrets prove its
+Prose and code are judged by different mechanisms (imported from the ecosystem
+research, 2026-08-24):
+
+1. **Prose artifacts (proposals, specs, designs): rubric judges.** LLM judges scoring
+   against rubrics derived from our own schema instructions (falsifiability,
+   spec-as-behavior-contract, deferrable-only open questions). Advisory only, attached
+   to receipts at gate time.
+2. **Code: execution-based correctness, never LLM judges.** Judges reward
+   plausible-looking code, not correct code (the HumanEval/SWE-bench lesson). The
+   correctness signal is compile + tests + static analysis — our TDD gates already
+   produce it; the eval layer records it, it does not re-judge it.
+3. **Efficiency is trace-derived, not judged:** iterations-to-success (retry/loop count
+   per step) and tokens-per-successful-run come from receipts/traces. The composite
+   objective (e.g. pass-rate-per-token) is a custom scoring function over both — L5
+   work; no vendor ships our trade-off curve.
+4. **Calibration before authority:** a judge may block only after regrets prove its
    scores predict quality. An uncalibrated blocking judge is just ceremony.
-3. **Evals-as-code later (L4):** promptfoo/DeepEval as CI regression walls for canonical
-   skills, once they stabilize (premature while methodologies are merging weekly).
+5. **Evals-as-code later (L4): promptfoo first** (MIT, TS-native, custom JS/TS scorers
+   versioned in-repo — the execution-based scorer is custom in every framework anyway).
+   DeepEval (Apache-2.0, Python-only, RAG-centric metrics) only as a sidecar if
+   subjective code criteria (idiomaticity, style adherence) ever need G-Eval-style
+   judging.
 
 ## The layered stack, and what we build when
 
@@ -92,17 +107,63 @@ Fields: provenance (`retro` | `human-inline`), status (`candidate` | `adjudicate
 L0 runtime          Pi fork                     — exists
 L1 vocabulary       OTel gen_ai semconv         — adopt NOW (free, prevents remapping)
 L2 transport        OTLP + Collector            — deferred: receipts must prove need
-L3 backend          Laminar/Opik/…              — deferred: same gate
-L4 evals-as-code    promptfoo/DeepEval          — when skills stabilize
+L3 backend           Laminar/Opik/…              — deferred: same gate (shortlist below)
+L4 evals-as-code     promptfoo (+DeepEval niche)  — when skills stabilize
 L5 semantic layer   receipts + regrets + retro  — build FIRST; this is the moat
 ```
 
 Build order (BACKLOG track E): schema freeze → thin native capture → retro skill →
 semantic evals → only then plumbing. Measure-first applies to the measuring system too.
 
+## Ecosystem research (imported 2026-08-24; re-verify facts before adopting)
+
+Source: the "Langgraph as Agentic Base" research session (Kimi, mid-2026), critically
+reviewed and found consistent with our direction. Facts are dated and partly
+vendor-sourced — re-check at adoption time.
+
+- **Orchestration: no framework.** LangGraph rejected: Pi already IS the agent runtime;
+  adopting a graph framework means either reimplementing Pi's loop inside it or
+  wrapping Pi sessions as opaque nodes (an expensive job scheduler). Orchestration is
+  **data** (declarative graph specs) interpreted by a thin engine on Pi's extension API
+  (`pi-dynamic-workflows`) — the same reasoning that parked Archon. Temporal (durable
+  execution) parked: adopt only if crash-resume/multi-day runs demand it, never before
+  observability shows the need.
+- **Capture rule: never a proxy/gateway.** A proxy sees API-level request/response, not
+  orchestration structure (which node called, what tool ran between calls). And our
+  subscription-auth providers (Claude Agent SDK → Anthropic subscription APIs) must
+  stay direct: gateways collide with the Authorization header and normalize away the
+  client fingerprint the subscription path expects.
+- **Token governor** lives at Pi's model-call layer: pre-request budget enforcement,
+  fed by ledger data (the ledger measures; the governor enforces). Reportedly no
+  vendor ships this ("open frontier") — treat the moat claim as hypothesis, but the
+  enforcement point is right regardless.
+- **L1 insurance:** gen_ai semconv is still experimental and its *agent/tool*
+  attributes are the least stable part. Emit `gen_ai.*` as baseline + OpenInference
+  attributes where richer payloads help; wrap all attribute names in ONE internal
+  constants module so a semconv rename is a one-file change. Hand-instrumenting Pi is
+  an advantage: no auto-instrumentor understands our workflow-node structure anyway.
+- **L3 shortlist (for when receipts open the gate):** Laminar (TS-native, best
+  agent-trace debugging, SQL over traces, no gating; risks: young community, Rust
+  stack) vs Opik (Apache-2.0, best free eval surface incl. ungated online evals,
+  prompt optimizer, test suites; the Ollie repair agent is Enterprise-gated on
+  self-host). Langfuse = maturity hedge (MIT, biggest community; agent UX lags, no
+  SQL). Phoenix out (online evals paywalled; ELv2 only matters if we ever host it for
+  others). Helicone out (maintenance mode). Bake-off = one OTLP instrumentation, two
+  exporters, side by side — but only AFTER L5 v0 exists. The backend is a **view over
+  the traces tier; receipts in the store remain the source of truth**.
+- **Retro calibration trick:** Opik's Ollie (trace analysis → fix proposal →
+  regression test) is the commercial twin of our retro skill. A month on their free
+  cloud tier can benchmark our detective's output — non-sensitive project only (cloud
+  traces would carry generated code).
+- **Independent confirmation:** the research's "don't loop on confidence, loop on
+  evidence" rule for stochastic nodes is the same principle as our categorical
+  escalation triggers (NORTH-STAR pillar 2), reached separately.
+
 ## Open items
 
 - Schema freeze is **gated on the second-brain materials** (Paolo shares; the ledger
   schema is the interface the second brain ingests).
-- The L3/L4 tool candidates came from a separate research session; pressure-test them
-  against this staging before any commitment.
+- Re-verify the L3/L4 shortlist facts at adoption time (fast-moving category,
+  vendor-authored comparisons).
+- Design the token governor (budget hierarchy, enforcement semantics, relation to
+  receipts) when Track F starts.
