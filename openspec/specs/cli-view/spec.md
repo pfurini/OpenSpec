@@ -3,7 +3,9 @@
 ## Purpose
 
 The `openspec view` command provides a comprehensive dashboard view of the OpenSpec project state, displaying specifications, changes, and progress metrics in a unified, visually appealing format to help developers quickly understand project status.
+
 ## Requirements
+
 ### Requirement: Dashboard Display
 
 The system SHALL provide a `view` command that displays a dashboard overview of specs and changes.
@@ -81,6 +83,13 @@ The dashboard SHALL display specifications sorted by requirement count.
 - **WHEN** a spec file cannot be parsed
 - **THEN** system includes it with 0 requirement count
 
+#### Scenario: Nested specs listed by path id
+
+- **GIVEN** a spec at `openspec/specs/platform/session/spec.md` (paths built with the platform's separators on disk)
+- **WHEN** the dashboard is rendered
+- **THEN** the spec appears with id `platform/session`, using `/` separators on every platform
+- **AND** its requirements are counted like any flat spec's
+
 ### Requirement: Visual Formatting
 
 The dashboard SHALL use consistent visual formatting with colors and symbols.
@@ -126,4 +135,3 @@ The dashboard SHALL display changes without tasks in a separate "Draft" section.
 
 - **WHEN** multiple draft changes exist
 - **THEN** system sorts them alphabetically by name
-
