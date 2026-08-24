@@ -139,12 +139,16 @@ export async function ensureDistFresh(): Promise<void> {
   console.log(`[vitest] Rebuilding dist/ before CLI tests: ${state.reason}.`);
 
   if (!buildPromise) {
-    buildPromise = runBuild().catch((error) => {
-      buildPromise = undefined;
-      throw error;
-    });
+    buildPromise = runBuild();
   }
-  await buildPromise;
+
+  try {
+    await buildPromise;
+  } catch (error) {
+    // Let a later run retry instead of replaying the failure from the memo.
+    buildPromise = undefined;
+    throw error;
+  }
 
   const rebuilt = inspectDist();
   if (!rebuilt.fresh) {
