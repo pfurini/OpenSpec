@@ -39,7 +39,7 @@
     "!dist/**/*.map"
   ],
   "scripts": {
-    "lint": "eslint src/",
+    "lint": "eslint src/ --max-warnings 0",
     "build": "node build.js",
     "rebaseline:skills": "pnpm build && node scripts/rebaseline-skill-hashes.mjs",
     "dev": "tsc --watch",
