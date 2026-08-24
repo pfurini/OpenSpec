@@ -1,0 +1,52 @@
+name: Gate
+
+# The repo's cross-platform path rules are enforced by convention locally; a
+# real Windows run enforces them mechanically.
+on:
+  push:
+    branches: [personal]
+  pull_request:
+    branches: [personal]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    name: Gate (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      # Must precede setup-node: its pnpm store cache needs the pnpm binary.
+      # Pinned to the version developers run locally.
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6.0.10
+        with:
+          version: 11.13.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7.0.0
+        with:
+          node-version: '22.13.0'
+          cache: pnpm
+
+      # pnpm-workspace.yaml allows esbuild's build script, so this needs no
+      # approval step.
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Gate
+        run: pnpm run gate
