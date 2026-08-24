@@ -24,6 +24,10 @@ pnpm run rebaseline:skills   # re-freeze skill-template parity hashes (see Gotch
 `pnpm run gate` is the pre-commit/pre-push check: it runs the three stages in order and stops
 at the first failure. CI runs the same script, so a green gate locally is the same bar as CI.
 
+You no longer need to remember to build before CLI tests. Any vitest run whose test files import
+`test/helpers/run-cli.ts` rebuilds `dist/` first when it is missing or older than `src/`; runs
+without such a file skip the check entirely. See `test/AGENTS.md` for the details.
+
 ## Architecture
 
 - `src/cli/`, `src/commands/` — CLI entry and command implementations (init, update, store, etc.).

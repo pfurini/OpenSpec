@@ -1,20 +1,6 @@
 import { spawn } from 'child_process';
-import { existsSync } from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const projectRoot = path.resolve(__dirname, '..', '..');
-const cliEntry = path.join(projectRoot, 'dist', 'cli', 'index.js');
-
-let buildPromise: Promise<void> | undefined;
-
-interface RunCommandOptions {
-  cwd?: string;
-  env?: NodeJS.ProcessEnv;
-}
+import { assertDistFresh, cliEntry, projectRoot } from './dist-freshness.js';
 
 interface RunCLIOptions {
   cwd?: string;
@@ -32,44 +18,14 @@ export interface RunCLIResult {
   command: string;
 }
 
-function runCommand(command: string, args: string[], options: RunCommandOptions = {}) {
-  return new Promise<void>((resolve, reject) => {
-    const child = spawn(command, args, {
-      cwd: options.cwd ?? projectRoot,
-      env: { ...process.env, ...options.env },
-      stdio: 'inherit',
-      shell: process.platform === 'win32',
-    });
-
-    child.on('error', (error) => reject(error));
-    child.on('close', (code, signal) => {
-      if (code === 0) {
-        resolve();
-      } else {
-        const reason = signal ? `signal ${signal}` : `exit code ${code}`;
-        reject(new Error(`Command failed (${reason}): ${command} ${args.join(' ')}`));
-      }
-    });
-  });
-}
-
+/**
+ * Guard every test that spawns the compiled CLI: `dist/` must exist and be
+ * newer than its sources. The global setup rebuilds when needed, so reaching a
+ * failure here means the run bypassed it — report it instead of building from
+ * a worker, where parallel builds would race.
+ */
 export async function ensureCliBuilt() {
-  if (existsSync(cliEntry)) {
-    return;
-  }
-
-  if (!buildPromise) {
-    buildPromise = runCommand('pnpm', ['run', 'build']).catch((error) => {
-      buildPromise = undefined;
-      throw error;
-    });
-  }
-
-  await buildPromise;
-
-  if (!existsSync(cliEntry)) {
-    throw new Error('CLI entry point missing after build. Expected dist/cli/index.js');
-  }
+  assertDistFresh();
 }
 
 export async function runCLI(args: string[] = [], options: RunCLIOptions = {}): Promise<RunCLIResult> {
