@@ -99,9 +99,17 @@ Then synthesis changes, one process step at a time. Carried items that belong he
       human gate (`kind` confirm/input/select, `timeoutMs` + `default` = the
       proceed-after-timeout path; irreversible gates omit `timeoutMs`). Design the
       policy, then map it onto the primitive.
-- [ ] **Fork `pi-dynamic-workflows` and make it ours** (leaning ratified 2026-08-24;
-      formal decision at Track F start — consistent with the fork-sovereignty
-      pattern). **Investigated 2026-08-24 (source-verified):** "subagents" = every
+- [ ] **Absorb the workflow engine into the OpenSpec Pi extension** (leaning revised
+      2026-08-24, supersedes "fork it standalone"; formal decision at Track F start).
+      One extension, not two: vendor the engine pieces we need from
+      `@quintinshaw/pi-dynamic-workflows` (MIT, keep attribution) — agent runner, vm
+      sandbox, journal/replay, checkpoint, budgets, quality patterns — PLUS their
+      tests; skip the product surfaces (TUI navigator, keyword trigger, built-in
+      workflows) unless later wanted. Keep the engine a bounded module inside the
+      extension so future comparisons stay mechanical. Ongoing relationship =
+      ADR-0001 shopping trips to their repo (the one-time MIT vendoring is the
+      founding act, not a rule violation; after that, ideas only).
+      **Investigation record (source-verified 2026-08-24):** "subagents" = every
       `agent()` call = a fresh in-process `AgentSession` via Pi's `createAgentSession`
       embedding API. The 3.2 `noExtensions` mitigation exists because a per-subagent
       loader re-ran EVERY extension factory (N subagents = N factory runs) and
@@ -109,15 +117,15 @@ Then synthesis changes, one process step at a time. Carried items that belong he
       dispose() emitted no `session_shutdown`. **Our Pi fork fixed this in core:
       commit `8775f8223` (2026-08-05, "emit session_shutdown on the SDK dispose path
       via shutdown()") + hardening `5c097d75a` — fork-only, NOT in upstream pi
-      (verified against `earendil-works/main`).** That core fix is what makes a forked
-      extension safe to re-open: deterministic plan — (1) curated worker toolset via
+      (verified against `earendil-works/main`).** That core fix is what lets the
+      absorbed engine safely re-open extensions in workers: deterministic plan — (1) curated worker toolset via
       the supported `options.tools`/toolset/agentType seam (export tool factories from
       hashline-edit-pro, tokensave, …); (2) when workers need real extensions: Pi
       core's loader ALREADY exposes the seams (`extensionFactories` for curated inline
       extensions, `extensionsOverride`, `skillsOverride`, `additionalSkillPaths`) —
       likely NO core change needed; keep orchestration extensions out to preserve
       anti-recursion. Caveat dispositions (settled 2026-08-24): agentType `skills:`
-      field — honor it in the fork via per-agentType loaders + `skillsOverride`
+      field — honor it in the absorbed engine via per-agentType loaders + `skillsOverride`
       (O(#agentTypes) loaders, leak-safe thanks to `8775f8223`); agentType `mcp:` —
       keep ignored but warn-on-use (curated toolset covers real needs); `context:
       fork` degradation in workers — KEEP by design (the spine owns fan-out; nested
