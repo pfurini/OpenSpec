@@ -544,7 +544,7 @@ openspec/
 
 1. **Merge deltas.** Each delta spec section (ADDED/MODIFIED/REMOVED) is applied to the corresponding main spec.
 
-2. **Move to archive.** The change folder moves to `changes/archive/` with a date prefix for chronological ordering.
+2. **Move to archive.** The change folder moves to `changes/archive/` with a date prefix for chronological ordering (a name that already starts with `YYYY-MM-DD-` is kept as is, never double-dated).
 
 3. **Preserve context.** All artifacts remain intact in the archive. You can always look back to understand why a change was made.
 

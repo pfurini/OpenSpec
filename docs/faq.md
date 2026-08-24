@@ -108,7 +108,7 @@ A spec that describes only what's changing, using `ADDED`, `MODIFIED`, and `REMO
 
 ### Where do archived changes go?
 
-To `openspec/changes/archive/YYYY-MM-DD-<name>/`, with all artifacts preserved. Nothing is deleted; the change just moves out of your active list.
+To `openspec/changes/archive/YYYY-MM-DD-<name>/` (a change name that already starts with a date keeps it; no second prefix is added), with all artifacts preserved. Nothing is deleted; the change just moves out of your active list.
 
 ## Configuration and customization
 

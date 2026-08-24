@@ -157,3 +157,4 @@ Main specs are now updated. The change remains active - archive when implementat
 - If something is unclear, ask for clarification
 - Show what you're changing as you go
 - The operation should be idempotent - running twice should give same result
+- A change whose deltas empty a capability entirely can retire that capability's spec file, but only when the change declares `retire_capabilities: true` in its `.openspec.yaml`; without the marker, syncing refuses and names the way out

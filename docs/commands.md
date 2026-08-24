@@ -370,7 +370,7 @@ Archive a completed change. Finalizes the change and moves it to the archive fol
 - Checks artifact completion status
 - Checks task completion (warns if incomplete)
 - Offers to sync delta specs if not already synced
-- Moves change folder to `openspec/changes/archive/YYYY-MM-DD-<name>/`
+- Moves change folder to `openspec/changes/archive/YYYY-MM-DD-<name>/` (an already-dated name is kept unchanged)
 - Preserves all artifacts for audit trail
 
 **Example:**

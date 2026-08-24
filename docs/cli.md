@@ -571,6 +571,7 @@ openspec archive [change-name] [options]
 | `-y, --yes` | Skip confirmation prompts |
 | `--skip-specs` | Skip spec updates (for infrastructure/tooling/doc-only changes) |
 | `--no-validate` | Skip validation (requires confirmation) |
+| `--json` | Machine-readable output; any prompt or abort becomes a JSON diagnostic with a suggested rerun command, exit code 1 |
 
 **Examples:**
 
@@ -592,8 +593,10 @@ openspec archive update-ci-config --skip-specs
 
 1. Validates the change (unless `--no-validate`)
 2. Prompts for confirmation (unless `--yes`)
-3. Merges delta specs into `openspec/specs/`
-4. Moves change folder to `openspec/changes/archive/YYYY-MM-DD-<name>/`
+3. Merges delta specs into `openspec/specs/` (already-synced deltas are warned no-ops; a change that empties a capability can retire its spec by declaring `retire_capabilities: true` in the change's `.openspec.yaml`)
+4. Moves change folder to `openspec/changes/archive/YYYY-MM-DD-<name>/` (an already-dated name never gets a second date prefix)
+
+Without a TTY (redirected or piped streams), prompts are plain single-line questions with no ANSI escapes; if a required prompt cannot be answered the command exits 1 and prints the exact rerun command (with your flags plus `--yes`).
 
 ---
 
