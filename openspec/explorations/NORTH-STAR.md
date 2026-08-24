@@ -52,9 +52,11 @@ step must pay for its ceremony (the anti-GSD rule: verbosity is a cost, measured
   attempts; a design fork the plan flagged as unsettled. Timeout policy: after 15–30 min
   without an answer, proceed with the most confident option — except irreversible
   decisions, which block forever.
-- Substrate: `pi-dynamic-workflows` (in `.refs/`). A **static DAG** encodes our process
-  spine (unbypassable by construction); the agent may grow **dynamic branches** only at
-  points we permit.
+- Substrate: `pi-dynamic-workflows` (in `.refs/`), which is code-mode orchestration:
+  the workflow is a deterministic, journaled JavaScript script. Our **static spine** is
+  a human-authored script the agent never rewrites (unbypassable because it is the
+  entry point); the agent may grow **dynamic branches** only at the call sites the
+  spine offers.
 
 ### 3. Own the harness
 

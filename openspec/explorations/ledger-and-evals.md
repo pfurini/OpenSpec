@@ -123,11 +123,16 @@ vendor-sourced — re-check at adoption time.
 
 - **Orchestration: no framework.** LangGraph rejected: Pi already IS the agent runtime;
   adopting a graph framework means either reimplementing Pi's loop inside it or
-  wrapping Pi sessions as opaque nodes (an expensive job scheduler). Orchestration is
-  **data** (declarative graph specs) interpreted by a thin engine on Pi's extension API
-  (`pi-dynamic-workflows`) — the same reasoning that parked Archon. Temporal (durable
-  execution) parked: adopt only if crash-resume/multi-day runs demand it, never before
-  observability shows the need.
+  wrapping Pi sessions as opaque nodes (an expensive job scheduler). Substrate verified
+  2026-08-24: `pi-dynamic-workflows` is **code-mode orchestration** (the Claude Code
+  model), not declarative graphs — the workflow IS a JavaScript script over runtime
+  primitives (`agent`, `parallel`, `phase`, `gate`, `checkpoint`, …) run in a
+  deterministic vm sandbox with journaled, position-keyed replay. Versioning the script
+  versions the workflow (Temporal-style workflow-as-code, not Airflow-style data), so
+  the ownership argument is unchanged; the design consequences (spine authorship,
+  explicit step labels) and the shipped substrate (checkpoint gates, budgets, quality
+  patterns) are recorded in BACKLOG track F. Temporal itself stays parked: adopt only
+  if crash-resume/multi-day runs demand it, never before observability shows the need.
 - **Capture rule: never a proxy/gateway.** A proxy sees API-level request/response, not
   orchestration structure (which node called, what tool ran between calls). And our
   subscription-auth providers (Claude Agent SDK → Anthropic subscription APIs) must

@@ -74,7 +74,9 @@ Then synthesis changes, one process step at a time. Carried items that belong he
 4. [ ] Semantic evals: schema-derived rubrics as advisory judges; calibrate against
        regrets before any blocking power
 5. [ ] Token governor at Pi's model-call layer: pre-request budget enforcement fed by
-       ledger data — never via a gateway (see ledger-and-evals "Ecosystem research")
+       ledger data — never via a gateway (see ledger-and-evals "Ecosystem research").
+       `pi-dynamic-workflows` already ships run/phase/agent budgets; the governor
+       generalizes budget enforcement to ALL Pi model calls, not just workflow runs.
 6. [ ] Later, receipts permitting: OTLP export + backend bake-off (L2/L3 shortlist:
        Laminar vs Opik — see ledger-and-evals); promptfoo regression walls (L4) once
        skills stabilize
@@ -84,10 +86,27 @@ Then synthesis changes, one process step at a time. Carried items that belong he
 
 ## Track F — the factory on Pi (pillar 2; after D has its first wins and E1–E3 exist)
 
-- [ ] Design the static-DAG process spine + permitted dynamic-branch points on
-      `pi-dynamic-workflows`; wave semantics per HISTORY decisions 7/8/9/14/17
+- [ ] Static spine on `pi-dynamic-workflows` — **substrate verified 2026-08-24:
+      code-mode scripts, not declarative graphs** (the Claude Code model; deterministic
+      vm sandbox, journaled replay). The unbypassable spine = a human-authored SAVED
+      workflow script (the entry point; the LLM never writes it); dynamic branches =
+      LLM-authored child workflows invoked via `workflow()`/`agent()` only at the call
+      sites the spine offers. Ledger step identity: journal replay is POSITIONAL, so
+      every spine step carries an explicit `label`/`phase` mapped to its schema-step id
+      — never rely on call order. Wave semantics per HISTORY decisions 7/8/9/14/17.
 - [ ] Escalation mechanism: categorical triggers, timeout policy, irreversible = block
-      forever (NORTH-STAR pillar 2)
+      forever (NORTH-STAR pillar 2). Substrate exists: `checkpoint()` is a journaled
+      human gate (`kind` confirm/input/select, `timeoutMs` + `default` = the
+      proceed-after-timeout path; irreversible gates omit `timeoutMs`). Design the
+      policy, then map it onto the primitive.
+- [ ] Extension adoption decision: depend on `@quintinshaw/pi-dynamic-workflows`, fork
+      it, or re-implement — decide deliberately at Track F start. Known constraint:
+      since 3.2 workflow subagents do NOT load host-extension tools, so an OpenSpec Pi
+      extension's tools won't reach them — subagents interact with OpenSpec via CLI +
+      skills (fits our layering, but must be designed for). Shipped substrate to
+      reuse: `verify`/`judgePanel`/`gate`/`completenessCheck` (review + adjudication
+      loops), run/phase/agent token budgets + measured per-agent cost (governor slice +
+      receipts source), worktree isolation, model tiers.
 - [ ] Wave-mode apply skill: teach `openspec-apply-change` the wave-map flow (git:
       START-HERE #15)
 - [ ] Receiving-review adjudication + severity-gated convergence, findings feed the
