@@ -664,8 +664,14 @@ function contentTheMergeCannotName(content: string): string[] {
     if (line.trim() === '') continue;
 
     if (fenced[i]) {
-      // Fenced content belongs to whatever section encloses it.
-      if (section === 'foreign') authored(line);
+      // Fenced content travels with the Purpose or the requirement that owns
+      // it; anywhere else (preamble, between requirements, foreign sections)
+      // it is authored content the merge cannot name, so retiring the file
+      // would lose it. The fence must not flip the audit from refuse to allow.
+      if (section === 'purpose' || (section === 'requirements' && inRequirement)) {
+        continue;
+      }
+      authored(line);
       continue;
     }
 

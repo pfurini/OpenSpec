@@ -685,6 +685,93 @@ describe('buildUpdatedSpec', () => {
     });
   });
 
+  describe('Unaccounted content audit', () => {
+    const REMOVE_SIGN_IN = [
+      '# auth - Changes',
+      '',
+      '## REMOVED Requirements',
+      '',
+      '### Requirement: Sign In',
+      '',
+    ].join('\n');
+
+    it('flags a fenced block between ## Requirements and the first requirement', async () => {
+      const main = [
+        '# auth Specification',
+        '',
+        '## Purpose',
+        'Authentication rules for the platform, covering sign-in and session handling.',
+        '',
+        '## Requirements',
+        '',
+        '```bash',
+        'openspec archive my-change --yes',
+        '```',
+        '',
+        SIGN_IN_BLOCK,
+        '',
+      ].join('\n');
+
+      const result = await build('auth', REMOVE_SIGN_IN, main);
+
+      expect(result.noRequirementBlocks).toBe(true);
+      expect(result.unaccountedContent).toContain('openspec archive my-change --yes');
+    });
+
+    it('flags a fenced block in the file preamble', async () => {
+      const main = [
+        '# auth Specification',
+        '',
+        '```text',
+        'hand-written preamble example',
+        '```',
+        '',
+        '## Purpose',
+        'Authentication rules for the platform, covering sign-in and session handling.',
+        '',
+        '## Requirements',
+        '',
+        SIGN_IN_BLOCK,
+        '',
+      ].join('\n');
+
+      const result = await build('auth', REMOVE_SIGN_IN, main);
+
+      expect(result.unaccountedContent).toContain('hand-written preamble example');
+    });
+
+    it('accepts fenced blocks inside the Purpose and inside a requirement', async () => {
+      const main = [
+        '# auth Specification',
+        '',
+        '## Purpose',
+        'Authentication rules for the platform, covering sign-in and session handling.',
+        '',
+        '```text',
+        'purpose example',
+        '```',
+        '',
+        '## Requirements',
+        '',
+        '### Requirement: Sign In',
+        'The system SHALL authenticate users.',
+        '',
+        '```json',
+        '{ "example": true }',
+        '```',
+        '',
+        '#### Scenario: Valid credentials',
+        '- **WHEN** credentials are valid',
+        '- **THEN** a session starts',
+        '',
+      ].join('\n');
+
+      const result = await build('auth', REMOVE_SIGN_IN, main);
+
+      expect(result.unaccountedContent).toEqual([]);
+    });
+  });
+
   describe('Target read failures', () => {
     it('rethrows a non-ENOENT read failure instead of treating the spec as new', async () => {
       const delta = [
