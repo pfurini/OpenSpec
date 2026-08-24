@@ -33,7 +33,7 @@ directory and use these settings:
 | Root directory | `website` |
 | Build command | `pnpm run build` |
 | Build output directory | `out` |
-| Node version | `20.19.0` or higher (set `NODE_VERSION` if needed) |
+| Node version | `22.13.0` or higher (set `NODE_VERSION` if needed) |
 
 Set one environment variable so social/Open Graph image URLs resolve to your real
 domain:

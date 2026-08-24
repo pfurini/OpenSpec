@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- **Node.js 20.19.0 or higher** — Check your version: `node --version`
+- **Node.js 22.13.0 or higher** — Check your version: `node --version`
 
 ## Package Managers
 
@@ -27,7 +27,7 @@ yarn global add @pfurini/openspec@latest
 ### bun
 
 Bun can install OpenSpec globally, but OpenSpec currently runs on Node.js.
-You still need Node.js 20.19.0 or higher available on `PATH`.
+You still need Node.js 22.13.0 or higher available on `PATH`.
 
 ```bash
 bun add -g @pfurini/openspec@latest

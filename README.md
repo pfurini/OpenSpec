@@ -99,7 +99,7 @@ Solo, OpenSpec keeps you and your AI honest on a single repo. On a team, the har
 
 ## Quick Start
 
-**Requires Node.js 20.19.0 or higher.**
+**Requires Node.js 22.13.0 or higher.**
 
 Install OpenSpec globally:
 

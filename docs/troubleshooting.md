@@ -15,15 +15,15 @@ openspec --version
 
 If it installed but still isn't found, your global npm bin directory probably isn't on your `PATH`. Run `npm bin -g` to see where global binaries live, and make sure that path is in your shell profile.
 
-### "Requires Node.js 20.19.0 or higher"
+### "Requires Node.js 22.13.0 or higher"
 
-OpenSpec runs on Node 20.19.0+. Check your version and upgrade if needed:
+OpenSpec runs on Node 22.13.0+. Check your version and upgrade if needed:
 
 ```bash
 node --version
 ```
 
-If you use bun to install OpenSpec, note that OpenSpec still *runs* on Node, so you need Node 20.19.0+ available on your `PATH` regardless. See [Installation](installation.md).
+If you use bun to install OpenSpec, note that OpenSpec still *runs* on Node, so you need Node 22.13.0+ available on your `PATH` regardless. See [Installation](installation.md).
 
 ### `openspec init` didn't configure my AI tool
 
