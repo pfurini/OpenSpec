@@ -9,7 +9,7 @@ Test GitHub Actions workflows locally using [act](https://nektosact.com/):
 act pull_request
 
 # Test specific job
-act pull_request -j nix-flake-validate
+act pull_request -j lint
 
 # Dry run to see what would execute
 act pull_request --dryrun

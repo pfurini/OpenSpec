@@ -33,37 +33,6 @@ You still need Node.js 22.13.0 or higher available on `PATH`.
 bun add -g @pfurini/openspec@latest
 ```
 
-## Nix
-
-Run OpenSpec directly without installation:
-
-```bash
-nix run github:Fission-AI/OpenSpec -- init
-```
-
-Or install to your profile:
-
-```bash
-nix profile install github:Fission-AI/OpenSpec
-```
-
-Or add to your development environment in `flake.nix`:
-
-```nix
-{
-  inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    openspec.url = "github:Fission-AI/OpenSpec";
-  };
-
-  outputs = { nixpkgs, openspec, ... }: {
-    devShells.x86_64-linux.default = nixpkgs.legacyPackages.x86_64-linux.mkShell {
-      buildInputs = [ openspec.packages.x86_64-linux.default ];
-    };
-  };
-}
-```
-
 ## Verify Installation
 
 ```bash
