@@ -84,23 +84,59 @@ function parseConfirmAnswer(line: string, fallback: boolean): boolean {
   return fallback;
 }
 
+type SharedLineQueue = {
+  lines: string[];
+  waiters: Array<(line: string | null) => void>;
+  closed: boolean;
+};
+
+/**
+ * One persistent reader per input stream. A fresh readline interface per
+ * prompt consumes the whole buffered chunk and discards every line after the
+ * first on close, so `printf 'y\ny\n' | openspec ...` would answer only the
+ * first of two prompts. The input is paused whenever no prompt is waiting,
+ * so an idle stdin cannot keep the process alive.
+ */
+const sharedLineQueues = new WeakMap<PromptInput, SharedLineQueue>();
+
+function getLineQueue(input: PromptInput): SharedLineQueue {
+  const existing = sharedLineQueues.get(input);
+  if (existing) return existing;
+
+  const queue: SharedLineQueue = { lines: [], waiters: [], closed: false };
+  const rl = readline.createInterface({ input, terminal: false });
+  rl.on('line', (line) => {
+    const waiter = queue.waiters.shift();
+    if (waiter) {
+      waiter(line);
+    } else {
+      queue.lines.push(line);
+    }
+    if (queue.waiters.length === 0) input.pause();
+  });
+  rl.on('close', () => {
+    queue.closed = true;
+    while (queue.waiters.length > 0) {
+      queue.waiters.shift()!(null);
+    }
+  });
+  sharedLineQueues.set(input, queue);
+  return queue;
+}
+
 /**
  * Reads one line with no terminal handling, so nothing ANSI reaches a
  * redirected stream. Resolves to null when the input ends unanswered.
  */
 function readPlainLine(input: PromptInput, output: PromptOutput, question: string): Promise<string | null> {
+  output.write(question);
+  const queue = getLineQueue(input);
+  const buffered = queue.lines.shift();
+  if (buffered !== undefined) return Promise.resolve(buffered);
+  if (queue.closed) return Promise.resolve(null);
   return new Promise((resolve) => {
-    output.write(question);
-    const rl = readline.createInterface({ input, terminal: false });
-    let answered = false;
-    rl.once('line', (line) => {
-      answered = true;
-      rl.close();
-      resolve(line);
-    });
-    rl.once('close', () => {
-      if (!answered) resolve(null);
-    });
+    queue.waiters.push(resolve);
+    input.resume();
   });
 }
 

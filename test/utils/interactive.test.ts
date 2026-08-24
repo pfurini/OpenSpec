@@ -236,6 +236,24 @@ describe('interactive utilities', () => {
       await expect(answered).resolves.toBe(true);
     });
 
+    it('answers sequential prompts from one piped stream, even in a single chunk', async () => {
+      const { input, output } = makeStreams(false);
+      input.write('y\nn\n');
+      input.end();
+
+      await expect(
+        confirmPrompt({ message: 'First?', default: false }, { input, output })
+      ).resolves.toBe(true);
+      await expect(
+        confirmPrompt({ message: 'Second?', default: true }, { input, output })
+      ).resolves.toBe(false);
+
+      // The piped answers are spent; a third prompt has nothing to read.
+      await expect(
+        confirmPrompt({ message: 'Third?', default: true }, { input, output })
+      ).rejects.toThrow(/could not be answered/);
+    });
+
     it('rejects with an ExitPromptError-shaped error when the input ends unanswered', async () => {
       const { input, output, written } = makeStreams(false);
       const answered = confirmPrompt({ message: 'Continue?', default: false }, { input, output });
