@@ -112,13 +112,18 @@ Then synthesis changes, one process step at a time. Carried items that belong he
       (verified against `earendil-works/main`).** That core fix is what makes a forked
       extension safe to re-open: deterministic plan — (1) curated worker toolset via
       the supported `options.tools`/toolset/agentType seam (export tool factories from
-      hashline-edit-pro, tokensave, …); (2) when workers need real extensions, add
-      `extensionAllowlist` to `DefaultResourceLoader` (it already gates on a path list
-      internally; boolean `noExtensions` today) for a shared per-run loader with OUR
-      extensions, excluding orchestration extensions to keep anti-recursion. Known
-      gaps in workers today: no host-extension tools (hashline replace, tokensave,
-      MCP bridges), pi-subagents absent → `context: fork` skills degrade to inline;
-      agentType `mcp`/`skills` fields parsed-but-ignored. Shipped substrate to reuse:
+      hashline-edit-pro, tokensave, …); (2) when workers need real extensions: Pi
+      core's loader ALREADY exposes the seams (`extensionFactories` for curated inline
+      extensions, `extensionsOverride`, `skillsOverride`, `additionalSkillPaths`) —
+      likely NO core change needed; keep orchestration extensions out to preserve
+      anti-recursion. Caveat dispositions (settled 2026-08-24): agentType `skills:`
+      field — honor it in the fork via per-agentType loaders + `skillsOverride`
+      (O(#agentTypes) loaders, leak-safe thanks to `8775f8223`); agentType `mcp:` —
+      keep ignored but warn-on-use (curated toolset covers real needs); `context:
+      fork` degradation in workers — KEEP by design (the spine owns fan-out; nested
+      delegation would multiply cost — decision 11 + anti-recursion), but route the
+      degradation diagnostic into the run journal/receipts so it is observed, never
+      silent. Shipped substrate to reuse:
       `verify`/`judgePanel`/`gate`/`completenessCheck` (review + adjudication loops),
       run/phase/agent token budgets + measured per-agent cost (governor slice +
       receipts source), worktree isolation, model tiers.
