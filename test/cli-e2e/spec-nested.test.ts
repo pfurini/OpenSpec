@@ -85,6 +85,24 @@ describe('openspec spec with nested capability folders', () => {
     expect(validated.stdout).toContain("Specification 'platform/session' is valid");
   }, 30000);
 
+  it('routes nested specs through top-level show and bulk validate', async () => {
+    const { projectDir, env } = await makeProject();
+
+    const shown = await runCLI(['show', 'platform/session'], { cwd: projectDir, env });
+    expect(shown.exitCode).toBe(0);
+    expect(shown.stdout).toContain('Session Lifetime');
+
+    const validated = await runCLI(['validate', '--specs', '--json', '--no-interactive'], {
+      cwd: projectDir,
+      env,
+    });
+    expect(validated.exitCode).toBe(0);
+    const parsed = JSON.parse(validated.stdout);
+    const ids = parsed.items.map((item: { id: string }) => item.id);
+    expect(ids).toContain('platform/session');
+    expect(parsed.summary.totals.failed).toBe(0);
+  }, 30000);
+
   it('does not treat a spec.md in the specs root as a spec', async () => {
     const { projectDir, env } = await makeProject();
 
