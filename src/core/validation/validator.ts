@@ -16,6 +16,7 @@ import {
   extractRequirementsSection,
   findMissingCurrentScenarios,
 } from '../parsers/requirement-blocks.js';
+import { stripTerminalEscapes } from '../../utils/interactive.js';
 import { findMainSpecStructureIssues } from '../parsers/spec-structure.js';
 import { FileSystemUtils } from '../../utils/file-system.js';
 
@@ -226,8 +227,8 @@ export class Validator {
                 level: 'ERROR',
                 path: entryPath,
                 message:
-                  `MODIFIED "${block.name}" omits ${missing.length} scenario(s) the main spec still carries: ` +
-                  `${missing.map(name => `"${name}"`).join(', ')}. ` +
+                  `MODIFIED "${stripTerminalEscapes(block.name)}" omits ${missing.length} scenario(s) the main spec still carries: ` +
+                  `${missing.map(name => `"${stripTerminalEscapes(name)}"`).join(', ')}. ` +
                   `A MODIFIED requirement replaces the whole block, so copy every scenario you intend to keep into it.`,
               });
             }
@@ -236,8 +237,14 @@ export class Validator {
 
         // ADDED over an existing requirement replaces the whole block exactly
         // like MODIFIED, so it gets the same authoring-time scenario-loss guard.
+        // A name the same delta renames away is free again: its old block
+        // survives under the new name, so an ADDED reusing it loses nothing.
+        const renamedAwayKeys = new Set(renamedTargets.values());
         for (const block of plan.added) {
-          const baseline = mainRequirements?.get(normalizeRequirementName(block.name));
+          const key = normalizeRequirementName(block.name);
+          const baseline = renamedAwayKeys.has(key)
+            ? undefined
+            : mainRequirements?.get(key);
           if (baseline !== undefined) {
             const missing = findMissingCurrentScenarios(baseline, block.raw);
             if (missing.length > 0) {
@@ -245,8 +252,8 @@ export class Validator {
                 level: 'ERROR',
                 path: entryPath,
                 message:
-                  `ADDED "${block.name}" omits ${missing.length} scenario(s) the main spec still carries: ` +
-                  `${missing.map(name => `"${name}"`).join(', ')}. ` +
+                  `ADDED "${stripTerminalEscapes(block.name)}" omits ${missing.length} scenario(s) the main spec still carries: ` +
+                  `${missing.map(name => `"${stripTerminalEscapes(name)}"`).join(', ')}. ` +
                   `An ADDED requirement that already exists replaces the whole block, so copy every scenario you intend to keep into it.`,
               });
             }

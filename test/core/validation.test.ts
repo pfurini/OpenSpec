@@ -817,6 +817,41 @@ The system MUST support mixed case delta headers.
       expect(messages).toContain('ADDED');
     });
 
+    it('does not flag an ADDED that reuses a name the same delta renamed away', async () => {
+      const { changeDir, mainSpecsDir } = await setup(
+        'scenario-loss-added-after-rename',
+        [
+          '## RENAMED Requirements',
+          '',
+          '- FROM: `### Requirement: Sign In`',
+          '- TO: `### Requirement: Authenticate`',
+          '',
+          '## ADDED Requirements',
+          '',
+          '### Requirement: Sign In',
+          'The system SHALL offer a fresh sign-in surface.',
+          '',
+          '#### Scenario: New surface',
+          '- **THEN** the new surface renders',
+          '',
+        ].join('\n'),
+        mainSpec(
+          [
+            '### Requirement: Sign In',
+            'The system SHALL authenticate users.',
+            '',
+            '#### Scenario: Valid credentials',
+            '- **THEN** a session starts',
+          ].join('\n')
+        )
+      );
+
+      const report = await new Validator().validateChangeDeltaSpecs(changeDir, { mainSpecsDir });
+
+      // The old block survives as the renamed requirement, so nothing is lost.
+      expect(scenarioLossIssues(report.issues)).toHaveLength(0);
+    });
+
     it('compares against the pre-rename requirement when the same delta renames it', async () => {
       const { changeDir, mainSpecsDir } = await setup(
         'scenario-loss-rename',
