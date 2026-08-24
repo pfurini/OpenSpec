@@ -71,9 +71,6 @@ jobs:
           - os: macos-latest
             shell: bash
             label: macos-bash
-          - os: windows-latest
-            shell: pwsh
-            label: windows-pwsh
 
     defaults:
       run:

@@ -1,7 +1,7 @@
 name: Gate
 
-# The repo's cross-platform path rules are enforced by convention locally; a
-# real Windows run enforces them mechanically.
+# Both supported targets: development happens on macOS, deployment on Linux.
+# Windows is not supported (package.json `os`).
 on:
   push:
     branches: [personal]
@@ -24,7 +24,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
 
     steps:
       - name: Checkout
