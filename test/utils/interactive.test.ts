@@ -194,6 +194,19 @@ describe('interactive utilities', () => {
       expect(question).not.toMatch(/[\u001b\u009b\u0007\r]/);
     });
 
+    it('stops an OSC at the 8-bit ST terminator instead of swallowing what follows', async () => {
+      const { input, output, written } = makeStreams(false);
+      const message = '\u001b]0;set title\u009cContinue?';
+      const answered = confirmPrompt({ message, default: false }, { input, output });
+      input.write('n\n');
+      input.end();
+
+      await expect(answered).resolves.toBe(false);
+      const question = written();
+      expect(question).toContain('Continue?');
+      expect(question).not.toMatch(/[\u001b\u009c]/);
+    });
+
     it('shows the default in the plain prompt', async () => {
       const { input, output, written } = makeStreams(false);
       const answered = confirmPrompt({ message: 'Continue?', default: true }, { input, output });

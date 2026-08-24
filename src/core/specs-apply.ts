@@ -19,6 +19,7 @@ import {
 } from './parsers/requirement-blocks.js';
 import { buildCodeFenceMask } from './parsers/code-fence.js';
 import { discoverSpecFiles } from '../utils/spec-discovery.js';
+import { stripTerminalEscapes } from '../utils/interactive.js';
 import { findMainSpecStructureIssues } from './parsers/spec-structure.js';
 import { MIN_PURPOSE_LENGTH } from './validation/constants.js';
 
@@ -366,9 +367,9 @@ export async function buildUpdatedSpec(
     const missingScenarios = findMissingCurrentScenarios(existing.raw, mod.raw);
     if (missingScenarios.length > 0) {
       throw new Error(
-        `${specName} MODIFIED failed for header "### Requirement: ${mod.name}" - the block omits ` +
+        `${specName} MODIFIED failed for header "### Requirement: ${stripTerminalEscapes(mod.name)}" - the block omits ` +
           `${missingScenarios.length} scenario(s) the main spec still carries: ` +
-          `${missingScenarios.map((name) => `"${name}"`).join(', ')}. ` +
+          `${missingScenarios.map((name) => `"${stripTerminalEscapes(name)}"`).join(', ')}. ` +
           `A MODIFIED requirement replaces the whole block, so copy every scenario you intend to keep into it.`
       );
     }
@@ -391,9 +392,9 @@ export async function buildUpdatedSpec(
       const missingScenarios = findMissingCurrentScenarios(existing.raw, add.raw);
       if (missingScenarios.length > 0) {
         throw new Error(
-          `${specName} ADDED failed for header "### Requirement: ${add.name}" - the block omits ` +
+          `${specName} ADDED failed for header "### Requirement: ${stripTerminalEscapes(add.name)}" - the block omits ` +
             `${missingScenarios.length} scenario(s) the main spec still carries: ` +
-            `${missingScenarios.map(name => `"${name}"`).join(', ')}. ` +
+            `${missingScenarios.map(name => `"${stripTerminalEscapes(name)}"`).join(', ')}. ` +
             `An ADDED requirement that already exists replaces the whole block, so copy every scenario you intend to keep into it.`
         );
       }

@@ -444,6 +444,47 @@ describe('buildUpdatedSpec', () => {
       expect(onDisk).toBe(MAIN_TWO_SCENARIOS);
     });
 
+    it('strips terminal escapes from the names quoted in the refusal message', async () => {
+      const mainWithEscape = [
+        '# auth Specification',
+        '',
+        '## Purpose',
+        'Authentication rules for the platform, covering sign-in and session handling.',
+        '',
+        '## Requirements',
+        '',
+        '### Requirement: Sign In',
+        'The system SHALL authenticate users.',
+        '',
+        '#### Scenario: Locked \u001b[31maccount',
+        '- **WHEN** the account is locked',
+        '- **THEN** access is refused',
+        '',
+      ].join('\n');
+      const delta = [
+        '# auth - Changes',
+        '',
+        '## ADDED Requirements',
+        '',
+        '### Requirement: Sign In',
+        'The system SHALL authenticate users against the directory.',
+        '',
+        '#### Scenario: Valid credentials',
+        '- **WHEN** credentials are valid',
+        '- **THEN** a directory session starts',
+        '',
+      ].join('\n');
+
+      const failure = await build('auth', delta, mainWithEscape).then(
+        () => undefined,
+        (error: Error) => error
+      );
+
+      expect(failure).toBeInstanceOf(Error);
+      expect(failure!.message).toContain('Locked account');
+      expect(failure!.message).not.toMatch(/\u001b/);
+    });
+
     it('reports dropped instances when duplicate scenario names are thinned out', async () => {
       const mainWithDuplicates = [
         '# auth Specification',

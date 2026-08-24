@@ -75,7 +75,7 @@ export function isNonInteractivePromptError(error: unknown): boolean {
  * rewrite or spoof a redirected stream.
  */
 const TERMINAL_ESCAPE_PATTERN = new RegExp(
-  '\u001B\\][^\u0007\u001B]*(?:\u0007|\u001B\\\\)?' + // OSC, BEL- or ST-terminated (or cut off)
+  '\u001B\\][^\u0007\u001B\u009C]*(?:\u0007|\u009C|\u001B\\\\)?' + // OSC, BEL- or ST-terminated (7- or 8-bit, or cut off)
     '|\u001B\\[[0-?]*[ -/]*[@-~]' + // CSI, 7-bit form
     '|\u009B[0-?]*[ -/]*[@-~]' + // CSI, 8-bit single-byte introducer
     '|\u001B[ -/]*[0-~]?' + // any other escape sequence (or a trailing bare ESC)
@@ -182,7 +182,7 @@ export async function confirmPrompt(
   const line = await readPlainLine(input, output, `${plainMessage} ${suffix} `);
   if (line === null) {
     throw new NonInteractivePromptError(
-      `The prompt "${prompt.message}" could not be answered: the input ended.`
+      `The prompt "${plainMessage}" could not be answered: the input ended.`
     );
   }
   return parseConfirmAnswer(line, fallback);
