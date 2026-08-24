@@ -100,12 +100,27 @@ Then synthesis changes, one process step at a time. Carried items that belong he
       proceed-after-timeout path; irreversible gates omit `timeoutMs`). Design the
       policy, then map it onto the primitive.
 - [ ] Extension adoption decision: depend on `@quintinshaw/pi-dynamic-workflows`, fork
-      it, or re-implement — decide deliberately at Track F start. Known constraint:
-      since 3.2 workflow subagents do NOT load host-extension tools, so an OpenSpec Pi
-      extension's tools won't reach them — subagents interact with OpenSpec via CLI +
-      skills (fits our layering, but must be designed for). Shipped substrate to
-      reuse: `verify`/`judgePanel`/`gate`/`completenessCheck` (review + adjudication
-      loops), run/phase/agent token budgets + measured per-agent cost (governor slice +
+      it, or re-implement — decide deliberately at Track F start. **Investigated
+      2026-08-24 (source-verified):** "subagents" = every `agent()` call = a fresh
+      in-process `AgentSession` via Pi's `createAgentSession` embedding API. The 3.2
+      `noExtensions` mitigation exists because a per-subagent loader re-ran EVERY
+      extension factory (N subagents = N factory runs) and factories arming timers/
+      listeners rooted sessions forever — upstream pi's dispose() emitted no
+      `session_shutdown`. **Our Pi fork has the single-flight `session_shutdown`
+      emission wired into shutdown/dispose** (verify provenance + tests), so the leak
+      mechanism is fixed at the source in our runtime. Deterministic options, in
+      order: (1) zero-fork — hand workers a curated toolset via the supported
+      `options.tools`/toolset/agentType seam (export tool factories from
+      hashline-edit-pro, tokensave, …); (2) small Pi-fork change —
+      `DefaultResourceLoader` gates extensions on a path list internally, so adding an
+      `extensionAllowlist` (instead of boolean `noExtensions`) enables a shared
+      per-run loader with OUR extensions, excluding orchestration extensions to keep
+      the anti-recursion property. Known gaps in workers today: no host-extension
+      tools (hashline replace, tokensave, MCP bridges), pi-subagents absent →
+      `context: fork` skills degrade to inline; agentType `mcp`/`skills` fields
+      parsed-but-ignored. Shipped substrate to reuse:
+      `verify`/`judgePanel`/`gate`/`completenessCheck` (review + adjudication loops),
+      run/phase/agent token budgets + measured per-agent cost (governor slice +
       receipts source), worktree isolation, model tiers.
 - [ ] Wave-mode apply skill: teach `openspec-apply-change` the wave-map flow (git:
       START-HERE #15)
