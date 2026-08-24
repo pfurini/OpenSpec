@@ -172,4 +172,86 @@ describe('openspec archive failure exit status', () => {
     expect(result.stdout).toContain('Aborted. No files were changed.');
     expect(await fs.readFile(mainSpecPath, 'utf-8')).toBe(mainContent);
   }, 30000);
+
+  it('exits non-zero with a machine-readable diagnostic in --json mode on validation failure', async () => {
+    const { projectDir, env } = await makeProject();
+    const changeName = 'invalid-delta-json';
+    await writeChangeSpec(
+      projectDir,
+      changeName,
+      'thing',
+      [
+        '# Thing - Changes',
+        '',
+        '## ADDED Requirements',
+        '',
+        '### Requirement: Broken',
+        'This requirement text has no modal verb and the block has no scenario.',
+        '',
+      ].join('\n')
+    );
+
+    const result = await runCLI(['archive', changeName, '--yes', '--json'], {
+      cwd: projectDir,
+      env,
+    });
+
+    expect(result.exitCode).toBe(1);
+    const parsed = JSON.parse(result.stdout);
+    expect(parsed.archive).toBeNull();
+    expect(parsed.status.length).toBeGreaterThan(0);
+    expect(parsed.status[0].message).toBeTruthy();
+  }, 30000);
+
+  it('exits non-zero with a machine-readable diagnostic in --json mode when the merge cannot be built', async () => {
+    const { projectDir, env } = await makeProject();
+    const changeName = 'unbuildable-delta-json';
+    const mainContent = [
+      '# alpha Specification',
+      '',
+      '## Purpose',
+      'Alpha capability purpose, long enough to be a real overview.',
+      '',
+      '## Requirements',
+      '',
+      '### Requirement: Alpha Rule',
+      'The system SHALL keep the alpha rule.',
+      '',
+      '#### Scenario: Alpha holds',
+      '- **WHEN** alpha runs',
+      '- **THEN** the rule holds',
+      '',
+    ].join('\n');
+    const mainSpecPath = await writeMainSpec(projectDir, 'alpha', mainContent);
+
+    await writeChangeSpec(
+      projectDir,
+      changeName,
+      'alpha',
+      [
+        '# Alpha - Changes',
+        '',
+        '## MODIFIED Requirements',
+        '',
+        '### Requirement: Absent Rule',
+        'The system SHALL keep the absent rule.',
+        '',
+        '#### Scenario: Absent holds',
+        '- **WHEN** it runs',
+        '- **THEN** the rule holds',
+        '',
+      ].join('\n')
+    );
+
+    const result = await runCLI(['archive', changeName, '--yes', '--no-validate', '--json'], {
+      cwd: projectDir,
+      env,
+    });
+
+    expect(result.exitCode).toBe(1);
+    const parsed = JSON.parse(result.stdout);
+    expect(parsed.archive).toBeNull();
+    expect(parsed.status[0].message).toContain('Absent Rule');
+    expect(await fs.readFile(mainSpecPath, 'utf-8')).toBe(mainContent);
+  }, 30000);
 });
