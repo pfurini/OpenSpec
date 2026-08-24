@@ -135,6 +135,14 @@ upstream rows; small, fold into whichever change next touches the file):
 - Route the two pre-existing unquoted hint sites through `quoteChangeName`
   (`src/core/archive.ts` — the `openspec validate ${changeName}` / `${specName}` suggestions), the
   same paste-target class the A1 quoting policy covers.
+- Pass `mainSpecsDir` to the archive's pre-validation (`src/core/archive.ts:357` calls
+  `validateChangeDeltaSpecs(changeDir)` bare). A dropped scenario is still blocked — the merge
+  refusal catches it, names the scenarios, writes nothing — but the user sees the merge's wording
+  later instead of the validator's up front; `root.specsDir` is already resolved two hops above.
+- `src/commands/change.ts:207` hardcodes `path.join(process.cwd(), 'openspec', 'specs')` as the
+  scenario-loss baseline while `commands/validate.ts` passes `root.specsDir`; under a selected
+  store the two entry points would compare against different baselines. Fold into the A3 sweep —
+  #1703/#1360 are exactly this surface.
 
 **Execution method** (worked well; reuse for the A2/A3/A4 sweeps): group the section's rows by
 module, diff the upstream module end-state for reference only (never copied), re-implement the
@@ -172,6 +180,9 @@ covered or explicitly superseded/deferred.
 | #1328 | Fix empty store registration |
 | #1287 | Doctor notes when a store checkout is behind its upstream ref |
 | #1455 | Resolve store pointer for `view` |
+
+Sweep note: pick up the `src/commands/change.ts:207` hardcoded scenario-loss baseline recorded in
+§A1's Post-A1 follow-ups — it is the same store-aware-root surface as #1703/#1360.
 
 ### A4. Completions / CLI polish (ADOPT, small)
 
