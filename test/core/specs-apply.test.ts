@@ -421,6 +421,29 @@ describe('buildUpdatedSpec', () => {
       expect(onDisk).toBe(MAIN_TWO_SCENARIOS);
     });
 
+    it('refuses an ADDED block over an existing requirement that drops a scenario', async () => {
+      const delta = [
+        '# auth - Changes',
+        '',
+        '## ADDED Requirements',
+        '',
+        '### Requirement: Sign In',
+        'The system SHALL authenticate users against the directory.',
+        '',
+        '#### Scenario: Valid credentials',
+        '- **WHEN** credentials are valid',
+        '- **THEN** a directory session starts',
+        '',
+      ].join('\n');
+
+      await expect(build('auth', delta, MAIN_TWO_SCENARIOS)).rejects.toThrow(
+        /Scenario: Locked account/
+      );
+
+      const onDisk = await fs.readFile(mainPath('auth'), 'utf-8');
+      expect(onDisk).toBe(MAIN_TWO_SCENARIOS);
+    });
+
     it('reports dropped instances when duplicate scenario names are thinned out', async () => {
       const mainWithDuplicates = [
         '# auth Specification',

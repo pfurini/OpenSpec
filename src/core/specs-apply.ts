@@ -386,6 +386,17 @@ export async function buildUpdatedSpec(
       continue;
     }
     if (existing) {
+      // ADDED over an existing requirement replaces the whole block, exactly
+      // like MODIFIED - so it gets the same scenario-loss refusal.
+      const missingScenarios = findMissingCurrentScenarios(existing.raw, add.raw);
+      if (missingScenarios.length > 0) {
+        throw new Error(
+          `${specName} ADDED failed for header "### Requirement: ${add.name}" - the block omits ` +
+            `${missingScenarios.length} scenario(s) the main spec still carries: ` +
+            `${missingScenarios.map(name => `"${name}"`).join(', ')}. ` +
+            `An ADDED requirement that already exists replaces the whole block, so copy every scenario you intend to keep into it.`
+        );
+      }
       warnAboutDroppedTail(specName, existing, add, 'replaces', warn);
     }
     nameToBlock.set(key, add);

@@ -782,6 +782,41 @@ The system MUST support mixed case delta headers.
       expect(messages).toContain('MODIFIED');
     });
 
+    it('errors listing each scenario an ADDED block over an existing requirement omits', async () => {
+      const { changeDir, mainSpecsDir } = await setup(
+        'scenario-loss-added-over-existing',
+        [
+          '## ADDED Requirements',
+          '',
+          '### Requirement: Sign In',
+          'The system SHALL authenticate users against the directory.',
+          '',
+          '#### Scenario: Valid credentials',
+          '- **THEN** a directory session starts',
+          '',
+        ].join('\n'),
+        mainSpec(
+          [
+            '### Requirement: Sign In',
+            'The system SHALL authenticate users.',
+            '',
+            '#### Scenario: Valid credentials',
+            '- **THEN** a session starts',
+            '',
+            '#### Scenario: Locked account',
+            '- **THEN** access is refused',
+          ].join('\n')
+        )
+      );
+
+      const report = await new Validator().validateChangeDeltaSpecs(changeDir, { mainSpecsDir });
+
+      expect(report.valid).toBe(false);
+      const messages = scenarioLossIssues(report.issues).map(i => i.message).join('\n');
+      expect(messages).toContain('Scenario: Locked account');
+      expect(messages).toContain('ADDED');
+    });
+
     it('compares against the pre-rename requirement when the same delta renames it', async () => {
       const { changeDir, mainSpecsDir } = await setup(
         'scenario-loss-rename',

@@ -234,6 +234,25 @@ export class Validator {
           }
         }
 
+        // ADDED over an existing requirement replaces the whole block exactly
+        // like MODIFIED, so it gets the same authoring-time scenario-loss guard.
+        for (const block of plan.added) {
+          const baseline = mainRequirements?.get(normalizeRequirementName(block.name));
+          if (baseline !== undefined) {
+            const missing = findMissingCurrentScenarios(baseline, block.raw);
+            if (missing.length > 0) {
+              issues.push({
+                level: 'ERROR',
+                path: entryPath,
+                message:
+                  `ADDED "${block.name}" omits ${missing.length} scenario(s) the main spec still carries: ` +
+                  `${missing.map(name => `"${name}"`).join(', ')}. ` +
+                  `An ADDED requirement that already exists replaces the whole block, so copy every scenario you intend to keep into it.`,
+              });
+            }
+          }
+        }
+
         // Validate REMOVED (names only)
         for (const name of plan.removed) {
           const key = normalizeRequirementName(name);

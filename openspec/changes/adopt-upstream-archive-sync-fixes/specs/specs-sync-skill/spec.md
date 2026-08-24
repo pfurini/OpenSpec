@@ -2,12 +2,19 @@
 
 ### Requirement: Scenario Preservation
 
-The sync SHALL refuse a MODIFIED requirement whose block omits scenarios the main spec still carries, so applying a change can never silently drop scenario content.
+The sync SHALL refuse a whole-block replacement - a MODIFIED requirement, or an ADDED requirement whose name already exists in the main spec - whose block omits scenarios the main spec still carries, so applying a change can never silently drop scenario content.
 
 #### Scenario: MODIFIED block drops a scenario
 
 - **GIVEN** a main spec requirement carrying a scenario the MODIFIED block does not contain
 - **WHEN** syncing the change
+- **THEN** refuse the operation, naming every missing scenario
+- **AND** change no files
+
+#### Scenario: ADDED block over an existing requirement drops a scenario
+
+- **GIVEN** a main spec requirement carrying a scenario
+- **WHEN** the delta ADDs a requirement with the same name whose block does not contain that scenario
 - **THEN** refuse the operation, naming every missing scenario
 - **AND** change no files
 
@@ -79,6 +86,7 @@ The agent SHALL reconcile main specs with delta specs using the delta operation 
 - **WHEN** delta contains `## ADDED Requirements` with a requirement
 - **AND** a requirement with the same name already exists in main spec
 - **THEN** update the existing requirement to match the delta version
+- **AND** apply the Scenario Preservation guard first (a block that omits scenarios the main spec still carries is refused, not applied)
 
 #### Scenario: ADDED requirement already synced
 
