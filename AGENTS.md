@@ -11,17 +11,18 @@ This file is the shared source of truth for agents working in this repo. Nested 
 
 ```bash
 pnpm install                 # install deps (pnpm is the package manager)
+pnpm run gate                # build + full test + lint — the canonical green check
 pnpm run build               # compile src/ -> dist/ via build.js (tsc)
 pnpm test                    # full vitest suite
 pnpm exec vitest run <file>  # focused test file
 pnpm run dev                 # tsc --watch
 pnpm run dev:cli             # build + run the local CLI (bin/openspec.js)
-pnpm run lint                # eslint src/
+pnpm run lint                # eslint src/ (warnings fail: --max-warnings 0)
 pnpm run rebaseline:skills   # re-freeze skill-template parity hashes (see Gotchas)
 ```
 
-Run `pnpm run build` before focused CLI/integration tests when implementation changes may leave
-`dist/` stale — several tests exercise the compiled CLI.
+`pnpm run gate` is the pre-commit/pre-push check: it runs the three stages in order and stops
+at the first failure. CI runs the same script, so a green gate locally is the same bar as CI.
 
 ## Architecture
 

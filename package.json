@@ -39,6 +39,7 @@
     "!dist/**/*.map"
   ],
   "scripts": {
+    "gate": "pnpm run build && pnpm run test && pnpm run lint",
     "lint": "eslint src/ --max-warnings 0",
     "build": "node build.js",
     "rebaseline:skills": "pnpm build && node scripts/rebaseline-skill-hashes.mjs",
