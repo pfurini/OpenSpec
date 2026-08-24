@@ -159,36 +159,27 @@ The spec update confirmation SHALL provide clear visibility into changes before 
 #### Scenario: Displaying confirmation
 
 - **WHEN** prompting for confirmation
-- **THEN** display a clear summary showing:
-  - Which specs will be created (new capabilities)
-  - Which specs will be updated (existing capabilities)
-  - The source path for each spec
-- **AND** format the confirmation prompt as:
+- **THEN** display a summary listing every affected capability id, each marked `create` (no main spec yet) or `update` (existing main spec):
 
   ```
-  The following specs will be updated:
-
-  NEW specs to be created:
-    - cli-archive (from changes/add-archive-command/specs/cli-archive/spec.md)
-
-  EXISTING specs to be updated:
-    - cli-init (from changes/update-init-command/specs/cli-init/spec.md)
-
-  Update 2 specs and archive 'add-archive-command'? [y/N]:
+  Specs to update:
+    cli-archive: update
+    platform/session: create
   ```
+
+- **AND** ask `Proceed with spec updates?`
 
 #### Scenario: Handling confirmation response
 
 - **WHEN** waiting for user confirmation
-- **THEN** default to "No" for safety (require explicit "y" or "yes")
+- **THEN** default to "Yes" (declining requires an explicit "n" or "no"); declining never destroys anything, because it skips the spec sync rather than acting
 - **AND** skip confirmation when `--yes` or `-y` flag is provided
 
 #### Scenario: User declines confirmation
 
 - **WHEN** user declines the confirmation
-- **THEN** abort the entire archive operation
-- **AND** display message: "Archive cancelled. No changes were made."
-- **AND** exit with non-zero status code
+- **THEN** skip the spec updates and proceed with the archive of the change directory
+- **AND** display message: "Skipping spec updates. Proceeding with archive."
 
 #### Scenario: Confirmation cannot be answered
 
