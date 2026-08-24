@@ -367,7 +367,26 @@ export async function assembleReferenceIndex(
       continue;
     }
 
-    const specs = await collectSpecEntries(inspection.canonicalRoot);
+    let specs: ReferenceSpecEntry[];
+    try {
+      specs = await collectSpecEntries(inspection.canonicalRoot);
+    } catch (error) {
+      // Discovery rethrows non-ENOENT walk failures; a referenced store the
+      // user does not author must degrade to a warning, not abort generation.
+      const reason = error instanceof Error ? error.message : String(error);
+      entries.push({
+        store_id: id,
+        root: inspection.canonicalRoot,
+        status: [
+          warning(
+            'reference_specs_unreadable',
+            `Referenced store '${id}' specs could not be listed (${reason}).`,
+            `Run: openspec store doctor ${id}`
+          ),
+        ],
+      });
+      continue;
+    }
     const entry: ReferenceIndexEntry = {
       store_id: id,
       root: inspection.canonicalRoot,

@@ -213,6 +213,34 @@ describe('reference index assembly', () => {
     }
   });
 
+  it.skipIf(process.platform === 'win32' || process.getuid?.() === 0)(
+    'degrades an unlistable referenced specs tree to a warning instead of throwing',
+    async () => {
+    const storeRoot = await registerStore('broken-specs');
+    // The root stays healthy, but an unreadable capability directory makes the
+    // recursive walk fail with a non-ENOENT error; the index must degrade,
+    // not abort generation.
+    const unreadable = path.join(storeRoot, 'openspec', 'specs', 'locked');
+    fs.mkdirSync(unreadable, { recursive: true });
+    fs.chmodSync(unreadable, 0o000);
+
+    let entries;
+    try {
+      entries = await assemble(['broken-specs']);
+    } finally {
+      fs.chmodSync(unreadable, 0o755);
+    }
+
+    expect(entries).toHaveLength(1);
+    expect(entries[0].status[0]).toEqual(
+      expect.objectContaining({
+        severity: 'warning',
+        code: 'reference_specs_unreadable',
+        fix: expect.stringContaining('openspec store doctor'),
+      })
+    );
+  });
+
   it('degrades every reference when the registry is unreadable', async () => {
     const registryDir = path.join(globalDataDir, 'stores');
     fs.mkdirSync(registryDir, { recursive: true });
