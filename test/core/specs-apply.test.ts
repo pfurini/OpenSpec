@@ -684,6 +684,28 @@ describe('buildUpdatedSpec', () => {
       expect(result.noRequirementBlocks).toBe(true);
     });
   });
+
+  describe('Target read failures', () => {
+    it('rethrows a non-ENOENT read failure instead of treating the spec as new', async () => {
+      const delta = [
+        '# auth - Changes',
+        '',
+        '## ADDED Requirements',
+        '',
+        SIGN_IN_BLOCK,
+        '',
+      ].join('\n');
+      const source = await writeDelta('auth', delta);
+      const target = mainPath('auth');
+      // A directory at the target path makes readFile fail with EISDIR on
+      // every platform - a read error that is NOT absence and must surface.
+      await fs.mkdir(target, { recursive: true });
+
+      await expect(
+        buildUpdatedSpec({ id: 'auth', source, target, exists: true }, CHANGE, { silent: true })
+      ).rejects.toThrow(/Failed to read/);
+    });
+  });
 });
 
 describe('extractPurposeSection', () => {

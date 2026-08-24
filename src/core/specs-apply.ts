@@ -53,6 +53,9 @@ export interface BuildUpdatedSpecResult {
   unaccountedContent: string[];
 }
 
+function isEnoent(error: unknown): boolean {
+  return (error as NodeJS.ErrnoException | undefined)?.code === 'ENOENT';
+}
 // -----------------------------------------------------------------------------
 // Public API
 // -----------------------------------------------------------------------------
@@ -225,7 +228,16 @@ export async function buildUpdatedSpec(
   let isNewSpec = false;
   try {
     targetContent = await fs.readFile(update.target, 'utf-8');
-  } catch {
+  } catch (error) {
+    if (!isEnoent(error)) {
+      // Absence means "new spec"; any other read failure (permissions, EISDIR,
+      // I/O) must surface, or a readable-in-name-only spec gets rebuilt from a
+      // skeleton and its content silently lost on write.
+      const reason = error instanceof Error ? error.message : String(error);
+      throw new Error(
+        `Failed to read ${update.target}: ${reason}. Fix the file (or its permissions) and re-run the archive.`
+      );
+    }
     // Target spec does not exist; MODIFIED and RENAMED are not allowed for new specs
     // REMOVED will be ignored with a warning since there's nothing to remove
     if (plan.modified.length > 0 || plan.renamed.length > 0) {
