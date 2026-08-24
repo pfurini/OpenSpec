@@ -85,6 +85,11 @@ Full design: `ledger-and-evals.md`.
 
 - **ADR-0001 everywhere:** shopping trips, verdicts, re-implementation. Never merge, never
   copy — from upstream or from methodologies.
+- **Adoptions land as structure-preserving subpackages** in the pnpm monorepo (the Pi
+  lesson: clear responsibility per package). A vendored package keeps its upstream
+  structure so fixes cherry-pick surgically (recorded upstream SHA + marked patches);
+  our logic layers vertically in sibling packages, never by rewriting vendored
+  internals.
 - **Measure first, build second:** machinery must be justified by receipts, not
   conviction.
 - **Docs stay prunable:** harvest-then-delete; git is the archive; ELI10 prose except

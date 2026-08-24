@@ -99,16 +99,22 @@ Then synthesis changes, one process step at a time. Carried items that belong he
       human gate (`kind` confirm/input/select, `timeoutMs` + `default` = the
       proceed-after-timeout path; irreversible gates omit `timeoutMs`). Design the
       policy, then map it onto the primitive.
-- [ ] **Absorb the workflow engine into the OpenSpec Pi extension** (leaning revised
-      2026-08-24, supersedes "fork it standalone"; formal decision at Track F start).
-      One extension, not two: vendor the engine pieces we need from
-      `@quintinshaw/pi-dynamic-workflows` (MIT, keep attribution) — agent runner, vm
-      sandbox, journal/replay, checkpoint, budgets, quality patterns — PLUS their
-      tests; skip the product surfaces (TUI navigator, keyword trigger, built-in
-      workflows) unless later wanted. Keep the engine a bounded module inside the
-      extension so future comparisons stay mechanical. Ongoing relationship =
-      ADR-0001 shopping trips to their repo (the one-time MIT vendoring is the
-      founding act, not a rule violation; after that, ideas only).
+- [ ] **Monorepo restructure, then absorb the workflow engine as a subpackage**
+      (strategy settled 2026-08-24; supersedes both "fork it standalone" and
+      "vendor only the pieces"). First unit of Track F: convert to pnpm workspaces —
+      `packages/cli` = today's `src/` (the Pi lesson: clear responsibility per
+      package); a monorepo pays rent at ≥2 packages, so do NOT restructure before
+      this. Then vendor `@quintinshaw/pi-dynamic-workflows` **whole, structure
+      preserved**, as `packages/workflow-engine` (MIT, attribution kept), library-ized
+      by removing the extension entry points and exporting the engine API; tests come
+      along. Disciplines that keep cherry-picks surgical: (1) our logic (spine,
+      receipts, labels, curated toolsets, escalation) lives in SIBLING packages that
+      compose the engine — never rewrite vendored internals; (2) unavoidable
+      in-package patches are minimal and listed in a `PATCHES.md`; (3) the package
+      records `VENDORED_FROM: <repo>@<sha>`; a shopping trip = fetch upstream, diff
+      `<vendored-sha>..<new-sha>`, apply wanted hunks, bump the SHA. This
+      structure-preserving-vendor model is the standing rule for ALL future code
+      adoptions (NORTH-STAR standing rules).
       **Investigation record (source-verified 2026-08-24):** "subagents" = every
       `agent()` call = a fresh in-process `AgentSession` via Pi's `createAgentSession`
       embedding API. The 3.2 `noExtensions` mitigation exists because a per-subagent
