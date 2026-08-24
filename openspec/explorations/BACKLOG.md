@@ -65,10 +65,16 @@ Then synthesis changes, one process step at a time. Carried items that belong he
 
 ## Track E — ledger + evals (pillar 3's measuring arm; design in `ledger-and-evals.md`)
 
-1. [ ] Ledger v0: schema freeze (receipts/regrets/escalations, join keys) — **gated on
-       reading the second-brain materials** (Paolo to share)
-2. [ ] Native capture: Pi extension emitting semconv-named events; store-homed with
-       local-first journal fallback; `openspec ledger record` CLI for other harnesses
+1. [ ] **Ledger-home design session** (owed — storage was converged in one chat
+       exchange, not designed; see ledger-and-evals "Storage: OPEN"): compare store /
+       global-dir SQLite / hybrid with concurrency + query + versioning analysis.
+       Then schema freeze (receipts/regrets/escalations, join keys). Both gated on
+       the second-brain materials (Paolo shares). Until settled: store/context/doctor
+       COMMAND surface is LATER in the port boarding list; store-aware plumbing
+       inside engine modules ports with the engine (removing it would be rework).
+2. [ ] Native capture: Pi extension emitting semconv-named events into the chosen
+       home (local-first, never loses a receipt); `openspec ledger record` CLI for
+       other harnesses
 3. [ ] Retro skill (the detective): post-change adjudication, regret writing, blame
        classes; taxonomy bootstrap from existing logs/incidents first
 4. [ ] Semantic evals: schema-derived rubrics as advisory judges; calibrate against

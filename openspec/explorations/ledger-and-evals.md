@@ -47,19 +47,30 @@ Interactive (studio) steps get receipts too — duration, turns, artifacts, deci
 recorded. Their quality signal arrives only via downstream regrets; that closes the loop
 that lets process synthesis (Track D) be evaluated empirically.
 
-## Storage: store-homed, local-first
+## Storage: OPEN — leaning store-homed, but the decision is owed a design session
 
-- **Canonical home: the OpenSpec store** (the external planning checkout we kept),
-  multi-project by design, git-friendly, works offline. Aligns with the second-brain
-  initiative: the store is one converging stream the second brain ingests; cross-project
-  queries (model routing stats) belong at second-brain level, not in one store query.
-- **Local-first capture semantics:** a receipt is never lost because the store is
-  unreachable — the emitter degrades to a project-local journal, `doctor` reports the
-  divergence, reconciliation replays the journal.
-- Transcripts stay in Pi session logs; the ledger stores pointers, not copies.
-- Other harnesses feed coarse receipts via a CLI surface (`openspec ledger record`
-  called from skill prose); Pi gets full fidelity natively. The ledger must never be
-  Pi-only.
+**Status corrected 2026-08-24:** "ledger home = the OpenSpec store" was converged in a
+single chat exchange, not designed. It remains the leaning, not a decision. A dedicated
+design session (gated on the second-brain materials) must compare at least:
+
+1. **OpenSpec store** (external planning git checkout). For: versioned, portable,
+   files-over-apps, one convergence point for the second brain, machinery exists.
+   Against (unexamined): git is a poor append-heavy event DB — commit policy, lock
+   semantics, CONCURRENT WRITERS (parallel workflow runs) are its weak spot; the store
+   was designed for low-frequency planning artifacts, not telemetry; weak query story
+   (L5 wants "iterations-per-tier across changes" — scan-everything over JSONL-in-git).
+2. **Global-dir SQLite keyed by project** (the proven precedent: the workflow engine
+   we absorb already persists runs under `~/.pi/workflows/projects/<project>/` —
+   offline, concurrent-safe, capped retention). Real SQL for L5; WAL for concurrency;
+   local-first by construction. Against: not versioned (is versioning receipts even
+   wanted?), per-machine rather than per-knowledge-base.
+3. **Hybrid**: SQLite operational store + periodic export (JSONL snapshots) into the
+   store / second brain as downstream consumers — the lakehouse pattern.
+
+Invariants that hold regardless of the outcome: capture is local-first and never loses
+a receipt; transcripts stay in Pi session logs (ledger stores pointers); other
+harnesses feed coarse receipts via a CLI surface (`openspec ledger record`); the
+second brain is a CONSUMER of the ledger, never its storage engine.
 
 ## Regrets
 

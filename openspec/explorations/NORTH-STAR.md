@@ -76,9 +76,10 @@ Pi is ours; hooks-era thinking is dead. OpenSpec integrates in three layers:
 The number that matters: **total cost of one shipped change** — tokens, plus human
 steering time, plus all rework discovered later. The measuring system is the **ledger**:
 traces (evidence) → receipts (one fact per process step) → regrets (quality signals that
-arrive late and point back at the step that caused them). Receipts live in the **store**
-(outside any one project), captured natively by the Pi extension, and feed the future
-**second brain** (a separate initiative where projects, mail, and documents converge).
+arrive late and point back at the step that caused them). Receipts live outside any
+one project — the exact home (OpenSpec store vs global SQLite vs hybrid) is owed a
+design session — captured natively by the Pi extension, and feed the future **second
+brain** (a separate initiative where projects, mail, and documents converge).
 Full design: `ledger-and-evals.md`.
 
 ## Standing rules
