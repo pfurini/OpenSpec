@@ -122,6 +122,20 @@ e.g. a future `adopt-upstream-archive-hardening`):
 - #1499 path-confinement machinery (`resolveTrustedSpecPath`, trust roots, `assertPathWithin`);
   `discoverSpecFiles` landed minimal, without trust-root checks.
 
+**Post-A1 follow-ups** (repo-local debt surfaced by the A1 code review, 2026-08-24 — not
+upstream rows; small, fold into whichever change next touches the file):
+
+- Unify `Validator.findDeltaSpecFiles()` onto `discoverSpecFiles` (`src/core/validation/validator.ts`).
+  The private walk swallows read errors — the #1353 silent-drop class A1 eliminated elsewhere — and
+  any future divergence (dot entries, symlink rules) would make validate and archive disagree about
+  which delta specs exist. Highest-value item here.
+- Unify `spec-structure.ts`'s private fence parser onto `buildCodeFenceMask`
+  (`src/core/parsers/code-fence.ts`). Both are correct today; fence-awareness is now load-bearing,
+  so a one-sided fence-rule change would split the merge's and the validator's notion of "fenced".
+- Route the two pre-existing unquoted hint sites through `quoteChangeName`
+  (`src/core/archive.ts` — the `openspec validate ${changeName}` / `${specName}` suggestions), the
+  same paste-target class the A1 quoting policy covers.
+
 **Execution method** (worked well; reuse for the A2/A3/A4 sweeps): group the section's rows by
 module, diff the upstream module end-state for reference only (never copied), re-implement the
 end-state behaviors in our idiom test-first, then walk the per-row checklist to confirm each is
