@@ -180,6 +180,20 @@ describe('interactive utilities', () => {
       expect(question).not.toMatch(ANSI);
     });
 
+    it('strips OSC sequences, bare escapes, C1 bytes, and carriage returns too', async () => {
+      const { input, output, written } = makeStreams(false);
+      const message =
+        '\u001b]8;;https://example.com\u0007Continue\u001b]8;;\u0007 with \u009b31mthe\r archive?\u001b(B';
+      const answered = confirmPrompt({ message, default: false }, { input, output });
+      input.write('n\n');
+      input.end();
+
+      await expect(answered).resolves.toBe(false);
+      const question = written();
+      expect(question).toContain('Continue with the archive?');
+      expect(question).not.toMatch(/[\u001b\u009b\u0007\r]/);
+    });
+
     it('shows the default in the plain prompt', async () => {
       const { input, output, written } = makeStreams(false);
       const answered = confirmPrompt({ message: 'Continue?', default: true }, { input, output });

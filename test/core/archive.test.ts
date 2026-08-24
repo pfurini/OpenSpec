@@ -1435,6 +1435,35 @@ missing update`);
       expect(process.exitCode).toBe(1);
     });
 
+    it('strips terminal escapes from the quoted unaccounted lines', async () => {
+      const withEscapes = [
+        '# reporting Specification',
+        '',
+        '## Purpose',
+        'Reporting rules for the platform, covering scheduled and ad-hoc reports.',
+        '',
+        '## Requirements',
+        '',
+        SCHEDULED_REPORT_BLOCK,
+        '',
+        '### Notes',
+        'colored \u001b[31mred\u001b[39m note with a stray \u009b C1 byte',
+        '',
+      ].join('\n');
+      const target = await seedMainSpec(withEscapes);
+      await seedChange('retire-escaped-notes', REMOVE_LAST_REQUIREMENT, MARKER_DECLARED);
+
+      await archiveCommand.execute('retire-escaped-notes', { yes: true });
+
+      expect(await fs.readFile(target, 'utf-8')).toBe(withEscapes);
+
+      const output = loggedLines();
+      expect(output).toContain('colored red note');
+      expect(output).not.toMatch(/[\u001b\u009b]/);
+
+      expect(process.exitCode).toBe(1);
+    });
+
     it('treats a marker it cannot honor as not declared and states why', async () => {
       const target = await seedMainSpec(MAIN_SPEC);
       await seedChange(

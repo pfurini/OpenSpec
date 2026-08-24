@@ -163,7 +163,8 @@ export interface MetadataMarker {
  */
 function sanitizeMarkerReason(reason: string): string {
   return reason
-    .replace(/[\u0000-\u001F\u007F]+/g, ' ')
+    // C0, DEL, and C1: a raw 0x9B is a one-byte CSI on 8-bit-control terminals.
+    .replace(/[\u0000-\u001F\u007F-\u009F]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }

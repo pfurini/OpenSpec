@@ -27,7 +27,11 @@ import {
   type MetadataMarker,
 } from '../utils/change-metadata.js';
 import { discoverSpecFiles } from '../utils/spec-discovery.js';
-import { confirmPrompt, isNonInteractivePromptError } from '../utils/interactive.js';
+import {
+  confirmPrompt,
+  isNonInteractivePromptError,
+  stripTerminalEscapes,
+} from '../utils/interactive.js';
 import { VALIDATION_MESSAGES } from './validation/constants.js';
 import type { ValidationReport } from './validation/types.js';
 
@@ -756,7 +760,9 @@ export class ArchiveCommand {
     if (unaccountedContent.length > 0) {
       const quoted = unaccountedContent
         .slice(0, MAX_QUOTED_UNACCOUNTED_LINES)
-        .map((line) => `    ${line}`);
+        // The lines come straight from a spec file; strip escapes so a
+        // crafted repo cannot rewrite the terminal through an abort hint.
+        .map((line) => `    ${stripTerminalEscapes(line)}`);
       const extra = unaccountedContent.length - quoted.length;
       parts.push(
         `'${specName}' has no requirements left, but ${displayPath} still holds content the merge ` +

@@ -68,10 +68,25 @@ export function isNonInteractivePromptError(error: unknown): boolean {
 }
 
 /**
- * Every CSI sequence, so a colored message from a caller cannot smuggle an
- * escape onto a redirected stream.
+ * Every escape a terminal could act on: OSC sequences (`ESC ] ... BEL/ST`),
+ * CSI sequences (`ESC [ ... final`), any other `ESC`-led sequence, and the
+ * remaining C0/C1 control bytes (tab and newline stay). CSI-only stripping is
+ * not enough - OSC hyperlinks, 8-bit C1 introducers, and a bare `\r` can all
+ * rewrite or spoof a redirected stream.
  */
-const ANSI_ESCAPE_PATTERN = new RegExp('\u001B\\[[0-?]*[ -/]*[@-~]', 'g');
+const TERMINAL_ESCAPE_PATTERN = new RegExp(
+  '\u001B\\][^\u0007\u001B]*(?:\u0007|\u001B\\\\)?' + // OSC, BEL- or ST-terminated (or cut off)
+    '|\u001B\\[[0-?]*[ -/]*[@-~]' + // CSI, 7-bit form
+    '|\u009B[0-?]*[ -/]*[@-~]' + // CSI, 8-bit single-byte introducer
+    '|\u001B[ -/]*[0-~]?' + // any other escape sequence (or a trailing bare ESC)
+    '|[\u0000-\u0008\u000B-\u001F\u007F-\u009F]', // leftover C0 (not tab/newline) + DEL + C1
+  'g'
+);
+
+/** Remove every terminal escape and control byte a caller could smuggle into output. */
+export function stripTerminalEscapes(text: string): string {
+  return text.replace(TERMINAL_ESCAPE_PATTERN, '');
+}
 
 /**
  * Mirrors inquirer's confirm parsing: a `y`/`yes` or `n`/`no` prefix decides,
@@ -163,7 +178,7 @@ export async function confirmPrompt(
   }
 
   const suffix = fallback ? '[Y/n]' : '[y/N]';
-  const plainMessage = prompt.message.replace(ANSI_ESCAPE_PATTERN, '');
+  const plainMessage = stripTerminalEscapes(prompt.message);
   const line = await readPlainLine(input, output, `${plainMessage} ${suffix} `);
   if (line === null) {
     throw new NonInteractivePromptError(

@@ -450,12 +450,12 @@ describe('readRetireCapabilitiesMarker', () => {
     expect(marker.invalidReason).toBeDefined();
   });
 
-  it('strips control characters from the reason', async () => {
-    await writeMetadata('schema: deep-planning\nretire_capabilities: maybe\n');
+  it('strips control characters, including C1 bytes, from the reason', async () => {
+    await writeMetadata('schema: deep-planning\nretire_capabilities: "may\u009bbe"\n');
 
     const marker = readRetireCapabilitiesMarker(changeDir);
     expect(marker.invalidReason).toBeDefined();
-    expect(marker.invalidReason).not.toMatch(/[\u0000-\u001F\u007F]/);
+    expect(marker.invalidReason).not.toMatch(/[\u0000-\u001F\u007F-\u009F]/);
   });
 });
 
